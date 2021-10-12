@@ -26,7 +26,7 @@ provider "openstack" {
 }
 
 module "rke2" {
-  source = "./rke2"
+  source = ".."
 
   name = local.name
 
