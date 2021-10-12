@@ -1,5 +1,5 @@
 
-resource "null_resource" "agent-remove" {
+resource "null_resource" "agent_remove" {
   count = !var.is_server && var.ff_autoremove_agent ? var.nodes_count : 0
 
   triggers = {

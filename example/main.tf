@@ -1,16 +1,3 @@
-
-variable "tenant_name" {
-  type = string
-}
-
-variable "user_name" {
-  type = string
-}
-
-variable "password" {
-  type = string
-}
-
 locals {
   auth_url = "https://api.pub1.infomaniak.cloud/identity"
   region   = "dc3-a"
@@ -103,19 +90,3 @@ resource "openstack_objectstorage_container_v1" "etcd_snapshots" {
 }
 
 resource "openstack_identity_ec2_credential_v3" "s3" {}
-
-output "floating_ip" {
-  value = module.rke2.floating_ips[0]
-}
-
-terraform {
-  required_version = ">= 0.14.0"
-
-  required_providers {
-    openstack = {
-      source  = "terraform-provider-openstack/openstack"
-      version = ">= 1.44.0"
-    }
-  }
-
-}

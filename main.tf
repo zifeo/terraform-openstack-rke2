@@ -1,5 +1,5 @@
 module "server" {
-  source    = "./node"
+  source    = "./modules/instance"
   name      = "${var.name}-server"
   is_server = true
 
@@ -29,10 +29,12 @@ module "server" {
 
   manifests_folder = var.manifests_folder
   manifests        = var.manifests
+
+  ff_autoremove_agent = var.ff_autoremove_agent
 }
 
 module "agents" {
-  source = "./node"
+  source = "./modules/instance"
 
   for_each = {
     for agent in var.agents :
@@ -63,4 +65,6 @@ module "agents" {
   secgroup_id      = openstack_networking_secgroup_v2.agent.id
   bootstrap_server = var.bootstrap_server
   bastion_host     = module.server.floating_ips[0]
+
+  ff_autoremove_agent = var.ff_autoremove_agent
 }

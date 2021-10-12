@@ -87,7 +87,7 @@ terraform apply
 terraform apply -parallelism=1
 ```
 
-## Infomaniak OpenStack [example](./example/infomaniak.tf)
+## Infomaniak OpenStack [example](./example/main.tf)
 
 A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as little as CHF 11.—/month (at the time of writing):
 - nginx-ingress with floating ip (perfect under Cloudflare proxy)
