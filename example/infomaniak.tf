@@ -26,11 +26,13 @@ provider "openstack" {
 }
 
 module "rke2" {
-  source = ".."
+  # source = "zifeo/rke2/openstack"
+  source = "./.."
 
   name = local.name
 
   public_net_name = "ext-floating1"
+  # 22 & 6443 should be restricted to a secure bastion
   rules_ext = [
     { "port" : 22, "protocol" : "tcp", "source" : "0.0.0.0/0" },
     { "port" : 80, "protocol" : "tcp", "source" : "0.0.0.0/0" },
@@ -108,18 +110,12 @@ output "floating_ip" {
 
 terraform {
   required_version = ">= 0.14.0"
+
   required_providers {
-    random = {
-      source  = "hashicorp/random"
-      version = ">=3.1.0"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = ">=2.1.2"
-    }
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = "~> 1.35.0"
+      version = ">= 1.44.0"
     }
   }
+
 }

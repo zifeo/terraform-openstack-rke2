@@ -1,15 +1,17 @@
 # Terraform RKE2 OpenStack
 
-Deploy easily a RKE2 Kubernetes cluster on OpenStack providers (e.g. [OVH](https://www.ovhcloud.com/fr/public-cloud/), [Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud), etc.).
+[![Terraform Registry](https://img.shields.io/badge/terraform-registry-blue.svg)](https://registry.terraform.io/modules/zifeo/rke2/openstack/latest)
 
-Inspired and reworked from [remche/terraform-openstack-rke2](https://github.com/remche/terraform-openstack-rke2) to add an easier interface, stricter security groups, persistent storage and S3 etcd snapshots.
+Deploy easily a RKE2 Kubernetes cluster on OpenStack providers (e.g. [Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud), [OVH](https://www.ovhcloud.com/fr/public-cloud/), etc.).
+
+Inspired and reworked from [remche/terraform-openstack-rke2](https://github.com/remche/terraform-openstack-rke2) to add an easier interface, stricter security groups, persistent storage and S3 automated etcd snapshots.
 
 ## Features
 
 - [RKE2](https://docs.rke2.io) Kubernetes distribution : lightweight, stable, simple and secure
-- Persisted `/var/lib/rancher/rke2` for (single) server durability
-- Configure OpenStack Swift or another S3 comptatible backend for etcd snapshots
-- Dropin updates & agent nodes autoremoval
+- persisted `/var/lib/rancher/rke2` for (single) server durability
+- configure OpenStack Swift or another S3 comptatible backend for automated etcd snapshots
+- smooth updates & agent nodes autoremoval
 
 ### Next
 
@@ -31,7 +33,6 @@ provider "openstack" {
 
 module "rke2" {
   source  = "zifeo/rke2/openstack"
-  version = "0.1.1"
 
   name = "k8s"
 
@@ -70,25 +71,31 @@ module "rke2" {
     }
   ]
 }
-EOF
-```
 
-```bash
+terraform {
+  required_providers {
+    openstack = {
+      source  = "terraform-provider-openstack/openstack"
+    }
+  }
+}
+EOF
+
 terraform init
 terraform apply
 # or, on upgrade, to process node by node
 terraform apply -parallelism=1
 ```
 
-## Infomaniak [example](./example/infomaniak.tf)
+## Infomaniak OpenStack [example](./example/infomaniak.tf)
 
 A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as little as CHF 11.—/month (at the time of writing):
-- nginx-ingress with floating ip (perfect under Cloudflare)
-- cinder-csi storage classes (retain, delete)
+- nginx-ingress with floating ip (perfect under Cloudflare proxy)
+- persistence through cinder-csi storage classes (retain, delete)
 - 1 server 1cpu/2go (= master)
 - 1 agent 1cpu/2go (= worker)
 
-Quick benchmarks confirmed that the price/performance outperformed outperforms Scaleway Kubernetes offering.
+Quick benchmarks confirmed that the price/performance outperforms Scaleway offering (but would need to be deepened).
 
 | flavour                                                      | CHF/month |
 |--------------------------------------------------------------|-----------|
