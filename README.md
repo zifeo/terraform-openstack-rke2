@@ -82,11 +82,13 @@ terraform apply -parallelism=1
 
 ## Infomaniak [example](./example/infomaniak.tf)
 
-A stable and fully-equiped Kubernetes cluster in Switzerland for as little as CHF 11.—/month (at the time of writing):
+A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as little as CHF 11.—/month (at the time of writing):
 - nginx-ingress with floating ip (perfect under Cloudflare)
 - cinder-csi storage classes (retain, delete)
 - 1 server 1cpu/2go (= master)
 - 1 agent 1cpu/2go (= worker)
+
+Quick benchmarks confirmed that the price/performance outperformed outperforms Scaleway Kubernetes offering.
 
 | flavour                                                      | CHF/month |
 |--------------------------------------------------------------|-----------|
@@ -117,7 +119,7 @@ curl -s $(terraform output -raw floating_ip) -H 'host: wordpress.local' | grep W
 # <p>Welcome to WordPress. This is your first post. Edit or delete it, then start writing!</p>
 ```
 
-Technical documentation: https://docs.infomaniak.cloud
+See their technical [documentation](https://docs.infomaniak.cloud) and [pricing](https://www.infomaniak.com/fr/hebergement/public-cloud/tarifs).
 
 ## More on RKE2 & OpenStack
 
