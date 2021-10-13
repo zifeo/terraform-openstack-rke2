@@ -2,7 +2,7 @@
 
 [![Terraform Registry](https://img.shields.io/badge/terraform-registry-blue.svg)](https://registry.terraform.io/modules/zifeo/rke2/openstack/latest)
 
-Deploy easily a RKE2 Kubernetes cluster on OpenStack providers (e.g. [Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud), [OVH](https://www.ovhcloud.com/fr/public-cloud/), etc.).
+Easily deploy a RKE2 Kubernetes cluster on OpenStack providers (e.g. [Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud), [OVH](https://www.ovhcloud.com/fr/public-cloud/), etc.).
 
 Inspired and reworked from [remche/terraform-openstack-rke2](https://github.com/remche/terraform-openstack-rke2) to add an easier interface, stricter security groups, persistent storage and S3 automated etcd snapshots.
 
