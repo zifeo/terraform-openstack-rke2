@@ -99,7 +99,7 @@ A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as 
 
 Quick benchmarks confirmed that the price/performance outperforms Scaleway offering (but would need to be deepened).
 
-| flavour                                                      | CHF/month |
+| Flavour                                                      | CHF/month |
 |--------------------------------------------------------------|-----------|
 | 2×2.93 (instances) + 0.09×2×(4+6) (blockstorage) + 3.34 (IP) | 11.—      |
 | single 2cpu/4go server with 1x4cpu/8go worker                | ~25.—     |
