@@ -102,9 +102,9 @@ Quick benchmarks confirmed that the price/performance outperforms Scaleway offer
 | flavour                                                      | CHF/month |
 |--------------------------------------------------------------|-----------|
 | 2×2.93 (instances) + 0.09×2×(4+6) (blockstorage) + 3.34 (IP) | 11.—      |
-| single server with 1x4cpu/8go workers                        | ~25.—     |
-| 3 HA servers with 1x4cpu/8go workers                         | ~40.—     |
-| 3 HA servers with 3x8cpu/16go workers                        | ~100.—    |
+| single 2cpu/4go server with 1x4cpu/8go worker                | ~25.—     |
+| 3x2cpu/4go HA servers with 1x4cpu/8go worker                 | ~40.—     |
+| 3x2cpu/4go HA servers with 3x8cpu/16go workers               | ~100.—    |
 
 ```bash
 git clone git@github.com:zifeo/terraform-openstack-rke2.git && cd terraform-openstack-rke2/example
