@@ -35,7 +35,7 @@ module "rke2" {
     system_user      = "ubuntu"
     boot_volume_size = 4
 
-    rke2_version     = "v1.21.5+rke2r1"
+    rke2_version     = "v1.21.5+rke2r2"
     rke2_volume_size = 6
     # https://docs.rke2.io/install/install_options/install_options/#configuration-file
     rke2_config_file = "configs/server.yaml"
