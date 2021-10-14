@@ -17,9 +17,9 @@ Inspired and reworked from [remche/terraform-openstack-rke2](https://github.com/
 
 ### Next
 
-- autoscaling
-- distinct subnet for servers and agents
-- loadbalancer auto-provisionning
+- [autoscaling](./example/autoscaling-tests.yaml) via HEAT
+- [loadbalancer](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/octavia-ingress-controller/using-octavia-ingress-controller.md) auto-provisionning
+- distinct subnets for servers and agents
 - gpu bindings
 
 ## Getting started
