@@ -17,6 +17,7 @@ Inspired and reworked from [remche/terraform-openstack-rke2](https://github.com/
 
 ### Next
 
+- autoscaling
 - distinct subnet for servers and agents
 - loadbalancer auto-provisionning
 - gpu bindings
