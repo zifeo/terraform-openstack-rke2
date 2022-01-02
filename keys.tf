@@ -8,9 +8,15 @@ resource "openstack_compute_keypair_v2" "key" {
 }
 
 resource "null_resource" "write_kubeconfig" {
+  count = var.ff_write_kubeconfig ? 1 : 0
+
   triggers = {
     servers = join(",", module.server.id)
   }
+
+  depends_on = [
+    module.server[0].id
+  ]
 
   connection {
     host  = module.server.floating_ips[0]
@@ -18,11 +24,18 @@ resource "null_resource" "write_kubeconfig" {
     agent = true
   }
 
-  provisioner "remote-exec" {
-    inline = ["until (grep rke2 /etc/rancher/rke2/rke2-remote.yaml >/dev/null 2>&1); do echo Waiting for $(hostname) rke2 to start && sleep 10; done; echo $(hostname) rke2 ready;"]
-  }
-
   provisioner "local-exec" {
-    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${var.server.system_user}@${module.server.floating_ips[0]}:/etc/rancher/rke2/rke2-remote.yaml rke2.yaml"
+    command = <<EOF
+      ssh-keygen -F ${module.server.floating_ips[0]} -f ~/.ssh/known_hosts | grep -q found || ssh-keyscan ${module.server.floating_ips[0]} >> ~/.ssh/known_hosts 2>/dev/null
+      rsync --rsync-path="sudo rsync" ${var.server.system_user}@${module.server.floating_ips[0]}:/etc/rancher/rke2/rke2.yaml rke2.yaml
+      chmod go-r rke2.yaml
+      yq eval --inplace '.clusters[0].name = "${var.name}-cluster"' rke2.yaml
+      yq eval --inplace '.clusters[0].cluster.server = "https://${module.server.floating_ips[0]}:6443"' rke2.yaml
+      yq eval --inplace '.users[0].name = "${var.name}-user"' rke2.yaml
+      yq eval --inplace '.contexts[0].context.cluster = "${var.name}-cluster"' rke2.yaml
+      yq eval --inplace '.contexts[0].context.user = "${var.name}-user"' rke2.yaml
+      yq eval --inplace '.contexts[0].name = "${var.name}"' rke2.yaml
+      yq eval --inplace '.current-context = "${var.name}"' rke2.yaml
+    EOF
   }
 }

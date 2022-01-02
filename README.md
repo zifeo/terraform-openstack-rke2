@@ -91,6 +91,8 @@ terraform apply
 terraform apply -parallelism=1
 ```
 
+Note: it requires [rsync](https://rsync.samba.org) and [yq](https://github.com/mikefarah/yq) to generate remote kube config file. You can disable this behaviour by setting `ff_write_kubeconfig=false` and fetch yourself `/etc/rancher/rke2/rke2.yaml` on server nodes.
+
 ## Infomaniak OpenStack [example](./example/main.tf)
 
 A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as little as CHF 11.—/month (at the time of writing):

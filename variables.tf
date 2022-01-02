@@ -92,6 +92,11 @@ variable "manifests" {
   default = {}
 }
 
+variable "ff_write_kubeconfig" {
+  type    = bool
+  default = true
+}
+
 variable "ff_autoremove_agent" {
   type    = bool
   default = true
