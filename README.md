@@ -140,5 +140,5 @@ See their technical [documentation](https://docs.infomaniak.cloud) and [pricing]
 
 ```
 # debug on nodes
-alias docker=sudo /var/lib/rancher/rke2/bin/crictl -r /run/k3s/containerd/containerd.sock
+alias docker="sudo /var/lib/rancher/rke2/bin/crictl -r /run/k3s/containerd/containerd.sock"
 ```
