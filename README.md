@@ -13,7 +13,7 @@ Inspired and reworked from [remche/terraform-openstack-rke2](https://github.com/
 - configure OpenStack Swift or another S3 comptatible backend for automated etcd snapshots
 - smooth updates & agent nodes autoremoval
 
-<img src="./example/net.png" height="400" />
+<img src="https://github.com/zifeo/terraform-openstack-rke2/raw/main/example/net.png" height="400" />
 
 ### Next
 
