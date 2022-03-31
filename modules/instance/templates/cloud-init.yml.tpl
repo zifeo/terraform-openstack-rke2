@@ -1,5 +1,12 @@
 #cloud-config
 
+resize_rootfs: True
+growpart:
+  mode: auto
+  devices:
+    - "/"
+    - "/dev/sdb"
+
 package_update: true
 package_upgrade: true
 package_reboot_if_required: true

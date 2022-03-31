@@ -141,4 +141,9 @@ See their technical [documentation](https://docs.infomaniak.cloud) and [pricing]
 ```
 # debug on nodes
 alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"
+
+# restore s3 snapshot
+sudo systemctl stop rke2-server
+sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH
+# reboot all nodes
 ```
