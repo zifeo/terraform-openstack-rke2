@@ -6,6 +6,10 @@ variable "is_server" {
   type = bool
 }
 
+variable "is_bootstrap" {
+  type = bool
+}
+
 variable "nodes_count" {
   type = string
 }
@@ -71,7 +75,7 @@ variable "rke2_version" {
   type = string
 }
 
-variable "rke2_config_file" {
+variable "rke2_config" {
   type = string
 }
 
@@ -112,3 +116,4 @@ variable "ff_autoremove_agent" {
   type    = bool
   default = true
 }
+

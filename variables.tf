@@ -36,8 +36,9 @@ variable "dns_nameservers" {
   default = ["1.1.1.1", "1.0.0.1"]
 }
 
-variable "server" {
-  type = object({
+variable "servers" {
+  type = list(object({
+    name               = string
     nodes_count        = number
     affinity           = optional(string)
     availability_zones = optional(list(string))
@@ -47,9 +48,9 @@ variable "server" {
     system_user        = string
     boot_volume_size   = number
     rke2_version       = string
-    rke2_config_file   = optional(string)
+    rke2_config        = optional(string)
     rke2_volume_size   = number
-  })
+  }))
 }
 
 variable "agents" {
@@ -64,7 +65,7 @@ variable "agents" {
     system_user        = string
     boot_volume_size   = number
     rke2_version       = string
-    rke2_config_file   = optional(string)
+    rke2_config        = optional(string)
     rke2_volume_size   = number
   }))
 }
@@ -84,6 +85,17 @@ variable "s3" {
   }
 }
 
+variable "cinder" {
+  type = object({
+    enabled       = bool
+    manifest_file = string
+  })
+  default = {
+    enabled       = true
+    manifest_file = "./templates/cinder.yml.tpl"
+  }
+}
+
 variable "manifests_folder" {
   type    = string
   default = ""
@@ -94,6 +106,12 @@ variable "manifests" {
   default = {}
 }
 
+variable "identity_url" {
+  type    = string
+  default = ""
+}
+
+
 variable "ff_write_kubeconfig" {
   type    = bool
   default = true
@@ -103,3 +121,4 @@ variable "ff_autoremove_agent" {
   type    = bool
   default = true
 }
+

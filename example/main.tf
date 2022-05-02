@@ -27,7 +27,8 @@ module "rke2" {
     { "port" : 6443, "protocol" : "tcp", "source" : "0.0.0.0/0" },
   ]
 
-  server = {
+  server = [{
+    name        = "server"
     nodes_count = 1
 
     flavor_name      = "a1-ram2-disk0"
@@ -38,8 +39,8 @@ module "rke2" {
     rke2_version     = "v1.21.5+rke2r2"
     rke2_volume_size = 6
     # https://docs.rke2.io/install/install_options/install_options/#configuration-file
-    rke2_config_file = "configs/server.yaml"
-  }
+    rke2_config = file("configs/server.yaml")
+  }]
 
   agents = [
     {

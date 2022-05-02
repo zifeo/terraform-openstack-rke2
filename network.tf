@@ -16,6 +16,21 @@ resource "openstack_networking_subnet_v2" "nodes_subnet" {
   dns_nameservers = var.dns_nameservers
 }
 
+resource "openstack_networking_subnet_v2" "nodes_subnet_ext" {
+  name            = "${var.name}-nodes-subnet-ext"
+  network_id      = openstack_networking_network_v2.nodes_net.id
+  cidr            = "2001:1600:11:7::/64"
+  ip_version      = 6
+  dns_nameservers = ["2001:1600:0:aaaa::53:5"]
+  #ipv6_address_mode = "dhcpv6-stateful"
+  #ipv6_ra_mode = "dhcpv6-stateful"
+}
+
+data "openstack_networking_network_v2" "public_net_6" {
+  name = "ext-provider1"
+}
+
+
 resource "openstack_networking_router_v2" "router" {
   name                = "${var.name}-router"
   admin_state_up      = true
@@ -26,3 +41,9 @@ resource "openstack_networking_router_interface_v2" "router_interface" {
   router_id = openstack_networking_router_v2.router.id
   subnet_id = openstack_networking_subnet_v2.nodes_subnet.id
 }
+
+resource "openstack_networking_router_interface_v2" "router_interface_ext" {
+  router_id = openstack_networking_router_v2.router.id
+  subnet_id = openstack_networking_subnet_v2.nodes_subnet_ext.id
+}
+

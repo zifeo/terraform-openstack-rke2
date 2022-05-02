@@ -21,16 +21,16 @@ resource "openstack_compute_volume_attach_v2" "attach" {
 }
 
 resource "openstack_networking_floatingip_v2" "floating_ip" {
-  count = var.is_server ? var.nodes_count : 0
+  count = var.is_server && var.floating_ip_net != null ? var.nodes_count : 0
   pool  = var.floating_ip_net
 
   lifecycle {
-    #prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
 resource "openstack_compute_floatingip_associate_v2" "associate_floating_ip" {
-  count       = var.is_server ? var.nodes_count : 0
+  count       = var.is_server && var.floating_ip_net != null ? var.nodes_count : 0
   floating_ip = openstack_networking_floatingip_v2.floating_ip[count.index].address
   instance_id = openstack_compute_instance_v2.instance[count.index].id
 }
@@ -43,7 +43,17 @@ resource "openstack_networking_port_v2" "port" {
   admin_state_up     = true
   fixed_ip {
     subnet_id  = var.subnet_id
-    ip_address = var.is_server && count.index == 0 ? var.bootstrap_server : null
+    ip_address = var.is_server && var.is_bootstrap && count.index == 0 ? var.bootstrap_server : null
+  }
+}
+
+resource "openstack_networking_port_v2" "port2" {
+  count              = var.nodes_count
+  network_id         = var.network_id
+  security_group_ids = [var.secgroup_id]
+  admin_state_up     = true
+  fixed_ip {
+    subnet_id  = "01a38926-3af8-446b-93de-746fd1dfd1bd"
   }
 }
 
@@ -59,6 +69,10 @@ resource "openstack_compute_instance_v2" "instance" {
 
   network {
     port = openstack_networking_port_v2.port[count.index].id
+  }
+
+network {
+    port = openstack_networking_port_v2.port2[count.index].id
   }
 
   scheduler_hints {
@@ -82,10 +96,11 @@ resource "openstack_compute_instance_v2" "instance" {
   user_data = base64encode(templatefile("${path.module}/templates/cloud-init.yml.tpl", {
     rke2_token       = var.rke2_token
     rke2_version     = var.rke2_version
-    rke2_conf        = var.rke2_config_file != null ? file(var.rke2_config_file) : ""
+    # https://docs.rke2.io/install/install_options/server_config/
+    rke2_conf        = var.rke2_config != null ? var.rke2_config : ""
     is_server        = var.is_server
-    bootstrap_server = var.is_server && count.index == 0 ? "" : var.bootstrap_server
-    public_address   = var.is_server ? openstack_networking_floatingip_v2.floating_ip[count.index].address : ""
+    bootstrap_server = var.is_server && var.is_bootstrap && count.index == 0 ? "" : var.bootstrap_server
+    public_address   = var.is_server && var.floating_ip_net != null ? openstack_networking_floatingip_v2.floating_ip[count.index].address : ""
     san              = var.is_server ? openstack_networking_floatingip_v2.floating_ip[*].address : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
