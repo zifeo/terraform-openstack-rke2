@@ -35,7 +35,6 @@ resource "openstack_compute_floatingip_associate_v2" "associate_floating_ip" {
   instance_id = openstack_compute_instance_v2.instance[count.index].id
 }
 
-
 resource "openstack_networking_port_v2" "port" {
   count              = var.nodes_count
   network_id         = var.network_id
@@ -47,16 +46,34 @@ resource "openstack_networking_port_v2" "port" {
   }
 }
 
-resource "openstack_networking_port_v2" "port2" {
-  count              = var.nodes_count
-  network_id         = var.network_id
-  security_group_ids = [var.secgroup_id]
-  admin_state_up     = true
-  fixed_ip {
-    subnet_id  = "01a38926-3af8-446b-93de-746fd1dfd1bd"
-  }
+locals {
+  instances_x_nets = [
+    for i in range(var.nodes_count) : [
+      for net in var.nets : {
+        name          = "${var.name}-${i + 1}-${net.network_name}"
+        instance_name = "${var.name}-${i + 1}"
+        network_id    = net.network_id
+        subnet_id     = net.subnet_id
+        secgroup_id   = net.secgroup_id
+        ip_address    = net.ip_address
+      }
+    ]
+  ]
 }
 
+resource "openstack_networking_port_v2" "ports" {
+  for_each = {
+    for inet in flatten(local.instances_x_nets) : inet.name => inet
+  }
+
+  network_id         = each.value.network_id
+  security_group_ids = each.value.secgroup_id != null ? [each.value.secgroup_id] : null
+  no_security_groups = each.value.secgroup_id == null
+  admin_state_up     = true
+  fixed_ip {
+    subnet_id = each.value.subnet_id
+  }
+}
 
 resource "openstack_compute_instance_v2" "instance" {
   count                   = var.nodes_count
@@ -71,8 +88,11 @@ resource "openstack_compute_instance_v2" "instance" {
     port = openstack_networking_port_v2.port[count.index].id
   }
 
-network {
-    port = openstack_networking_port_v2.port2[count.index].id
+  dynamic "network" {
+    for_each = local.instances_x_nets[count.index]
+    content {
+      port = openstack_networking_port_v2.ports[network.value["name"]].id
+    }
   }
 
   scheduler_hints {
@@ -94,8 +114,8 @@ network {
   }
 
   user_data = base64encode(templatefile("${path.module}/templates/cloud-init.yml.tpl", {
-    rke2_token       = var.rke2_token
-    rke2_version     = var.rke2_version
+    rke2_token   = var.rke2_token
+    rke2_version = var.rke2_version
     # https://docs.rke2.io/install/install_options/server_config/
     rke2_conf        = var.rke2_config != null ? var.rke2_config : ""
     is_server        = var.is_server

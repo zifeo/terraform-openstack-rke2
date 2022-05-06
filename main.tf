@@ -26,6 +26,14 @@ module "servers" {
 
   s3 = var.s3
 
+  nets = [{
+    network_name = module.net_server.net_name
+    network_id   = module.net_server.net_id
+    subnet_id    = module.net_server.subnet_id
+    secgroup_id  = openstack_networking_secgroup_v2.server.id
+    ip_address   = null
+  }]
+
   system_user  = each.value.system_user
   keypair_name = openstack_compute_keypair_v2.key.name
 
@@ -33,7 +41,7 @@ module "servers" {
   subnet_id        = openstack_networking_subnet_v2.nodes_subnet.id
   secgroup_id      = openstack_networking_secgroup_v2.server.id
   bootstrap_server = var.bootstrap_server
-  floating_ip_net  = each.key == "0" ? var.public_net_name : null
+  floating_ip_net  = each.key == "0" ? var.floating_ip_net : null
 
   manifests_folder = var.manifests_folder
   manifests = merge(var.manifests, var.cinder.manifest_file != "" ? {

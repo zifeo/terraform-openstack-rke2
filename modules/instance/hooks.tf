@@ -10,9 +10,10 @@ resource "null_resource" "agent_remove" {
   }
 
   connection {
-    host  = self.triggers.bastion_host
-    user  = self.triggers.user
-    agent = true
+    host    = self.triggers.bastion_host
+    user    = self.triggers.user
+    agent   = true
+    timeout = "30s"
   }
 
   provisioner "remote-exec" {

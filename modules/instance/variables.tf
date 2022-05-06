@@ -49,6 +49,18 @@ variable "subnet_id" {
 variable "secgroup_id" {
   type = string
 }
+
+variable "nets" {
+  type = list(object({
+    network_name = string
+    network_id   = string
+    subnet_id    = string
+    secgroup_id  = optional(string)
+    ip_address   = optional(string)
+  }))
+  default = []
+}
+
 variable "bootstrap_server" {
   type    = string
   default = ""

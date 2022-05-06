@@ -26,9 +26,8 @@ resource "null_resource" "write_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ssh-keygen -R ${module.servers[0].floating_ips[0]} 2>/dev/null
-      ssh-keyscan ${module.servers[0].floating_ips[0]} >> ~/.ssh/known_hosts 2>/dev/null
-      until ssh ${var.servers[0].system_user}@${module.servers[0].floating_ips[0]} true > /dev/null 2>&1; do echo Wait for SSH availability && sleep 10; done
+      ssh-keygen -R ${module.servers[0].floating_ips[0]} >/dev/null 2>&1
+      until ssh -o StrictHostKeyChecking=accept-new ${var.servers[0].system_user}@${module.servers[0].floating_ips[0]} true > /dev/null 2>&1; do echo Wait for SSH availability && sleep 10; done
       until ssh ${var.servers[0].system_user}@${module.servers[0].floating_ips[0]} ls /etc/rancher/rke2/rke2.yaml > /dev/null 2>&1; do echo Wait rke2.yaml generation && sleep 10; done
       rsync --rsync-path="sudo rsync" ${var.servers[0].system_user}@${module.servers[0].floating_ips[0]}:/etc/rancher/rke2/rke2.yaml rke2.yaml \
       && chmod go-r rke2.yaml \

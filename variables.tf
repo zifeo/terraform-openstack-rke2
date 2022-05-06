@@ -8,7 +8,11 @@ variable "ssh_public_key_file" {
   default = "~/.ssh/id_rsa.pub"
 }
 
-variable "public_net_name" {
+variable "floating_ip_net" {
+  type = string
+}
+
+variable "external_net_name" {
   type = string
 }
 
