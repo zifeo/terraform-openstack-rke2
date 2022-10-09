@@ -11,13 +11,13 @@ package_update: true
 package_upgrade: true
 package_reboot_if_required: true
 packages:
- - fail2ban
- - unattended-upgrades
- - apt-listchanges
- - ncdu
- - htop
- - curl
- - jq
+  - fail2ban
+  - unattended-upgrades
+  - apt-listchanges
+  - ncdu
+  - htop
+  - curl
+  - jq
 
 ntp:
   enabled: true

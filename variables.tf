@@ -20,7 +20,8 @@ variable "rules_ext" {
   type = list(object({
     port     = number
     protocol = string
-    source   = string
+    source4   = string
+    source6   = string
   }))
 }
 
