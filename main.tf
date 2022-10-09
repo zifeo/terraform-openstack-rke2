@@ -6,6 +6,7 @@ module "server" {
   nodes_count      = var.server.nodes_count
   flavor_name      = var.server.flavor_name
   image_name       = var.server.image_name
+  image_uuid       = var.server.image_uuid
   boot_volume_size = var.server.boot_volume_size
 
   availability_zones = coalesce(var.server.availability_zones, [])
@@ -47,6 +48,7 @@ module "agents" {
   nodes_count      = each.value.nodes_count
   flavor_name      = each.value.flavor_name
   image_name       = each.value.image_name
+  image_uuid       = each.value.image_uuid
   boot_volume_size = each.value.boot_volume_size
 
   availability_zones = coalesce(each.value.availability_zones, [])

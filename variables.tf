@@ -43,6 +43,7 @@ variable "server" {
     availability_zones = optional(list(string))
     flavor_name        = string
     image_name         = string
+    image_uuid         = optional(string)
     system_user        = string
     boot_volume_size   = number
     rke2_version       = string
@@ -59,6 +60,7 @@ variable "agents" {
     availability_zones = optional(list(string))
     flavor_name        = string
     image_name         = string
+    image_uuid         = optional(string)
     system_user        = string
     boot_volume_size   = number
     rke2_version       = string

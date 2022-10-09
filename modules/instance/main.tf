@@ -71,7 +71,7 @@ resource "openstack_compute_instance_v2" "instance" {
   }
 
   block_device {
-    uuid                  = data.openstack_images_image_v2.image.id
+    uuid                  = var.image_uuid != null ? var.image_uuid : data.openstack_images_image_v2.image.id
     source_type           = "image"
     volume_size           = var.boot_volume_size
     boot_index            = 0

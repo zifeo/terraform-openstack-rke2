@@ -17,6 +17,11 @@ variable "image_name" {
   type = string
 }
 
+variable "image_uuid" {
+  type    = string
+  default = null
+}
+
 variable "boot_volume_size" {
   type = number
 }
