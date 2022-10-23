@@ -21,7 +21,7 @@ resource "openstack_compute_volume_attach_v2" "attach" {
 }
 
 resource "openstack_networking_floatingip_v2" "floating_ip" {
-  count = var.is_server && var.floating_ip_net != null ? var.nodes_count : 0
+  count = var.floating_ip_net != "" ? var.nodes_count : 0
   pool  = var.floating_ip_net
 
   lifecycle {
@@ -30,49 +30,35 @@ resource "openstack_networking_floatingip_v2" "floating_ip" {
 }
 
 resource "openstack_compute_floatingip_associate_v2" "associate_floating_ip" {
-  count       = var.is_server && var.floating_ip_net != null ? var.nodes_count : 0
+  count       = var.floating_ip_net != "" ? var.nodes_count : 0
   floating_ip = openstack_networking_floatingip_v2.floating_ip[count.index].address
   instance_id = openstack_compute_instance_v2.instance[count.index].id
 }
 
 resource "openstack_networking_port_v2" "port" {
-  count              = var.nodes_count
+  count = var.nodes_count
+
   network_id         = var.network_id
-  security_group_ids = [var.secgroup_id]
+  security_group_ids = var.secgroup_id != null ? [var.secgroup_id] : null
+  no_security_groups = var.secgroup_id == null
   admin_state_up     = true
+
   fixed_ip {
     subnet_id  = var.subnet_id
     ip_address = var.is_server && var.is_bootstrap && count.index == 0 ? var.bootstrap_server : null
   }
+
+  dynamic "fixed_ip" {
+    for_each = var.subnet_ext_id != "" ? [1] : []
+    content {
+      subnet_id = var.subnet_ext_id
+    }
+  }
 }
 
-locals {
-  instances_x_nets = [
-    for i in range(var.nodes_count) : [
-      for net in var.nets : {
-        name          = "${var.name}-${i + 1}-${net.network_name}"
-        instance_name = "${var.name}-${i + 1}"
-        network_id    = net.network_id
-        subnet_id     = net.subnet_id
-        secgroup_id   = net.secgroup_id
-        ip_address    = net.ip_address
-      }
-    ]
-  ]
-}
-
-resource "openstack_networking_port_v2" "ports" {
-  for_each = {
-    for inet in flatten(local.instances_x_nets) : inet.name => inet
-  }
-
-  network_id         = each.value.network_id
-  security_group_ids = each.value.secgroup_id != null ? [each.value.secgroup_id] : null
-  no_security_groups = each.value.secgroup_id == null
-  admin_state_up     = true
-  fixed_ip {
-    subnet_id = each.value.subnet_id
-  }
+local {
+  external_ips = var.is_server ? openstack_networking_port_v2.port[*].fixed_ip[0].ip_address : []
+  floating_ips = floating_ip_net != "" ? openstack_networking_floatingip_v2.floating_ip[*].address : []
 }
 
 resource "openstack_compute_instance_v2" "instance" {
@@ -86,13 +72,6 @@ resource "openstack_compute_instance_v2" "instance" {
 
   network {
     port = openstack_networking_port_v2.port[count.index].id
-  }
-
-  dynamic "network" {
-    for_each = local.instances_x_nets[count.index]
-    content {
-      port = openstack_networking_port_v2.ports[network.value["name"]].id
-    }
   }
 
   scheduler_hints {
@@ -120,8 +99,7 @@ resource "openstack_compute_instance_v2" "instance" {
     rke2_conf        = var.rke2_config != null ? var.rke2_config : ""
     is_server        = var.is_server
     bootstrap_server = var.is_server && var.is_bootstrap && count.index == 0 ? "" : var.bootstrap_server
-    public_address   = var.is_server && var.floating_ip_net != null ? openstack_networking_floatingip_v2.floating_ip[count.index].address : ""
-    san              = var.is_server ? openstack_networking_floatingip_v2.floating_ip[*].address : []
+    san              = var.is_server ? concat(external_ips, floating_ips) : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
         for f in fileset(var.manifests_folder, "*.{yml,yaml}") : f => base64gzip(file("${var.manifests_folder}/${f}"))

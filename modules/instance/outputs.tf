@@ -1,5 +1,9 @@
+output "external_ips" {
+  value = locals.external_ips
+}
+
 output "floating_ips" {
-  value = openstack_networking_floatingip_v2.floating_ip[*].address
+  value = locals.floating_ips
 }
 
 output "internal_ips" {

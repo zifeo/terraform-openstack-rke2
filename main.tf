@@ -5,7 +5,11 @@ locals {
     access_secret = openstack_identity_ec2_credential_v3.s3[0].secret
     bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
   } : var.s3_backup
+
+  proxy_ips = var.floating_net != "" ? module.servers[0].floating_ips : module.servers[0].external_ips
+  proxy_ip  = local.proxy_ips[0]
 }
+
 module "servers" {
   source = "./modules/instance"
 
@@ -34,31 +38,24 @@ module "servers" {
 
   s3 = local.s3
 
-  nets = [{
-    network_name = module.net_server.net_name
-    network_id   = module.net_server.net_id
-    subnet_id    = module.net_server.subnet_id
-    secgroup_id  = openstack_networking_secgroup_v2.server.id
-    ip_address   = null
-  }]
-
   system_user  = each.value.system_user
   keypair_name = openstack_compute_keypair_v2.key.name
 
-  network_id       = openstack_networking_network_v2.nodes_net.id
-  subnet_id        = openstack_networking_subnet_v2.nodes_subnet.id
+  network_id       = openstack_networking_network_v2.servers.id
+  subnet_id        = openstack_networking_subnet_v2.servers.id
+  subnet_ext_id    = openstack_networking_subnet_v2.servers-ext.id
   secgroup_id      = openstack_networking_secgroup_v2.server.id
   bootstrap_server = var.bootstrap_server
-  floating_ip_net  = each.key == "0" ? var.floating_ip_net : null
+  floating_ip_net  = var.floating_net
 
   manifests_folder = var.manifests_folder
-  manifests = merge(var.manifests, var.cinder.manifest_file != "" ? {
-    "cinder-csi-plugin.yml" : templatefile("${path.module}/${var.cinder.manifest_file}", {
-      auth_url   = var.identity_url
-      region     = openstack_identity_application_credential_v3.rke2_csi.region
-      project_id = openstack_identity_application_credential_v3.rke2_csi.project_id
-      app_id     = openstack_identity_application_credential_v3.rke2_csi.id
-      app_secret = openstack_identity_application_credential_v3.rke2_csi.secret
+  manifests = merge(var.manifests, var.ff_native_csi != "" ? {
+    "cinder-csi-plugin.yml" : templatefile("${path.module}/templates/cinder.yml.tpl", {
+      auth_url   = var.ff_native_csi
+      region     = openstack_identity_application_credential_v3.rke2_csi[0].region
+      project_id = openstack_identity_application_credential_v3.rke2_csi[0].project_id
+      app_id     = openstack_identity_application_credential_v3.rke2_csi[0].id
+      app_secret = openstack_identity_application_credential_v3.rke2_csi[0].secret
   }) } : {})
 
   ff_autoremove_agent = var.ff_autoremove_agent
@@ -93,11 +90,11 @@ module "agents" {
   system_user  = each.value.system_user
   keypair_name = openstack_compute_keypair_v2.key.name
 
-  network_id       = openstack_networking_network_v2.nodes_net.id
-  subnet_id        = openstack_networking_subnet_v2.nodes_subnet.id
+  network_id       = openstack_networking_network_v2.agents.id
+  subnet_id        = openstack_networking_subnet_v2.agents.id
   secgroup_id      = openstack_networking_secgroup_v2.agent.id
   bootstrap_server = var.bootstrap_server
-  bastion_host     = module.servers[0].floating_ips[0]
+  bastion_host     = local.proxy_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
 }

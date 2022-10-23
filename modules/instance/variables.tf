@@ -46,19 +46,18 @@ variable "subnet_id" {
   type = string
 }
 
-variable "secgroup_id" {
-  type = string
+variable "subnet_ext_id" {
+  type    = string
+  default = ""
 }
 
-variable "nets" {
-  type = list(object({
-    network_name = string
-    network_id   = string
-    subnet_id    = string
-    secgroup_id  = optional(string)
-    ip_address   = optional(string)
-  }))
-  default = []
+variable "floating_ip_net" {
+  type    = string
+  default = ""
+}
+
+variable "secgroup_id" {
+  type = string
 }
 
 variable "bootstrap_server" {
@@ -66,10 +65,6 @@ variable "bootstrap_server" {
   default = ""
 }
 
-variable "floating_ip_net" {
-  type    = string
-  default = null
-}
 variable "bastion_host" {
   type    = string
   default = ""

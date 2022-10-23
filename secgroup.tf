@@ -6,31 +6,17 @@ resource "openstack_networking_secgroup_v2" "agent" {
   name = "${var.name}-agent"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "ext4" {
-  for_each = {
-    for rule in var.rules_ext :
-    format("%s-%s-%s", rule["source4"], rule["protocol"], rule["port"]) => rule
-  }
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = each.value.protocol
-  port_range_min    = each.value.port
-  port_range_max    = each.value.port
-  remote_ip_prefix  = each.value.source4
-  security_group_id = openstack_networking_secgroup_v2.server.id
-}
-
 resource "openstack_networking_secgroup_rule_v2" "ext6" {
   for_each = {
     for rule in var.rules_ext :
-    format("%s-%s-%s", rule["source6"], rule["protocol"], rule["port"]) => rule
+    format("%s-%s-%s%s", rule["source"], rule["protocol"], rule["port"], rule["name"] != null ? "-${rule["name"]}" : "") => rule
   }
   direction         = "ingress"
-  ethertype         = "IPv6"
+  ethertype         = "IPv${var.external_ip_version}"
   protocol          = each.value.protocol
   port_range_min    = each.value.port
   port_range_max    = each.value.port
-  remote_ip_prefix  = each.value.source6
+  remote_ip_prefix  = each.value.source
   security_group_id = openstack_networking_secgroup_v2.server.id
 }
 

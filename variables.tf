@@ -8,21 +8,35 @@ variable "ssh_public_key_file" {
   default = "~/.ssh/id_rsa.pub"
 }
 
-variable "floating_ip_net" {
-  type = string
-}
-
-variable "external_net_name" {
-  type = string
+variable "floating_net" {
+  type    = string
+  default = ""
 }
 
 variable "rules_ext" {
   type = list(object({
     port     = number
     protocol = string
-    source4  = string
-    source6  = string
+    source   = string
+    name     = optional(string)
   }))
+}
+
+variable "external_net_name" {
+  type = string
+}
+
+variable "external_cidr" {
+  type = string
+}
+
+variable "external_ip_version" {
+  type = number
+}
+
+variable "subnet_servers_cidr" {
+  type    = string
+  default = "192.168.42.0/24"
 }
 
 variable "bootstrap_server" {
@@ -30,15 +44,21 @@ variable "bootstrap_server" {
   default = "192.168.42.3"
 }
 
-variable "subnet_cidr" {
+variable "subnet_agents_cidr" {
   type    = string
-  default = "192.168.42.0/24"
+  default = "192.168.43.0/24"
 }
 
-variable "dns_nameservers" {
+variable "dns_nameservers4" {
   type = list(string)
   # Cloudflare
   default = ["1.1.1.1", "1.0.0.1"]
+}
+
+variable "dns_nameservers6" {
+  type = list(string)
+  # Cloudflare
+  default = ["2606:4700:4700::1111", "2606:4700:4700::1001"]
 }
 
 variable "servers" {
@@ -89,17 +109,6 @@ variable "s3_backup" {
   }
 }
 
-variable "cinder" {
-  type = object({
-    enabled       = bool
-    manifest_file = string
-  })
-  default = {
-    enabled       = true
-    manifest_file = "./templates/cinder.yml.tpl"
-  }
-}
-
 variable "manifests_folder" {
   type    = string
   default = ""
@@ -110,8 +119,9 @@ variable "manifests" {
   default = {}
 }
 
-variable "identity_url" {
-  type = string
+variable "ff_native_csi" {
+  type    = string
+  default = ""
 }
 
 variable "ff_write_kubeconfig" {
