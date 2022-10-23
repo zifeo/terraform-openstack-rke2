@@ -1,3 +1,11 @@
+locals {
+  s3 = var.ff_native_backup != "" ? {
+    endpoint      = var.ff_native_backup
+    access_key    = openstack_identity_ec2_credential_v3.s3[0].access
+    access_secret = openstack_identity_ec2_credential_v3.s3[0].secret
+    bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
+  } : var.s3_backup
+}
 module "servers" {
   source = "./modules/instance"
 
@@ -10,7 +18,7 @@ module "servers" {
   is_server    = true
   is_bootstrap = each.key == "0"
 
-  nodes_count      = each.value.nodes_count
+  nodes_count      = 1
   flavor_name      = each.value.flavor_name
   image_name       = each.value.image_name
   image_uuid       = each.value.image_uuid
@@ -24,7 +32,7 @@ module "servers" {
   rke2_token       = random_string.rke2_token.result
   rke2_volume_size = each.value.rke2_volume_size
 
-  s3 = var.s3
+  s3 = local.s3
 
   nets = [{
     network_name = module.net_server.net_name

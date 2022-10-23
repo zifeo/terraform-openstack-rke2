@@ -20,8 +20,8 @@ variable "rules_ext" {
   type = list(object({
     port     = number
     protocol = string
-    source4   = string
-    source6   = string
+    source4  = string
+    source6  = string
   }))
 }
 
@@ -44,7 +44,6 @@ variable "dns_nameservers" {
 variable "servers" {
   type = list(object({
     name               = string
-    nodes_count        = number
     affinity           = optional(string)
     availability_zones = optional(list(string))
     flavor_name        = string
@@ -75,7 +74,7 @@ variable "agents" {
   }))
 }
 
-variable "s3" {
+variable "s3_backup" {
   type = object({
     endpoint      = string
     access_key    = string
@@ -83,10 +82,10 @@ variable "s3" {
     bucket        = string
   })
   default = {
+    endpoint      = ""
     access_key    = ""
     access_secret = ""
     bucket        = ""
-    endpoint      = ""
   }
 }
 
@@ -112,10 +111,8 @@ variable "manifests" {
 }
 
 variable "identity_url" {
-  type    = string
-  default = ""
+  type = string
 }
-
 
 variable "ff_write_kubeconfig" {
   type    = bool
@@ -127,3 +124,7 @@ variable "ff_autoremove_agent" {
   default = true
 }
 
+variable "ff_native_backup" {
+  type    = string
+  default = ""
+}

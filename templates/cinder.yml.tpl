@@ -6,7 +6,7 @@ metadata:
 spec:
   chart: openstack-cinder-csi
   repo: https://kubernetes.github.io/cloud-provider-openstack
-  version: 1.3.9
+  version: 2.3.0
   targetNamespace: kube-system
   bootstrap: True
   valuesContent: |-
@@ -48,15 +48,15 @@ spec:
       data:
         cloud-config: |-
           [Global]
-          auth-url=${auth_url}
-          application-credential-id=${app_id}
-          application-credential-secret=${app_secret}
-          region=${region}
-          tenant-id=${project_id}
+          auth-url = ${auth_url}
+          application-credential-id = ${app_id}
+          application-credential-secret = ${app_secret}
+          region = ${region}
+          tenant-id = ${project_id}
           [BlockStorage]
-          ignore-volume-az = yes
+          ignore-volume-az = true
     storageClass:
-      enabled: false
+      enabled: true
       custom: |-
         apiVersion: storage.k8s.io/v1
         kind: StorageClass
