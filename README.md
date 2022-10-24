@@ -2,16 +2,25 @@
 
 [![Terraform Registry](https://img.shields.io/badge/terraform-registry-blue.svg)](https://registry.terraform.io/modules/zifeo/rke2/openstack/latest)
 
-Easily deploy a RKE2 Kubernetes cluster on OpenStack providers (e.g. [Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud), [OVH](https://www.ovhcloud.com/fr/public-cloud/), etc.).
+Easily deploy a RKE2 Kubernetes cluster on OpenStack providers (e.g.
+[Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud),
+[OVH](https://www.ovhcloud.com/fr/public-cloud/), etc.).
 
-Inspired and reworked from [remche/terraform-openstack-rke2](https://github.com/remche/terraform-openstack-rke2) to add an easier interface, stricter security groups, persistent storage and S3 automated etcd snapshots.
+Inspired and reworked from
+[remche/terraform-openstack-rke2](https://github.com/remche/terraform-openstack-rke2)
+to add an easier interface, stricter security groups, persistent storage and S3
+automated etcd snapshots.
 
 ## Features
 
-- [RKE2](https://docs.rke2.io) Kubernetes distribution : lightweight, stable, simple and secure
+- [RKE2](https://docs.rke2.io) Kubernetes distribution : lightweight, stable,
+  simple and secure
 - persisted `/var/lib/rancher/rke2` for (single) server durability
-- configure OpenStack Swift or another S3 comptatible backend for automated etcd snapshots
+- configure OpenStack Swift or another S3 comptatible backend for automated etcd
+  snapshots
 - smooth updates & agent nodes autoremoval
+- automated etcd backups
+- bundle with CSI
 
 <img src="https://github.com/zifeo/terraform-openstack-rke2/raw/main/example/net.png" height="400" />
 
@@ -19,8 +28,6 @@ Inspired and reworked from [remche/terraform-openstack-rke2](https://github.com/
 
 - [autoscaling](./example/autoscaling-tests.yaml) via HEAT
 - single-ip output NAT
-- [loadbalancer](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/octavia-ingress-controller/using-octavia-ingress-controller.md) auto-provisionning
-- distinct subnets for servers and agents
 - gpu bindings
 
 ## Getting started
@@ -40,7 +47,7 @@ module "rke2" {
 
   name = "k8s"
 
-  public_net_name = "ext-floating1"
+  floating_pool = "ext-floating1"
   rules_ext = [
     { "port" : 22, "protocol" : "tcp", "source" : "0.0.0.0/0" },
     { "port" : 80, "protocol" : "tcp", "source" : "0.0.0.0/0" },
@@ -48,17 +55,19 @@ module "rke2" {
     { "port" : 6443, "protocol" : "tcp", "source" : "0.0.0.0/0" },
   ]
 
-  server = {
-    nodes_count = 1
+  server = [
+    {
+      name = "server-a"
 
-    flavor_name      = "a2-ram4-disk0"
-    image_name       = "Ubuntu 20.04 LTS Focal Fossa"
-    system_user      = "ubuntu"
-    boot_volume_size = 8
+      flavor_name      = "a2-ram4-disk0"
+      image_name       = "Ubuntu 20.04 LTS Focal Fossa"
+      system_user      = "ubuntu"
+      boot_volume_size = 8
 
-    rke2_version     = "v1.21.5+rke2r2"
-    rke2_volume_size = 16
-  }
+      rke2_version     = "v1.25.3+rke2r1"
+      rke2_volume_size = 16
+    }
+  ]
 
   agents = [
     {
@@ -70,7 +79,7 @@ module "rke2" {
       system_user      = "ubuntu"
       boot_volume_size = 8
 
-      rke2_version     = "v1.21.5+rke2r2"
+      rke2_version     = "v1.25.3+rke2r1"
       rke2_volume_size = 16
     }
   ]
@@ -91,20 +100,26 @@ terraform apply
 terraform apply -parallelism=1
 ```
 
-Note: it requires [rsync](https://rsync.samba.org) and [yq](https://github.com/mikefarah/yq) to generate remote kube config file. You can disable this behaviour by setting `ff_write_kubeconfig=false` and fetch yourself `/etc/rancher/rke2/rke2.yaml` on server nodes.
+Note: it requires [rsync](https://rsync.samba.org) and
+[yq](https://github.com/mikefarah/yq) to generate remote kube config file. You
+can disable this behaviour by setting `ff_write_kubeconfig=false` and fetch
+yourself `/etc/rancher/rke2/rke2.yaml` on server nodes.
 
 ## Infomaniak OpenStack [example](./example/main.tf)
 
-A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as little as CHF 11.—/month (at the time of writing):
+A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as
+little as CHF 11.—/month (at the time of writing):
+
 - nginx-ingress with floating ip (perfect under Cloudflare proxy)
 - persistence through cinder-csi storage classes (retain, delete)
 - 1 server 1cpu/2go (= master)
 - 1 agent 1cpu/2go (= worker)
 
-Quick benchmarks confirmed that the price/performance outperforms Scaleway offering (but would need to be deepened).
+Quick benchmarks confirmed that the price/performance outperforms Scaleway
+offering (but would need to be deepened).
 
 | Flavour                                                      | CHF/month |
-|--------------------------------------------------------------|-----------|
+| ------------------------------------------------------------ | --------- |
 | 2×2.93 (instances) + 0.09×2×(4+6) (blockstorage) + 3.34 (IP) | 11.—      |
 | single 2cpu/4go server with 1x4cpu/8go worker                | ~25.—     |
 | 3x2cpu/4go HA servers with 1x4cpu/8go worker                 | ~40.—     |
@@ -132,7 +147,8 @@ curl -s $(terraform output -raw floating_ip) -H 'host: wordpress.local' | grep W
 # <p>Welcome to WordPress. This is your first post. Edit or delete it, then start writing!</p>
 ```
 
-See their technical [documentation](https://docs.infomaniak.cloud) and [pricing](https://www.infomaniak.com/fr/hebergement/public-cloud/tarifs).
+See their technical [documentation](https://docs.infomaniak.cloud) and
+[pricing](https://www.infomaniak.com/fr/hebergement/public-cloud/tarifs).
 
 ## More on RKE2 & OpenStack
 
