@@ -48,15 +48,19 @@ module "servers" {
   floating_pool    = var.floating_pool
 
   manifests_folder = var.manifests_folder
-  manifests = merge(var.manifests, var.ff_native_csi != "" ? {
-    "cinder-csi-plugin.yml" : templatefile("${path.module}/templates/cinder.yml.tpl", {
-      auth_url   = var.ff_native_csi
-      region     = openstack_identity_application_credential_v3.rke2_csi[0].region
-      project_id = openstack_identity_application_credential_v3.rke2_csi[0].project_id
-      app_id     = openstack_identity_application_credential_v3.rke2_csi[0].id
-      app_secret = openstack_identity_application_credential_v3.rke2_csi[0].secret
-  }) } : {})
-
+  manifests = merge(
+    var.manifests,
+    var.ff_native_csi != "" ? {
+      "cinder-csi-plugin.yml" : templatefile("${path.module}/templates/cinder.yml.tpl", {
+        auth_url   = var.ff_native_csi
+        region     = openstack_identity_application_credential_v3.rke2_csi[0].region
+        project_id = openstack_identity_application_credential_v3.rke2_csi[0].project_id
+        app_id     = openstack_identity_application_credential_v3.rke2_csi[0].id
+        app_secret = openstack_identity_application_credential_v3.rke2_csi[0].secret
+    }) } : {},
+    var.ff_snapshot_controller ? templatefile("${path.module}/templates/snapshot-controller.yml.tpl", {}) : {},
+    var.ff_snapshot_controller ? templatefile("${path.module}/templates/snapshot-validation-webhook.yml.tpl", {}) : {}
+  )
   ff_autoremove_agent = var.ff_autoremove_agent
 }
 

@@ -126,3 +126,8 @@ variable "ff_native_backup" {
   type    = string
   default = ""
 }
+
+variable "ff_snapshot_controller" {
+  type    = bool
+  default = true
+}
