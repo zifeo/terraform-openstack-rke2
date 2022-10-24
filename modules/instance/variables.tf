@@ -51,7 +51,7 @@ variable "subnet_ext_id" {
   default = ""
 }
 
-variable "floating_ip_net" {
+variable "floating_pool" {
   type    = string
   default = ""
 }

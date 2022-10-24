@@ -21,8 +21,8 @@ resource "openstack_compute_volume_attach_v2" "attach" {
 }
 
 resource "openstack_networking_floatingip_v2" "floating_ip" {
-  count = var.floating_ip_net != "" ? var.nodes_count : 0
-  pool  = var.floating_ip_net
+  count = var.floating_pool != "" ? var.nodes_count : 0
+  pool  = var.floating_pool
 
   lifecycle {
     prevent_destroy = false
@@ -30,7 +30,7 @@ resource "openstack_networking_floatingip_v2" "floating_ip" {
 }
 
 resource "openstack_compute_floatingip_associate_v2" "associate_floating_ip" {
-  count       = var.floating_ip_net != "" ? var.nodes_count : 0
+  count       = var.floating_pool != "" ? var.nodes_count : 0
   floating_ip = openstack_networking_floatingip_v2.floating_ip[count.index].address
   instance_id = openstack_compute_instance_v2.instance[count.index].id
 }
@@ -56,14 +56,14 @@ resource "openstack_networking_port_v2" "port" {
   }
 }
 
-local {
+locals {
   external_ips = var.is_server ? openstack_networking_port_v2.port[*].fixed_ip[0].ip_address : []
-  floating_ips = floating_ip_net != "" ? openstack_networking_floatingip_v2.floating_ip[*].address : []
+  floating_ips = var.floating_pool != "" ? openstack_networking_floatingip_v2.floating_ip[*].address : []
 }
 
 resource "openstack_compute_instance_v2" "instance" {
   count                   = var.nodes_count
-  name                    = "${var.name}-${count.index + 1}"
+  name                    = var.nodes_count == 1 ? var.name : "${var.name}-${count.index + 1}"
   availability_zone_hints = length(var.availability_zones) > 0 ? var.availability_zones[count.index % length(var.availability_zones)] : null
 
   flavor_name  = var.flavor_name
@@ -99,7 +99,7 @@ resource "openstack_compute_instance_v2" "instance" {
     rke2_conf        = var.rke2_config != null ? var.rke2_config : ""
     is_server        = var.is_server
     bootstrap_server = var.is_server && var.is_bootstrap && count.index == 0 ? "" : var.bootstrap_server
-    san              = var.is_server ? concat(external_ips, floating_ips) : []
+    san              = var.is_server ? concat(local.external_ips, local.floating_ips) : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
         for f in fileset(var.manifests_folder, "*.{yml,yaml}") : f => base64gzip(file("${var.manifests_folder}/${f}"))

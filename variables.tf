@@ -8,7 +8,7 @@ variable "ssh_public_key_file" {
   default = "~/.ssh/id_rsa.pub"
 }
 
-variable "floating_net" {
+variable "floating_pool" {
   type    = string
   default = ""
 }
@@ -20,18 +20,6 @@ variable "rules_ext" {
     source   = string
     name     = optional(string)
   }))
-}
-
-variable "external_net_name" {
-  type = string
-}
-
-variable "external_cidr" {
-  type = string
-}
-
-variable "external_ip_version" {
-  type = number
 }
 
 variable "subnet_servers_cidr" {

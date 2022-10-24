@@ -32,7 +32,7 @@ resource "null_resource" "write_kubeconfig" {
       rsync --rsync-path="sudo rsync" ${var.servers[0].system_user}@${local.proxy_ip}:/etc/rancher/rke2/rke2.yaml rke2.yaml \
       && chmod go-r rke2.yaml \
       && yq eval --inplace '.clusters[0].name = "${var.name}-cluster"' rke2.yaml \
-      && yq eval --inplace '.clusters[0].cluster.server = "https://${join(",", [for ip in proxy_ips : "${ip}:6443"])}"' rke2.yaml \
+      && yq eval --inplace '.clusters[0].cluster.server = "https://${join(",", [for ip in local.proxy_ips : "${ip}:6443"])}"' rke2.yaml \
       && yq eval --inplace '.users[0].name = "${var.name}-user"' rke2.yaml \
       && yq eval --inplace '.contexts[0].context.cluster = "${var.name}-cluster"' rke2.yaml \
       && yq eval --inplace '.contexts[0].context.user = "${var.name}-user"' rke2.yaml \

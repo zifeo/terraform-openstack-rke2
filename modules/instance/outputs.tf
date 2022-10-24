@@ -1,9 +1,9 @@
 output "external_ips" {
-  value = locals.external_ips
+  value = local.external_ips
 }
 
 output "floating_ips" {
-  value = locals.floating_ips
+  value = local.floating_ips
 }
 
 output "internal_ips" {

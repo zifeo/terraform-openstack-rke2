@@ -6,7 +6,7 @@ locals {
     bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
   } : var.s3_backup
 
-  proxy_ips = var.floating_net != "" ? module.servers[0].floating_ips : module.servers[0].external_ips
+  proxy_ips = var.floating_pool != "" ? module.servers[0].floating_ips : module.servers[0].external_ips
   proxy_ip  = local.proxy_ips[0]
 }
 
@@ -43,10 +43,9 @@ module "servers" {
 
   network_id       = openstack_networking_network_v2.servers.id
   subnet_id        = openstack_networking_subnet_v2.servers.id
-  subnet_ext_id    = openstack_networking_subnet_v2.servers-ext.id
   secgroup_id      = openstack_networking_secgroup_v2.server.id
   bootstrap_server = var.bootstrap_server
-  floating_ip_net  = var.floating_net
+  floating_pool    = var.floating_pool
 
   manifests_folder = var.manifests_folder
   manifests = merge(var.manifests, var.ff_native_csi != "" ? {

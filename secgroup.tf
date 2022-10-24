@@ -6,13 +6,13 @@ resource "openstack_networking_secgroup_v2" "agent" {
   name = "${var.name}-agent"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "ext6" {
+resource "openstack_networking_secgroup_rule_v2" "ext" {
   for_each = {
     for rule in var.rules_ext :
     format("%s-%s-%s%s", rule["source"], rule["protocol"], rule["port"], rule["name"] != null ? "-${rule["name"]}" : "") => rule
   }
   direction         = "ingress"
-  ethertype         = "IPv${var.external_ip_version}"
+  ethertype         = "IPv4"
   protocol          = each.value.protocol
   port_range_min    = each.value.port
   port_range_max    = each.value.port
