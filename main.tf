@@ -58,8 +58,12 @@ module "servers" {
         app_id     = openstack_identity_application_credential_v3.rke2_csi[0].id
         app_secret = openstack_identity_application_credential_v3.rke2_csi[0].secret
     }) } : {},
-    var.ff_snapshot_controller ? templatefile("${path.module}/templates/snapshot-controller.yml.tpl", {}) : {},
-    var.ff_snapshot_controller ? templatefile("${path.module}/templates/snapshot-validation-webhook.yml.tpl", {}) : {}
+    var.ff_snapshot_controller ? {
+      "snapshot-controller.yml" : templatefile("${path.module}/templates/snapshot-controller.yml.tpl", {})
+    } : {},
+    var.ff_snapshot_controller ? {
+      "snapshot-validation-webhook.yml" : templatefile("${path.module}/templates/snapshot-validation-webhook.yml.tpl", {})
+    } : {}
   )
   ff_autoremove_agent = var.ff_autoremove_agent
 }
