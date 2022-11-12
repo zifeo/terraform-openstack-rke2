@@ -63,7 +63,7 @@ module "servers" {
     } : {},
     var.ff_snapshot_controller ? {
       "snapshot-validation-webhook.yml" : templatefile("${path.module}/templates/snapshot-validation-webhook.yml.tpl", {})
-    } : {}
+    } : {},
   )
   ff_autoremove_agent = var.ff_autoremove_agent
 }
