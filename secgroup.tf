@@ -1,9 +1,11 @@
 resource "openstack_networking_secgroup_v2" "server" {
-  name = "${var.name}-server"
+  name                 = "${var.name}-server"
+  delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "agent" {
-  name = "${var.name}-agent"
+  name                 = "${var.name}-agent"
+  delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_rule_v2" "ext" {
@@ -18,6 +20,30 @@ resource "openstack_networking_secgroup_rule_v2" "ext" {
   port_range_max    = each.value.port
   remote_ip_prefix  = each.value.source
   security_group_id = openstack_networking_secgroup_v2.server.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "server4" {
+  direction         = "egress"
+  ethertype         = "IPv4"
+  security_group_id = openstack_networking_secgroup_v2.server.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "server6" {
+  direction         = "egress"
+  ethertype         = "IPv6"
+  security_group_id = openstack_networking_secgroup_v2.server.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "agent4" {
+  direction         = "egress"
+  ethertype         = "IPv4"
+  security_group_id = openstack_networking_secgroup_v2.agent.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "agent6" {
+  direction         = "egress"
+  ethertype         = "IPv6"
+  security_group_id = openstack_networking_secgroup_v2.agent.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "inside" {
@@ -56,3 +82,10 @@ resource "openstack_networking_secgroup_rule_v2" "inside" {
   security_group_id = each.value.to.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "vrrp-broadcast" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "vrrp"
+  remote_group_id   = openstack_networking_secgroup_v2.server.id
+  security_group_id = openstack_networking_secgroup_v2.server.id
+}

@@ -63,6 +63,12 @@ variable "servers" {
     rke2_config        = optional(string)
     rke2_volume_size   = number
   }))
+  validation {
+    condition = (
+      length(var.servers) % 2 == 1
+    )
+    error_message = "RKE requires an odd number of servers"
+  }
 }
 
 variable "agents" {

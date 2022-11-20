@@ -6,8 +6,7 @@ locals {
     bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
   } : var.s3_backup
 
-  proxy_ips = var.floating_pool != "" ? module.servers[0].floating_ips : module.servers[0].external_ips
-  proxy_ip  = local.proxy_ips[0]
+  proxy_ip = var.floating_pool != "" ? openstack_networking_floatingip_v2.floating_ip[0].address : module.servers[0].external_ips[0]
 }
 
 module "servers" {
@@ -45,7 +44,11 @@ module "servers" {
   subnet_id        = openstack_networking_subnet_v2.servers.id
   secgroup_id      = openstack_networking_secgroup_v2.server.id
   bootstrap_server = var.bootstrap_server
-  floating_pool    = var.floating_pool
+  failover_ips = var.floating_pool == "" ? [] : concat(
+    [openstack_networking_port_v2.port[each.key].all_fixed_ips[0]],
+    length(var.servers) > 1 ? [openstack_networking_port_v2.port[(each.key + 1) % length(var.servers)].all_fixed_ips[0]] : []
+  )
+  san = openstack_networking_floatingip_v2.floating_ip[*].address
 
   manifests_folder = var.manifests_folder
   manifests = merge(
@@ -65,6 +68,7 @@ module "servers" {
       "snapshot-validation-webhook.yml" : templatefile("${path.module}/templates/snapshot-validation-webhook.yml.tpl", {})
     } : {},
   )
+
   ff_autoremove_agent = var.ff_autoremove_agent
 }
 

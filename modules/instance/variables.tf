@@ -46,14 +46,14 @@ variable "subnet_id" {
   type = string
 }
 
-variable "subnet_ext_id" {
-  type    = string
-  default = ""
+variable "failover_ips" {
+  type    = list(string)
+  default = []
 }
 
-variable "floating_pool" {
-  type    = string
-  default = ""
+variable "san" {
+  type    = list(string)
+  default = []
 }
 
 variable "secgroup_id" {

@@ -18,17 +18,12 @@ packages:
   - htop
   - curl
   - jq
+  %{~ if is_server ~}
+  - keepalived
+  %{~ endif ~}
 
 users:
   - default
-  - name: teo
-    passwd: "$6$kW4vfBM9kGgq4hr$TFtHW7.3jOECR9UCBuw9NrdSMJETzSVoNQGcVv2y.RqRUzWDEtYhYRkGvIpB6ml1fh/fZEVIgKbSXI9L1B6xF."
-    shell: /bin/bash
-    lock-passwd: false
-    ssh_pwauth: True
-    chpasswd: { expire: False }
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    groups: users, admin
 
 ntp:
   enabled: true
@@ -65,6 +60,32 @@ write_files:
   encoding: gz+b64
   content: ${v}
   %{~ endfor ~}
+%{~ endif ~}
+%{~ if is_server ~}
+- path: /etc/keepalived/keepalived.conf
+  permissions: "0600"
+  owner: root:root
+  content: |
+    %{~ for ip in failover_ips ~}
+    vrrp_instance vrrp_${split(".", ip)[3]} {
+      %{~ if ip == failover_ips[0] ~}
+      state MASTER
+      priority 100
+      %{~ else ~}
+      state BACKUP
+      priority 50
+      %{~ endif ~}
+      interface ens3
+      virtual_router_id ${split(".", ip)[3]}
+      authentication {
+        auth_type PASS
+        auth_pass password
+      }
+      virtual_ipaddress {
+        ${ip}/32 brd ${cidrhost(failover_cidr, -1)} dev ens3
+      }
+    }
+    %{~ endfor ~}
 %{~ endif ~}
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"

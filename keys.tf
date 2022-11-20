@@ -27,12 +27,12 @@ resource "null_resource" "write_kubeconfig" {
   provisioner "local-exec" {
     command = <<EOF
       ssh-keygen -R ${local.proxy_ip} >/dev/null 2>&1
-      until ssh -o StrictHostKeyChecking=accept-new ${var.servers[0].system_user}@${local.proxy_ip} true > /dev/null 2>&1; do echo Wait for SSH availability && sleep 10; done
-      until ssh ${var.servers[0].system_user}@${local.proxy_ip} ls /etc/rancher/rke2/rke2.yaml > /dev/null 2>&1; do echo Wait rke2.yaml generation && sleep 10; done
+      until ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new ${var.servers[0].system_user}@${local.proxy_ip} true > /dev/null 2>&1; do echo Wait for SSH availability on ${local.proxy_ip} && sleep 10; done
+      until ssh -o ConnectTimeout=10 ${var.servers[0].system_user}@${local.proxy_ip} ls /etc/rancher/rke2/rke2.yaml > /dev/null 2>&1; do echo Wait rke2.yaml generation && sleep 10; done
       rsync --rsync-path="sudo rsync" ${var.servers[0].system_user}@${local.proxy_ip}:/etc/rancher/rke2/rke2.yaml rke2.yaml \
       && chmod go-r rke2.yaml \
       && yq eval --inplace '.clusters[0].name = "${var.name}-cluster"' rke2.yaml \
-      && yq eval --inplace '.clusters[0].cluster.server = "https://${join(",", [for ip in local.proxy_ips : "${ip}:6443"])}"' rke2.yaml \
+      && yq eval --inplace '.clusters[0].cluster.server = "https://${local.proxy_ip}:6443"' rke2.yaml \
       && yq eval --inplace '.users[0].name = "${var.name}-user"' rke2.yaml \
       && yq eval --inplace '.contexts[0].context.cluster = "${var.name}-cluster"' rke2.yaml \
       && yq eval --inplace '.contexts[0].context.user = "${var.name}-user"' rke2.yaml \

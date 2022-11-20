@@ -21,13 +21,12 @@ automated etcd snapshots.
 - smooth updates & agent nodes autoremoval
 - automated etcd backups
 - bundled with CSI and snapshot controller
+- highly-available through ip failovers (via address-pairs and VRRP)
 
 <img src="https://github.com/zifeo/terraform-openstack-rke2/raw/main/example/net.png" height="400" />
 
 ### Next
 
-- Cilium
-- kube-vip
 - Auth via external provider
 - [CSI Manila](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/manila-csi-plugin/using-manila-csi-plugin.md)
 - [Magnum autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/magnum)

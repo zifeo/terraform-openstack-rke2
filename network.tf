@@ -25,13 +25,17 @@ resource "openstack_networking_subnet_v2" "agents" {
   ip_version      = 4
   dns_nameservers = var.dns_nameservers4
 }
+
 data "openstack_networking_network_v2" "floating_net" {
+  count = var.floating_pool != "" ? 1 : 0
+
   name = var.floating_pool
 }
+
 resource "openstack_networking_router_v2" "router" {
   name                = "${var.name}-router"
   admin_state_up      = true
-  external_network_id = data.openstack_networking_network_v2.floating_net.id
+  external_network_id = var.floating_pool != "" ? data.openstack_networking_network_v2.floating_net[0].id : null
 }
 
 resource "openstack_networking_router_interface_v2" "servers" {
@@ -44,3 +48,22 @@ resource "openstack_networking_router_interface_v2" "agents" {
   subnet_id = openstack_networking_subnet_v2.agents.id
 }
 
+resource "openstack_networking_floatingip_v2" "floating_ip" {
+  count = var.floating_pool != "" ? length(var.servers) : 0
+
+  pool    = var.floating_pool
+  port_id = openstack_networking_port_v2.port[count.index].id
+}
+
+resource "openstack_networking_port_v2" "port" {
+  count = var.floating_pool != "" ? length(var.servers) : 0
+
+  network_id         = openstack_networking_network_v2.servers.id
+  no_security_groups = true
+  admin_state_up     = true
+
+  fixed_ip {
+    subnet_id = openstack_networking_subnet_v2.servers.id
+    # ip_address
+  }
+}
