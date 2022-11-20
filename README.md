@@ -2,8 +2,8 @@
 
 [![Terraform Registry](https://img.shields.io/badge/terraform-registry-blue.svg)](https://registry.terraform.io/modules/zifeo/rke2/openstack/latest)
 
-Easily deploy a RKE2 Kubernetes cluster on OpenStack providers (e.g.
-[Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud),
+Easily deploy a high-availability RKE2 Kubernetes cluster on OpenStack providers
+(e.g. [Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud),
 [OVH](https://www.ovhcloud.com/fr/public-cloud/), etc.).
 
 Inspired and reworked from
