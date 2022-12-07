@@ -56,7 +56,7 @@ spec:
           [BlockStorage]
           ignore-volume-az = true
     storageClass:
-      enabled: true
+      enabled: false
       custom: |-
         apiVersion: storage.k8s.io/v1
         kind: StorageClass
