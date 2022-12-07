@@ -160,6 +160,7 @@ See their technical [documentation](https://docs.infomaniak.cloud) and
 ```
 # debug on nodes
 alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"
+sudo systemctl status rke2-server
 
 # restore s3 snapshot
 sudo systemctl stop rke2-server

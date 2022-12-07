@@ -37,7 +37,8 @@ resource "null_resource" "write_kubeconfig" {
       && yq eval --inplace '.contexts[0].context.cluster = "${var.name}-cluster"' rke2.yaml \
       && yq eval --inplace '.contexts[0].context.user = "${var.name}-user"' rke2.yaml \
       && yq eval --inplace '.contexts[0].name = "${var.name}"' rke2.yaml \
-      && yq eval --inplace '.current-context = "${var.name}"' rke2.yaml
+      && yq eval --inplace '.current-context = "${var.name}"' rke2.yaml \
+      && mv rke2.yaml ${var.name}.rke2.yaml
     EOF
   }
 }

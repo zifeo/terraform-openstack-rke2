@@ -67,6 +67,13 @@ write_files:
   owner: root:root
   content: |
     %{~ for ip in failover_ips ~}
+    vrrp_script check_apiserver {
+      script "/usr/bin/curl -L --cacert /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt --cert /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key --fail https://127.0.0.1:6443/readyz"
+      interval 3
+      timeout 3
+      rise 3
+      fall 3
+    }
     vrrp_instance vrrp_${split(".", ip)[3]} {
       %{~ if ip == failover_ips[0] ~}
       state MASTER
@@ -83,6 +90,9 @@ write_files:
       }
       virtual_ipaddress {
         ${ip}/32 brd ${cidrhost(failover_cidr, -1)} dev ens3
+      }
+      track_script {
+        check_apiserver
       }
     }
     %{~ endfor ~}
