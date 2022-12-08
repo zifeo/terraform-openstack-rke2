@@ -22,6 +22,42 @@ variable "rules_ext" {
   }))
 }
 
+variable "rules_server_server" {
+  type = list(object({
+    port     = number
+    protocol = string
+    name     = optional(string)
+  }))
+  default = []
+}
+
+variable "rules_server_agent" {
+  type = list(object({
+    port     = number
+    protocol = string
+    name     = optional(string)
+  }))
+  default = []
+}
+
+variable "rules_agent_server" {
+  type = list(object({
+    port     = number
+    protocol = string
+    name     = optional(string)
+  }))
+  default = []
+}
+
+variable "rules_agent_agent" {
+  type = list(object({
+    port     = number
+    protocol = string
+    name     = optional(string)
+  }))
+  default = []
+}
+
 variable "subnet_servers_cidr" {
   type    = string
   default = "192.168.42.0/24"

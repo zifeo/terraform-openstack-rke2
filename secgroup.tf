@@ -46,7 +46,7 @@ resource "openstack_networking_secgroup_rule_v2" "agent6" {
   security_group_id = openstack_networking_secgroup_v2.agent.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "inside" {
+resource "openstack_networking_secgroup_rule_v2" "default" {
   for_each = {
     for rule in [
       # bastion ssh
@@ -80,6 +80,62 @@ resource "openstack_networking_secgroup_rule_v2" "inside" {
   port_range_max    = each.value.port
   remote_group_id   = each.value.from.id
   security_group_id = each.value.to.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "server_server" {
+  for_each = {
+    for rule in var.rules_server_server :
+    format("%s-%s%s", rule["protocol"], rule["port"], rule["name"] != null ? "-${rule["name"]}" : "") => rule
+  }
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = each.value.protocol
+  port_range_min    = each.value.port
+  port_range_max    = each.value.port
+  remote_group_id   = openstack_networking_secgroup_v2.server.id
+  security_group_id = openstack_networking_secgroup_v2.server.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "server_agent" {
+  for_each = {
+    for rule in var.rules_server_agent :
+    format("%s-%s%s", rule["protocol"], rule["port"], rule["name"] != null ? "-${rule["name"]}" : "") => rule
+  }
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = each.value.protocol
+  port_range_min    = each.value.port
+  port_range_max    = each.value.port
+  remote_group_id   = openstack_networking_secgroup_v2.server.id
+  security_group_id = openstack_networking_secgroup_v2.agent.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "agent_server" {
+  for_each = {
+    for rule in var.rules_agent_server :
+    format("%s-%s%s", rule["protocol"], rule["port"], rule["name"] != null ? "-${rule["name"]}" : "") => rule
+  }
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = each.value.protocol
+  port_range_min    = each.value.port
+  port_range_max    = each.value.port
+  remote_group_id   = openstack_networking_secgroup_v2.agent.id
+  security_group_id = openstack_networking_secgroup_v2.server.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "agent_agent" {
+  for_each = {
+    for rule in var.rules_agent_agent :
+    format("%s-%s%s", rule["protocol"], rule["port"], rule["name"] != null ? "-${rule["name"]}" : "") => rule
+  }
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = each.value.protocol
+  port_range_min    = each.value.port
+  port_range_max    = each.value.port
+  remote_group_id   = openstack_networking_secgroup_v2.agent.id
+  security_group_id = openstack_networking_secgroup_v2.agent.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "vrrp-broadcast" {
