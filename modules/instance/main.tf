@@ -101,6 +101,7 @@ resource "openstack_compute_instance_v2" "instance" {
     s3_bucket        = var.s3.bucket
     failover_ips     = var.failover_ips
     failover_cidr    = data.openstack_networking_subnet_v2.subnet.cidr
+    vrrp_check       = var.vrrp_check != null ? var.vrrp_check : "/usr/bin/curl -L --cacert /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt --cert /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key --fail https://127.0.0.1:6443/readyz"
   }))
 }
 

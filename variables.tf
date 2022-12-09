@@ -173,3 +173,8 @@ variable "ff_snapshot_controller" {
   type    = bool
   default = true
 }
+
+variable "vrrp_check" {
+  type    = string
+  default = null
+}

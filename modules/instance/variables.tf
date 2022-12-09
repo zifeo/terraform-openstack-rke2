@@ -124,3 +124,7 @@ variable "ff_autoremove_agent" {
   default = true
 }
 
+variable "vrrp_check" {
+  type    = string
+  default = null
+}

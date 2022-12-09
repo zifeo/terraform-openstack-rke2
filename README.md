@@ -166,4 +166,7 @@ sudo systemctl status rke2-server
 sudo systemctl stop rke2-server
 sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH
 # reboot all nodes
+
+# upgrade a single node at a time
+terraform state list | grep -F 'module.rke2.module.servers["2"]' | sed 's/\"/\\\"/g' | xargs -I '{}' echo '-target={}' | sed 's/\"/\\\\\"/g' | xargs -o -r terraform apply
 ```

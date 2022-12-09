@@ -68,7 +68,7 @@ write_files:
   content: |
     %{~ for ip in failover_ips ~}
     vrrp_script check_apiserver {
-      script "/usr/bin/curl -L --cacert /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt --cert /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key --fail https://127.0.0.1:6443/readyz"
+      script "${vrrp_check}"
       interval 3
       timeout 3
       rise 3
@@ -110,13 +110,13 @@ write_files:
     tls-san:
       ${indent(6, yamlencode(san))}
     kube-apiserver-arg: "kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname"
-    %{~ if s3_endpoint != "" ~}
+      %{~ if s3_endpoint != "" ~}
     etcd-s3: true                                    
     etcd-s3-endpoint: ${s3_endpoint}                     
     etcd-s3-access-key: ${s3_access_key}
     etcd-s3-secret-key: ${s3_access_secret}
     etcd-s3-bucket: ${s3_bucket}
-    %{~ endif ~}
+      %{~ endif ~}
     %{~ endif ~}
     ${indent(4,rke2_conf)}
 
@@ -135,7 +135,9 @@ runcmd:
   - systemctl start rke2-server.service
   - [ sh, -c, 'until [ -f /etc/rancher/rke2/rke2.yaml ]; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   - [ sh, -c, 'until [ -x /var/lib/rancher/rke2/bin/kubectl ]; do echo Waiting for $(hostname) kubectl bin && sleep 10; done;' ]
-  - mv /tmp/manifests/* /var/lib/rancher/rke2/server/manifests || echo "No files"
+    %{~ if bootstrap_server != "" ~}
+  - mv /tmp/manifests/* /var/lib/rancher/rke2/server/manifests 2>/dev/null || echo "No files"
+    %{~ endif ~}
   %{~ else ~}
   - systemctl enable rke2-agent.service
   - systemctl start rke2-agent.service
