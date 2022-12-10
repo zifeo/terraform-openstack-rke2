@@ -14,11 +14,6 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
   EOF
 }
 
-provider "openstack" {
-  auth_url = local.auth_url
-  region   = local.region
-}
-
 module "rke2" {
   # source = "zifeo/rke2/openstack"
   source = "./.."
@@ -65,18 +60,38 @@ module "rke2" {
     }
   ]
 
-  # deploy cinder csi
-  ff_native_csi = local.auth_url
+  # HA when agents >= 3 (disable it to recover in case majority of server are lost)
+  ff_wait_apiserver = false
   # enable automatically `kubectl delete node AGENT-NAME` after an agent change
   ff_autoremove_agent = true
   # rewrite kubeconfig
   ff_write_kubeconfig = true
   # deploy etcd backup
-  ff_native_backup = "s3.pub1.infomaniak.cloud"
+  ff_native_backup = true
+
+  identity_endpoint     = auth_url
+  object_store_endpoint = "s3.pub1.infomaniak.cloud"
 }
 
-output "floating_ip" {
-  value = module.rke2.floating_ips[0]
+variable "tenant_name" {
+  type = string
+}
+
+variable "user_name" {
+  type = string
+}
+
+variable "password" {
+  type = string
+}
+
+provider "openstack" {
+  tenant_name = var.tenant_name
+  user_name   = var.user_name
+  # checkov:skip=CKV_OPENSTACK_1
+  password = var.password
+  auth_url = local.auth_url
+  region   = local.region
 }
 
 terraform {

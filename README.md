@@ -4,31 +4,32 @@
 
 Easily deploy a high-availability RKE2 Kubernetes cluster on OpenStack providers
 (e.g. [Infomaniak](https://www.infomaniak.com/fr/hebergement/public-cloud),
-[OVH](https://www.ovhcloud.com/fr/public-cloud/), etc.).
+[OVH](https://www.ovhcloud.com/fr/public-cloud/), etc.). This project aims at
+offering a simple and stable distribution rather than supporting all
+configuration possibilities.
 
 Inspired and reworked from
 [remche/terraform-openstack-rke2](https://github.com/remche/terraform-openstack-rke2)
-to add an easier interface, stricter security groups, persistent storage and S3
-automated etcd snapshots.
+to add an easier interface, high-availability, stricter security groups,
+persistent storage, load-balancer integration and S3 automated etcd snapshots.
 
 ## Features
 
 - [RKE2](https://docs.rke2.io) Kubernetes distribution : lightweight, stable,
   simple and secure
 - persisted `/var/lib/rancher/rke2` for (single) server durability
-- configure OpenStack Swift or another S3 comptatible backend for automated etcd
-  snapshots
+- configure Openstack Swift or S3-like backend for automated etcd snapshots
 - smooth updates & agent nodes autoremoval
-- automated etcd backups
-- bundled with CSI and snapshot controller
+- bundled with Openstack Cinder CSI
+- Cilium networking (network policy support and no Kube-proxy)
+- load balancers (Openstack Octivia) provisioning
 - highly-available through ip failovers (via address-pairs and VRRP)
+- out of the box support for volume snapshot and Velero
 
 <img src="https://github.com/zifeo/terraform-openstack-rke2/raw/main/example/net.png" height="400" />
 
-### Next
+### Next features
 
-- Auth via external provider
-- [CSI Manila](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/manila-csi-plugin/using-manila-csi-plugin.md)
 - [Magnum autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/magnum)
 - single-ip output NAT
 - gpu bindings
@@ -58,7 +59,7 @@ module "rke2" {
     { "port" : 6443, "protocol" : "tcp", "source" : "0.0.0.0/0" },
   ]
 
-  server = [
+  servers = [
     {
       name = "server-a"
 
@@ -100,7 +101,7 @@ EOF
 terraform init
 terraform apply
 # or, on upgrade, to process node by node
-terraform apply -parallelism=1
+terraform apply -target='module.rke2.module.servers["0"]'
 ```
 
 Note: it requires [rsync](https://rsync.samba.org) and
@@ -166,7 +167,4 @@ sudo systemctl status rke2-server
 sudo systemctl stop rke2-server
 sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH
 # reboot all nodes
-
-# upgrade a single node at a time
-terraform apply -target='module.rke2.module.servers["0"]'
 ```

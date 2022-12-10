@@ -59,6 +59,7 @@ resource "openstack_networking_port_v2" "port" {
   admin_state_up     = true
 
   fixed_ip {
-    subnet_id = openstack_networking_subnet_v2.servers.id
+    subnet_id  = openstack_networking_subnet_v2.servers.id
+    ip_address = cidrhost(var.subnet_servers_cidr, 3)
   }
 }

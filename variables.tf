@@ -167,5 +167,5 @@ variable "ff_native_backup" {
 
 variable "ff_wait_apiserver" {
   type    = bool
-  default = true
+  default = false
 }
