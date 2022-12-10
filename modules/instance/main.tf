@@ -29,12 +29,11 @@ resource "openstack_networking_port_v2" "port" {
   admin_state_up     = true
 
   fixed_ip {
-    subnet_id  = var.subnet_id
-    ip_address = var.is_server && var.is_bootstrap && count.index == 0 ? var.bootstrap_server : null
+    subnet_id = var.subnet_id
   }
 
   dynamic "allowed_address_pairs" {
-    for_each = var.failover_ips
+    for_each = var.is_server ? [var.bootstrap_ip] : []
     content {
       ip_address = allowed_address_pairs.value
     }
@@ -43,10 +42,6 @@ resource "openstack_networking_port_v2" "port" {
 
 data "openstack_networking_subnet_v2" "subnet" {
   subnet_id = var.subnet_id
-}
-
-locals {
-  external_ips = var.is_server ? openstack_networking_port_v2.port[*].fixed_ip[0].ip_address : []
 }
 
 resource "openstack_compute_instance_v2" "instance" {
@@ -84,11 +79,11 @@ resource "openstack_compute_instance_v2" "instance" {
   user_data = base64encode(templatefile("${path.module}/templates/cloud-init.yml.tpl", {
     rke2_token   = var.rke2_token
     rke2_version = var.rke2_version
-    # https://docs.rke2.io/install/install_options/server_config/
-    rke2_conf        = var.rke2_config != null ? var.rke2_config : ""
-    is_server        = var.is_server
-    bootstrap_server = var.is_server && var.is_bootstrap && count.index == 0 ? "" : var.bootstrap_server
-    san              = var.is_server ? concat(local.external_ips, var.san) : []
+    rke2_conf    = var.rke2_config != null ? var.rke2_config : ""
+    is_server    = var.is_server
+    bootstrap_ip = var.bootstrap_ip
+    is_bootstrap = var.is_bootstrap
+    san          = var.is_server ? var.san : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
         for f in fileset(var.manifests_folder, "*.{yml,yaml}") : f => base64gzip(file("${var.manifests_folder}/${f}"))
@@ -99,7 +94,6 @@ resource "openstack_compute_instance_v2" "instance" {
     s3_access_key    = var.s3.access_key
     s3_access_secret = var.s3.access_secret
     s3_bucket        = var.s3.bucket
-    failover_ips     = var.failover_ips
     failover_cidr    = data.openstack_networking_subnet_v2.subnet.cidr
     vrrp_apiserver   = var.ff_vrrp_apiserver
   }))

@@ -1,16 +1,3 @@
-
-variable "tenant_name" {
-  type = string
-}
-
-variable "user_name" {
-  type = string
-}
-
-variable "password" {
-  type = string
-}
-
 locals {
   auth_url = "https://api.pub1.infomaniak.cloud/identity"
   region   = "dc3-a"
@@ -28,11 +15,8 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
 }
 
 provider "openstack" {
-  tenant_name = var.tenant_name
-  user_name   = var.user_name
-  password    = var.password
-  auth_url    = local.auth_url
-  region      = local.region
+  auth_url = local.auth_url
+  region   = local.region
 }
 
 module "rke2" {

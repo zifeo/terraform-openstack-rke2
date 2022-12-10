@@ -13,6 +13,7 @@ variable "is_bootstrap" {
 variable "nodes_count" {
   type = string
 }
+
 variable "flavor_name" {
   type = string
 }
@@ -46,11 +47,6 @@ variable "subnet_id" {
   type = string
 }
 
-variable "failover_ips" {
-  type    = list(string)
-  default = []
-}
-
 variable "san" {
   type    = list(string)
   default = []
@@ -60,7 +56,7 @@ variable "secgroup_id" {
   type = string
 }
 
-variable "bootstrap_server" {
+variable "bootstrap_ip" {
   type    = string
   default = ""
 }

@@ -49,21 +49,16 @@ resource "openstack_networking_router_interface_v2" "agents" {
 }
 
 resource "openstack_networking_floatingip_v2" "floating_ip" {
-  count = var.floating_pool != "" ? length(var.servers) : 0
-
   pool    = var.floating_pool
-  port_id = openstack_networking_port_v2.port[count.index].id
+  port_id = openstack_networking_port_v2.port.id
 }
 
 resource "openstack_networking_port_v2" "port" {
-  count = var.floating_pool != "" ? length(var.servers) : 0
-
   network_id         = openstack_networking_network_v2.servers.id
   no_security_groups = true
   admin_state_up     = true
 
   fixed_ip {
     subnet_id = openstack_networking_subnet_v2.servers.id
-    # ip_address
   }
 }

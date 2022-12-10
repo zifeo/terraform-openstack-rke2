@@ -9,8 +9,7 @@ variable "ssh_public_key_file" {
 }
 
 variable "floating_pool" {
-  type    = string
-  default = ""
+  type = string
 }
 
 variable "rules_ext" {
@@ -63,11 +62,6 @@ variable "subnet_servers_cidr" {
   default = "192.168.42.0/24"
 }
 
-variable "bootstrap_server" {
-  type    = string
-  default = "192.168.42.3"
-}
-
 variable "subnet_agents_cidr" {
   type    = string
   default = "192.168.43.0/24"
@@ -77,12 +71,6 @@ variable "dns_nameservers4" {
   type = list(string)
   # Cloudflare
   default = ["1.1.1.1", "1.0.0.1"]
-}
-
-variable "dns_nameservers6" {
-  type = list(string)
-  # Cloudflare
-  default = ["2606:4700:4700::1111", "2606:4700:4700::1001"]
 }
 
 variable "servers" {
@@ -168,8 +156,8 @@ variable "ff_autoremove_agent" {
 }
 
 variable "ff_native_backup" {
-  type    = string
-  default = ""
+  type    = bool
+  default = true
 }
 
 variable "ff_vrrp_apiserver" {

@@ -1,9 +1,5 @@
-output "floating_ips" {
-  value = openstack_networking_port_v2.port[*].all_fixed_ips[0]
-}
-
-output "external_ips" {
-  value = flatten([for server in module.servers : server.external_ips])
+output "external_ip" {
+  value = local.external_ip
 }
 
 output "restore_cmd" {

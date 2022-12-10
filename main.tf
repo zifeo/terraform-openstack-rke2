@@ -1,12 +1,13 @@
 locals {
-  s3 = var.ff_native_backup != "" && var.object_store_endpoint != "" ? {
+  s3 = var.ff_native_backup && var.object_store_endpoint != "" ? {
     endpoint      = var.object_store_endpoint
     access_key    = openstack_identity_ec2_credential_v3.s3[0].access
     access_secret = openstack_identity_ec2_credential_v3.s3[0].secret
     bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
   } : var.s3_backup
 
-  proxy_ip = var.floating_pool != "" ? openstack_networking_floatingip_v2.floating_ip[0].address : module.servers[0].external_ips[0]
+  external_ip = openstack_networking_floatingip_v2.floating_ip.address
+  internal_ip = openstack_networking_port_v2.port.all_fixed_ips[0]
 }
 
 module "servers" {
@@ -40,15 +41,11 @@ module "servers" {
   system_user  = each.value.system_user
   keypair_name = openstack_compute_keypair_v2.key.name
 
-  network_id       = openstack_networking_network_v2.servers.id
-  subnet_id        = openstack_networking_subnet_v2.servers.id
-  secgroup_id      = openstack_networking_secgroup_v2.server.id
-  bootstrap_server = var.bootstrap_server
-  failover_ips = var.floating_pool == "" ? [] : concat(
-    [openstack_networking_port_v2.port[each.key].all_fixed_ips[0]],
-    length(var.servers) > 1 ? [openstack_networking_port_v2.port[(each.key + 1) % length(var.servers)].all_fixed_ips[0]] : []
-  )
-  san = openstack_networking_floatingip_v2.floating_ip[*].address
+  network_id   = openstack_networking_network_v2.servers.id
+  subnet_id    = openstack_networking_subnet_v2.servers.id
+  secgroup_id  = openstack_networking_secgroup_v2.server.id
+  bootstrap_ip = local.internal_ip
+  san          = [local.internal_ip, local.external_ip]
 
   manifests_folder = var.manifests_folder
   manifests = merge(
@@ -83,21 +80,15 @@ module "servers" {
         floating_network_id = var.floating_pool != "" ? data.openstack_networking_network_v2.floating_net[0].id : null
         cluster_name        = var.name
       }),
+      "cilium.yml" : templatefile("${path.module}/templates/cilium.yml.tpl", {
+        apiserver_host = var.identity_endpoint
+      }),
     },
     var.manifests,
   )
 
   ff_autoremove_agent = false
   ff_vrrp_apiserver   = var.ff_vrrp_apiserver
-}
-
-data "openstack_networking_network_v2" "net-ext" {
-  name = "ext-net1"
-}
-
-data "openstack_networking_subnet_ids_v2" "subnet-ext" {
-  network_id = data.openstack_networking_network_v2.net-ext.id
-  ip_version = "4"
 }
 
 module "agents" {
@@ -129,11 +120,11 @@ module "agents" {
   system_user  = each.value.system_user
   keypair_name = openstack_compute_keypair_v2.key.name
 
-  network_id       = openstack_networking_network_v2.agents.id
-  subnet_id        = openstack_networking_subnet_v2.agents.id
-  secgroup_id      = openstack_networking_secgroup_v2.agent.id
-  bootstrap_server = var.bootstrap_server
-  bastion_host     = local.proxy_ip
+  network_id   = openstack_networking_network_v2.agents.id
+  subnet_id    = openstack_networking_subnet_v2.agents.id
+  secgroup_id  = openstack_networking_secgroup_v2.agent.id
+  bootstrap_ip = local.internal_ip
+  bastion_host = local.external_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_vrrp_apiserver   = false

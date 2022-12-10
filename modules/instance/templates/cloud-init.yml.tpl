@@ -49,7 +49,7 @@ write_files:
       echo "Installing RKE2 $INSTALL_RKE2_VERSION with $RKE2_ROLE role"
       curl -sfL https://get.rke2.io | sh -
     fi
-%{ if bootstrap_server == "" ~}
+%{ if is_server ~}
   %{~ for k, v in manifests_files ~}
 - path: /tmp/manifests/${k}
   permissions: "0600"
@@ -57,14 +57,11 @@ write_files:
   encoding: gz+b64
   content: ${v}
   %{~ endfor ~}
-%{~ endif ~}
-%{~ if is_server ~}
 - path: /etc/keepalived/keepalived.conf
   permissions: "0600"
   owner: root:root
   content: |
-    %{~ for ip in failover_ips ~}
-      %{~ if vrrp_apiserver ~}
+    %{~ if vrrp_apiserver ~}
     vrrp_script check_apiserver {
       script "/usr/bin/curl -L --cacert /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt --cert /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key --fail https://127.0.0.1:6443/readyz"
       interval 3
@@ -72,23 +69,22 @@ write_files:
       rise 3
       fall 3
     }
-      %{~ endif ~}
-    vrrp_instance vrrp_${split(".", ip)[3]} {
-      %{~ if ip == failover_ips[0] ~}
+    %{~ endif ~}
+    vrrp_instance up {
+      %{~ if is_bootstrap ~}
       state MASTER
-      priority 100
       %{~ else ~}
       state BACKUP
-      priority 50
       %{~ endif ~}
+      priority 100
       interface ens3
-      virtual_router_id ${split(".", ip)[3]}
+      virtual_router_id 1
       authentication {
         auth_type PASS
         auth_pass password
       }
       virtual_ipaddress {
-        ${ip}/32 brd ${cidrhost(failover_cidr, -1)} dev ens3
+        ${bootstrap_ip}/32 brd ${cidrhost(failover_cidr, -1)} dev ens3
       }
       %{~ if vrrp_apiserver ~}
       track_script {
@@ -96,17 +92,14 @@ write_files:
       }
       %{~ endif ~}
     }
-    %{~ endfor ~}
-%{~ endif ~}
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
   owner: root:root
   content: |
     token: "${rke2_token}"
-    %{~ if bootstrap_server != "" ~}
-    server: https://${bootstrap_server}:9345
+    %{~ if !is_bootstrap ~}
+    server: https://${bootstrap_ip}:9345
     %{~ endif ~}
-    %{~ if is_server ~}
     write-kubeconfig-mode: "0640"
     tls-san:
       ${indent(6, yamlencode(san))}
@@ -119,8 +112,17 @@ write_files:
     etcd-s3-bucket: ${s3_bucket}
       %{~ endif ~}
     disable-cloud-controller: true
-    %{~ endif ~}
+    disable-kube-proxy: true
     ${indent(4,rke2_conf)}
+%{~ else ~}
+- path: /etc/rancher/rke2/config.yaml
+  permissions: "0600"
+  owner: root:root
+  content: |
+    token: "${rke2_token}"
+    server: https://${bootstrap_ip}:9345
+    ${indent(4,rke2_conf)}
+%{~ endif ~}
 
 runcmd:
   - "[ ! -b /dev/sdb ] && (echo \"ERROR: sdb not attached. Will sleep 10s...\"; sleep 10;)"
@@ -130,8 +132,8 @@ runcmd:
   - sudo mount -a
   - /usr/local/bin/install-or-upgrade-rke2.sh
   %{~ if is_server ~}
-    %{~ if bootstrap_server != "" ~}
-  - [ sh,  -c, 'until (nc -z ${bootstrap_server} 6443); do echo Wait for $(hostname) server node && sleep 10; done;']
+    %{~ if !is_bootstrap ~}
+  - [ sh,  -c, 'until (nc -z ${bootstrap_ip} 6443); do echo Wait for server node && sleep 10; done;']
     %{~ endif ~}
   - systemctl enable rke2-server.service
   - systemctl start rke2-server.service

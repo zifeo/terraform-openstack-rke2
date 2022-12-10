@@ -138,7 +138,7 @@ resource "openstack_networking_secgroup_rule_v2" "agent_agent" {
   security_group_id = openstack_networking_secgroup_v2.agent.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "vrrp-broadcast" {
+resource "openstack_networking_secgroup_rule_v2" "vrrp_broadcast" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "vrrp"
