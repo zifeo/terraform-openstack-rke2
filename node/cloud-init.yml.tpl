@@ -52,7 +52,7 @@ write_files:
 %{ if is_server ~}
   %{~ if is_bootstrap ~}
     %{~ for k, v in manifests_files ~}
-- path: /var/lib/rancher/rke2/server/manifests/${k}
+- path: /tmp/manifests/${k}
   permissions: "0600"
   owner: root:root
   encoding: gz+b64
@@ -144,6 +144,7 @@ runcmd:
   - systemctl start rke2-server.service
   - [ sh, -c, 'until [ -f /etc/rancher/rke2/rke2.yaml ]; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   - [ sh, -c, 'until [ -x /var/lib/rancher/rke2/bin/kubectl ]; do echo Waiting for $(hostname) kubectl bin && sleep 10; done;' ]
+  - mv -v /tmp/manifests/* /var/lib/rancher/rke2/server/manifests 2>/dev/null || echo "No manifest files"
   %{~ else ~}
   - systemctl enable rke2-agent.service
   - systemctl start rke2-agent.service

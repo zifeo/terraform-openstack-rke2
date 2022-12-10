@@ -85,6 +85,10 @@ variable "password" {
   type = string
 }
 
+output "floating_ip" {
+  value = module.rke2.external_ip
+}
+
 provider "openstack" {
   tenant_name = var.tenant_name
   user_name   = var.user_name

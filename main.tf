@@ -11,7 +11,7 @@ locals {
 }
 
 module "servers" {
-  source = "./modules/instance"
+  source = "./node"
 
   for_each = {
     for server in var.servers :
@@ -50,7 +50,7 @@ module "servers" {
   manifests_folder = var.manifests_folder
   manifests = merge(
     {
-      "cinder-csi.yml" : templatefile("${path.module}/templates/csi-cinder.yml.tpl", {
+      "cinder-csi.yml" : templatefile("${path.module}/manifests/csi-cinder.yml.tpl", {
         auth_url   = var.identity_endpoint
         region     = openstack_identity_application_credential_v3.rke2.region
         project_id = openstack_identity_application_credential_v3.rke2.project_id
@@ -58,7 +58,7 @@ module "servers" {
         app_secret = openstack_identity_application_credential_v3.rke2.secret
         app_name   = openstack_identity_application_credential_v3.rke2.name
       }),
-      "velero.yml" : templatefile("${path.module}/templates/velero.yml.tpl", {
+      "velero.yml" : templatefile("${path.module}/manifests/velero.yml.tpl", {
         auth_url   = var.identity_endpoint
         region     = openstack_identity_application_credential_v3.rke2.region
         project_id = openstack_identity_application_credential_v3.rke2.project_id
@@ -66,7 +66,7 @@ module "servers" {
         app_secret = openstack_identity_application_credential_v3.rke2.secret
         app_name   = openstack_identity_application_credential_v3.rke2.name
       }),
-      "cloud-controller-openstack.yml" : templatefile("${path.module}/templates/cloud-controller-openstack.yml.tpl", {
+      "cloud-controller-openstack.yml" : templatefile("${path.module}/manifests/cloud-controller-openstack.yml.tpl", {
         auth_url            = var.identity_endpoint
         region              = openstack_identity_application_credential_v3.rke2.region
         project_id          = openstack_identity_application_credential_v3.rke2.project_id
@@ -77,14 +77,14 @@ module "servers" {
         floating_network_id = var.floating_pool != "" ? data.openstack_networking_network_v2.floating_net[0].id : null
         cluster_name        = var.name
       }),
-      "cilium.yml" : templatefile("${path.module}/templates/cilium.yml.tpl", {
+      "cilium.yml" : templatefile("${path.module}/manifests/cilium.yml.tpl", {
         apiserver_host = local.internal_ip
         cluster_name   = var.name
         cluster_id     = var.cluster_id
       }),
     },
     {
-      for f in fileset(path.module, "manifests/*") : basename(f) => file("${path.module}/${f}")
+      for f in fileset(path.module, "manifests/*.{yml,yaml}") : basename(f) => file("${path.module}/${f}")
     },
     var.manifests,
   )
@@ -94,7 +94,7 @@ module "servers" {
 }
 
 module "agents" {
-  source = "./modules/instance"
+  source = "./node"
 
   for_each = {
     for agent in var.agents :

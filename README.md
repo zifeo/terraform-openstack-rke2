@@ -19,7 +19,7 @@ persistent storage, load-balancer integration and S3 automated etcd snapshots.
   simple and secure
 - persisted `/var/lib/rancher/rke2` for (single) server durability
 - configure Openstack Swift or S3-like backend for automated etcd snapshots
-- smooth updates & agent nodes autoremoval
+- smooth updates & agent nodes autoremoval with draining
 - bundled with Openstack Cinder CSI
 - Cilium networking (network policy support and no Kube-proxy)
 - load balancers (Openstack Octivia) provisioning
