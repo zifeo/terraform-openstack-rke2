@@ -50,18 +50,20 @@ write_files:
       curl -sfL https://get.rke2.io | sh -
     fi
 %{ if is_server ~}
-  %{~ for k, v in manifests_files ~}
+  %{~ if is_bootstrap ~}
+    %{~ for k, v in manifests_files ~}
 - path: /tmp/manifests/${k}
   permissions: "0600"
   owner: root:root
   encoding: gz+b64
   content: ${v}
-  %{~ endfor ~}
+    %{~ endfor ~}
+  %{~ endif ~}
 - path: /etc/keepalived/keepalived.conf
   permissions: "0600"
   owner: root:root
   content: |
-    %{~ if vrrp_apiserver ~}
+    %{~ if ff_wait_apiserver ~}
     vrrp_script check_apiserver {
       script "/usr/bin/curl -L --cacert /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt --cert /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key --fail https://127.0.0.1:6443/readyz"
       interval 3
@@ -86,7 +88,7 @@ write_files:
       virtual_ipaddress {
         ${bootstrap_ip}/32 brd ${cidrhost(failover_cidr, -1)} dev ens3
       }
-      %{~ if vrrp_apiserver ~}
+      %{~ if ff_wait_apiserver ~}
       track_script {
         check_apiserver
       }
@@ -113,6 +115,12 @@ write_files:
       %{~ endif ~}
     disable-cloud-controller: true
     disable-kube-proxy: true
+    disable: rke2-ingress-nginx
+    cni: cilium
+    node-label:
+      - node.kubernetes.io/exclude-from-external-load-balancers=true
+    node-taint:
+      - "CriticalAddonsOnly=true:NoExecute"
     ${indent(4,rke2_conf)}
 %{~ else ~}
 - path: /etc/rancher/rke2/config.yaml
@@ -132,9 +140,6 @@ runcmd:
   - sudo mount -a
   - /usr/local/bin/install-or-upgrade-rke2.sh
   %{~ if is_server ~}
-    %{~ if !is_bootstrap ~}
-  - [ sh,  -c, 'until (nc -z ${bootstrap_ip} 6443); do echo Wait for server node && sleep 10; done;']
-    %{~ endif ~}
   - systemctl enable rke2-server.service
   - systemctl start rke2-server.service
   - [ sh, -c, 'until [ -f /etc/rancher/rke2/rke2.yaml ]; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]

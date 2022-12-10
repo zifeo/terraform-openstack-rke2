@@ -60,11 +60,19 @@ resource "openstack_networking_secgroup_rule_v2" "default" {
       # rke2 supervisor
       { "port" : 9345, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
       { "port" : 9345, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
-      # flannel VXLAN
+      # cilium
       { "port" : 8472, "protocol" : "udp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
       { "port" : 8472, "protocol" : "udp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
       { "port" : 8472, "protocol" : "udp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
       { "port" : 8472, "protocol" : "udp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.agent },
+      { "port" : 4240, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
+      { "port" : 4240, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
+      { "port" : 4240, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
+      { "port" : 4240, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.agent },
+      { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
+      { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
+      { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
+      { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.agent },
       # kubelet / metric server
       { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
       { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },

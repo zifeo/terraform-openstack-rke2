@@ -90,12 +90,12 @@ resource "openstack_compute_instance_v2" "instance" {
       } : {},
       { for k, v in var.manifests : k => base64gzip(v) },
     ) : {}
-    s3_endpoint      = var.s3.endpoint
-    s3_access_key    = var.s3.access_key
-    s3_access_secret = var.s3.access_secret
-    s3_bucket        = var.s3.bucket
-    failover_cidr    = data.openstack_networking_subnet_v2.subnet.cidr
-    vrrp_apiserver   = var.ff_vrrp_apiserver
+    s3_endpoint       = var.s3.endpoint
+    s3_access_key     = var.s3.access_key
+    s3_access_secret  = var.s3.access_secret
+    s3_bucket         = var.s3.bucket
+    failover_cidr     = data.openstack_networking_subnet_v2.subnet.cidr
+    ff_wait_apiserver = var.ff_wait_apiserver
   }))
 }
 

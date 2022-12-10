@@ -137,6 +137,11 @@ variable "manifests" {
   default = {}
 }
 
+variable "cluster_id" {
+  type    = number
+  default = 0
+}
+
 variable "object_store_endpoint" {
   type = string
 }
@@ -160,7 +165,7 @@ variable "ff_native_backup" {
   default = true
 }
 
-variable "ff_vrrp_apiserver" {
+variable "ff_wait_apiserver" {
   type    = bool
   default = true
 }

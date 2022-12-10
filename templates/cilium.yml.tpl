@@ -5,8 +5,21 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
+    cluster:
+      name: ${cluster_name}
+      id: ${cluster_id}
+    eni:
+      enabled: true
     kubeProxyReplacement: strict
     k8sServiceHost: ${apiserver_host}
     k8sServicePort: 6443
     cni:
       chainingMode: "none"
+    resources: {}
+      # limits:
+      #   cpu: 4000m
+      #   memory: 4Gi
+      # requests:
+      #   cpu: 100m
+      #   memory: 512Mi
+

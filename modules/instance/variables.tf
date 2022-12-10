@@ -119,6 +119,6 @@ variable "ff_autoremove_agent" {
   type = bool
 }
 
-variable "ff_vrrp_apiserver" {
+variable "ff_wait_apiserver" {
   type = bool
 }

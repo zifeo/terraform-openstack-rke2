@@ -58,7 +58,6 @@ module "servers" {
         app_secret = openstack_identity_application_credential_v3.rke2.secret
         app_name   = openstack_identity_application_credential_v3.rke2.name
       }),
-      "csi-cinder-snapclass.yml" : file("${path.module}/manifests/csi-cinder-snapclass.yml"),
       "velero.yml" : templatefile("${path.module}/templates/velero.yml.tpl", {
         auth_url   = var.identity_endpoint
         region     = openstack_identity_application_credential_v3.rke2.region
@@ -67,8 +66,6 @@ module "servers" {
         app_secret = openstack_identity_application_credential_v3.rke2.secret
         app_name   = openstack_identity_application_credential_v3.rke2.name
       }),
-      "csi-cinder-delete.yml" : file("${path.module}/manifests/csi-cinder-delete.yml"),
-      "csi-cinder-retain.yml" : file("${path.module}/manifests/csi-cinder-retain.yml"),
       "cloud-controller-openstack.yml" : templatefile("${path.module}/templates/cloud-controller-openstack.yml.tpl", {
         auth_url            = var.identity_endpoint
         region              = openstack_identity_application_credential_v3.rke2.region
@@ -81,14 +78,19 @@ module "servers" {
         cluster_name        = var.name
       }),
       "cilium.yml" : templatefile("${path.module}/templates/cilium.yml.tpl", {
-        apiserver_host = var.identity_endpoint
+        apiserver_host = local.internal_ip
+        cluster_name   = var.name
+        cluster_id     = var.cluster_id
       }),
+    },
+    {
+      for f in fileset(path.module, "manifests/*") : basename(f) => file("${path.module}/${f}")
     },
     var.manifests,
   )
 
   ff_autoremove_agent = false
-  ff_vrrp_apiserver   = var.ff_vrrp_apiserver
+  ff_wait_apiserver   = var.ff_wait_apiserver
 }
 
 module "agents" {
@@ -127,5 +129,5 @@ module "agents" {
   bastion_host = local.external_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
-  ff_vrrp_apiserver   = false
+  ff_wait_apiserver   = false
 }
