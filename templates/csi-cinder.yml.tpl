@@ -1,14 +1,14 @@
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
-  name: cinder-csi-plugin
+  name: openstack-cinder-csi
   namespace: kube-system
 spec:
   chart: openstack-cinder-csi
   repo: https://kubernetes.github.io/cloud-provider-openstack
   version: 2.3.0
   targetNamespace: kube-system
-  bootstrap: True
+  bootstrap: true
   valuesContent: |-
     csi:
       attacher:
@@ -41,6 +41,12 @@ spec:
           requests:
             cpu: 20m
             memory: 32M
+      snapshotController:
+        enabled: true
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32M
     secret:
       enabled: true
       create: true
@@ -49,6 +55,7 @@ spec:
         cloud.conf: |-
           [Global]
           auth-url = ${auth_url}
+          application-credential-name = ${app_name}
           application-credential-id = ${app_id}
           application-credential-secret = ${app_secret}
           region = ${region}
@@ -57,28 +64,5 @@ spec:
           ignore-volume-az = true
     storageClass:
       enabled: false
-      custom: |-
-        apiVersion: storage.k8s.io/v1
-        kind: StorageClass
-        metadata:
-          annotations: {}
-          name: csi-cinder-delete
-        provisioner: cinder.csi.openstack.org
-        volumeBindingMode: WaitForFirstConsumer
-        allowVolumeExpansion: true
-        reclaimPolicy: Delete
-        parameters:
-          availability: nova
-        ---
-        apiVersion: storage.k8s.io/v1
-        kind: StorageClass
-        metadata:
-          annotations:
-            storageclass.kubernetes.io/is-default-class: "true"
-          name: csi-cinder-retain
-        provisioner: cinder.csi.openstack.org
-        volumeBindingMode: WaitForFirstConsumer
-        allowVolumeExpansion: true
-        reclaimPolicy: Retain
-        parameters:
-          availability: nova
+      custom: |
+        

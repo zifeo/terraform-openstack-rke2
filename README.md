@@ -168,5 +168,5 @@ sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s
 # reboot all nodes
 
 # upgrade a single node at a time
-terraform state list | grep -F 'module.rke2.module.servers["2"]' | sed 's/\"/\\\"/g' | xargs -I '{}' echo '-target={}' | sed 's/\"/\\\\\"/g' | xargs -o -r terraform apply
+terraform apply -target='module.rke2.module.servers["0"]'
 ```

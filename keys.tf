@@ -42,3 +42,9 @@ resource "null_resource" "write_kubeconfig" {
     EOF
   }
 }
+
+
+resource "openstack_identity_application_credential_v3" "rke2" {
+  name = "${var.name}-credentials"
+}
+

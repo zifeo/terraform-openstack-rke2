@@ -149,9 +149,12 @@ variable "manifests" {
   default = {}
 }
 
-variable "ff_native_csi" {
-  type    = string
-  default = ""
+variable "object_store_endpoint" {
+  type = string
+}
+
+variable "identity_endpoint" {
+  type = string
 }
 
 variable "ff_write_kubeconfig" {
@@ -169,12 +172,7 @@ variable "ff_native_backup" {
   default = ""
 }
 
-variable "ff_snapshot_controller" {
+variable "ff_vrrp_apiserver" {
   type    = bool
   default = true
-}
-
-variable "vrrp_check" {
-  type    = string
-  default = null
 }

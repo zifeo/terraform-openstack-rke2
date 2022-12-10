@@ -35,21 +35,18 @@ write_files:
   content: |
     #!/bin/sh
     until (curl -sL http://localhost:10248/healthz) && [ $(curl -sL http://localhost:10248/healthz) = "ok" ];
-      do sleep 10 && echo "Wait for $(hostname) kubelet to be ready"; done;
+      do sleep 10 && echo "Waiting for $(hostname) kubelet to be ready"; done;
 - path: /usr/local/bin/install-or-upgrade-rke2.sh
   permissions: "0755"
   owner: root:root
   content: |
     #!/bin/sh
-    # Fetch target and actual version if already installed
     export INSTALL_RKE2_VERSION=${rke2_version}
     which rke2 >/dev/null 2>&1 && RKE2_VERSION=$(rke2 --version | head -1 | cut -f 3 -d " ")
-
-    # Install or upgrade
     if ([ -z "$RKE2_VERSION" ]) || ([ -n "$INSTALL_RKE2_VERSION" ] && [ "$INSTALL_RKE2_VERSION" != "$RKE2_VERSION" ]); then
       RKE2_ROLE=$(curl -s http://169.254.169.254/openstack/2012-08-10/meta_data.json | jq -r '.meta.rke2_role')
       RKE2_SERVICE="rke2-$RKE2_ROLE.service"
-      echo "Will install RKE2 $INSTALL_RKE2_VERSION with $RKE2_ROLE role"
+      echo "Installing RKE2 $INSTALL_RKE2_VERSION with $RKE2_ROLE role"
       curl -sfL https://get.rke2.io | sh -
     fi
 %{ if bootstrap_server == "" ~}
@@ -67,13 +64,15 @@ write_files:
   owner: root:root
   content: |
     %{~ for ip in failover_ips ~}
+      %{~ if vrrp_apiserver ~}
     vrrp_script check_apiserver {
-      script "${vrrp_check}"
+      script "/usr/bin/curl -L --cacert /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt --cert /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key --fail https://127.0.0.1:6443/readyz"
       interval 3
       timeout 3
       rise 3
       fall 3
     }
+      %{~ endif ~}
     vrrp_instance vrrp_${split(".", ip)[3]} {
       %{~ if ip == failover_ips[0] ~}
       state MASTER
@@ -91,9 +90,11 @@ write_files:
       virtual_ipaddress {
         ${ip}/32 brd ${cidrhost(failover_cidr, -1)} dev ens3
       }
+      %{~ if vrrp_apiserver ~}
       track_script {
         check_apiserver
       }
+      %{~ endif ~}
     }
     %{~ endfor ~}
 %{~ endif ~}
@@ -117,6 +118,7 @@ write_files:
     etcd-s3-secret-key: ${s3_access_secret}
     etcd-s3-bucket: ${s3_bucket}
       %{~ endif ~}
+    disable-cloud-controller: true
     %{~ endif ~}
     ${indent(4,rke2_conf)}
 
@@ -135,9 +137,7 @@ runcmd:
   - systemctl start rke2-server.service
   - [ sh, -c, 'until [ -f /etc/rancher/rke2/rke2.yaml ]; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   - [ sh, -c, 'until [ -x /var/lib/rancher/rke2/bin/kubectl ]; do echo Waiting for $(hostname) kubectl bin && sleep 10; done;' ]
-    %{~ if bootstrap_server != "" ~}
-  - mv /tmp/manifests/* /var/lib/rancher/rke2/server/manifests 2>/dev/null || echo "No files"
-    %{~ endif ~}
+  - mv /tmp/manifests/* /var/lib/rancher/rke2/server/manifests || echo "No files"
   %{~ else ~}
   - systemctl enable rke2-agent.service
   - systemctl start rke2-agent.service

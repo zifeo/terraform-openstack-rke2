@@ -120,11 +120,9 @@ variable "manifests" {
 }
 
 variable "ff_autoremove_agent" {
-  type    = bool
-  default = true
+  type = bool
 }
 
-variable "vrrp_check" {
-  type    = string
-  default = null
+variable "ff_vrrp_apiserver" {
+  type = bool
 }
