@@ -13,6 +13,8 @@ spec:
     kubeProxyReplacement: strict
     k8sServiceHost: ${apiserver_host}
     k8sServicePort: 6443
+    operator:
+      replicas: 1
     cni:
       chainingMode: "none"
     resources: {}

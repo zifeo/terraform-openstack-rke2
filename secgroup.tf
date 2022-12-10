@@ -73,7 +73,7 @@ resource "openstack_networking_secgroup_rule_v2" "default" {
       { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
       { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
       { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.agent },
-      # kubelet / metric server
+      # kubelet
       { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
       { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
       { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },

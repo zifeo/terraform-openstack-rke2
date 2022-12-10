@@ -19,6 +19,7 @@ packages:
   - curl
   - jq
   %{~ if is_server ~}
+  - etcd-client
   - keepalived
   %{~ endif ~}
 
@@ -66,8 +67,8 @@ write_files:
     %{~ if ff_wait_apiserver ~}
     vrrp_script check_apiserver {
       script "/usr/bin/curl -L --cacert /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt --cert /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key --fail https://127.0.0.1:6443/readyz"
-      interval 3
-      timeout 3
+      interval 2
+      timeout 2
       rise 3
       fall 3
     }
@@ -102,6 +103,8 @@ write_files:
     %{~ if !is_bootstrap ~}
     server: https://${bootstrap_ip}:9345
     %{~ endif ~}
+    node-ip: ${node_ip}
+    node-external-ip: ${bootstrap_ip}
     write-kubeconfig-mode: "0640"
     tls-san:
       ${indent(6, yamlencode(san))}
@@ -120,7 +123,7 @@ write_files:
     node-label:
       - node.kubernetes.io/exclude-from-external-load-balancers=true
     node-taint:
-      - "CriticalAddonsOnly=true:NoExecute"
+      - CriticalAddonsOnly=true:NoExecute
     ${indent(4,rke2_conf)}
 %{~ else ~}
 - path: /etc/rancher/rke2/config.yaml
@@ -150,3 +153,4 @@ runcmd:
   - systemctl start rke2-agent.service
   - [ sh, -c, 'until systemctl is-active -q rke2-agent.service; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   %{~ endif ~}
+  - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> ~/.bashrc

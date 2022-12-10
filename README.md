@@ -160,11 +160,14 @@ See their technical [documentation](https://docs.infomaniak.cloud) and
 
 ```
 # debug on nodes
-alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"
+crictl
 sudo systemctl status rke2-server
 
 # restore s3 snapshot
-sudo systemctl stop rke2-server
-sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH
+sudo systemctl stop rke2-server && sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH && sudo reboot
+# remove db on other server nodes
+# sudo systemctl stop rke2-server && sudo rm -rf /var/lib/rancher/rke2/server/db && sudo reboot
 # reboot all nodes
+
+openssl s_client -connect 192.168.42.3:10250 </dev/null 2>/dev/null | openssl x509 -inform pem -text
 ```

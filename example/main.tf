@@ -7,7 +7,7 @@ locals {
 node-taint:
   - "CriticalAddonsOnly=true:NoExecute"
 
-etcd-snapshot-schedule-cron: "* */6 * * *"
+etcd-snapshot-schedule-cron: "0 */6 * * *"
 etcd-snapshot-retention: 20
 
 control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=128M,kube-scheduler-cpu=75m,kube-scheduler-memory=128M,kube-controller-manager-cpu=75m,kube-controller-manager-memory=128M,kube-proxy-cpu=75m,kube-proxy-memory=128M,etcd-cpu=75m,etcd-memory=128M,cloud-controller-manager-cpu=75m,cloud-controller-manager-memory=128M
@@ -60,7 +60,7 @@ module "rke2" {
     }
   ]
 
-  # HA when agents >= 3 (disable it to recover in case majority of server are lost)
+  # HA when agents >= 3 (disable it to recover in case of quorum loss)
   ff_wait_apiserver = false
   # enable automatically `kubectl delete node AGENT-NAME` after an agent change
   ff_autoremove_agent = true
