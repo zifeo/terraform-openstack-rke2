@@ -6,3 +6,5 @@ metadata:
     snapshot.storage.kubernetes.io/is-default-class: "true"
 driver: cinder.csi.openstack.org
 deletionPolicy: Delete
+parameters:
+  force-create: "false"

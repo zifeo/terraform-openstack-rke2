@@ -68,6 +68,11 @@ variable "subnet_agents_cidr" {
   default = "192.168.43.0/24"
 }
 
+variable "subnet_lb_cidr" {
+  type    = string
+  default = "192.168.44.0/24"
+}
+
 variable "dns_nameservers4" {
   type = list(string)
   # Cloudflare

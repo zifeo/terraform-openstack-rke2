@@ -26,8 +26,6 @@ persistent storage, load-balancer integration and S3 automated etcd snapshots.
 - highly-available through ip failovers (via address-pairs and VRRP)
 - out of the box support for volume snapshot and Velero
 
-<img src="https://github.com/zifeo/terraform-openstack-rke2/raw/main/example/net.png" height="400" />
-
 ### Next features
 
 - [Magnum autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/magnum)

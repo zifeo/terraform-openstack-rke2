@@ -13,22 +13,13 @@ resource "openstack_networking_secgroup_v2" "lb" {
   delete_default_rules = true
 }
 
-resource "openstack_networking_secgroup_rule_v2" "ext_server" {
+resource "openstack_networking_secgroup_rule_v2" "lb_server" {
   for_each = {
-    for rule in concat(
-      [
-        for cidr in local.ssh_cidr :
-        { "port" : 22, "protocol" : "tcp", "source" : cidr }
-      ],
-      [
-        for cidr in local.k8s_cidr :
-        { "port" : 6443, "protocol" : "tcp", "source" : cidr }
-      ],
-      [
-        for cidr in local.rke2_cidr :
-        { "port" : 9345, "protocol" : "tcp", "source" : cidr }
-      ]
-    ) :
+    for rule in [
+      { "port" : 22, "protocol" : "tcp", "source" : var.subnet_lb_cidr },
+      { "port" : 6443, "protocol" : "tcp", "source" : var.subnet_lb_cidr },
+      { "port" : 9345, "protocol" : "tcp", "source" : var.subnet_lb_cidr },
+    ] :
     format("%s-%s-%s", rule["source"], rule["protocol"], rule["port"]) => rule
   }
   direction         = "ingress"
@@ -73,7 +64,6 @@ resource "openstack_networking_secgroup_rule_v2" "default" {
       { "port" : 2379, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
       { "port" : 2380, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
       # api server (k8s)
-      #{ "port" : 6443, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.lb },
       { "port" : 6443, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
       { "port" : 6443, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.server },
       # rke2 supervisor

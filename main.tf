@@ -7,7 +7,7 @@ locals {
   } : var.s3_backup
 
   external_ip = openstack_networking_floatingip_v2.external.address
-  internal_ip = "192.168.44.3" #cidrhost(var.subnet_servers_cidr, 3)
+  internal_ip = cidrhost(var.subnet_lb_cidr, 3)
 }
 
 module "servers" {
@@ -74,7 +74,7 @@ module "servers" {
         app_secret          = openstack_identity_application_credential_v3.rke2.secret
         app_name            = openstack_identity_application_credential_v3.rke2.name
         network_id          = openstack_networking_network_v2.net.id
-        subnet_id           = openstack_networking_subnet_v2.agents.id
+        subnet_id           = openstack_networking_subnet_v2.lb.id
         floating_network_id = data.openstack_networking_network_v2.floating_net.id
         cluster_name        = var.name
       }),

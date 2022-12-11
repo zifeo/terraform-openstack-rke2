@@ -20,6 +20,15 @@ resource "openstack_networking_subnet_v2" "agents" {
   dns_nameservers = var.dns_nameservers4
 }
 
+resource "openstack_networking_subnet_v2" "lb" {
+  name            = "${var.name}-lb-subnet"
+  network_id      = openstack_networking_network_v2.net.id
+  cidr            = var.subnet_lb_cidr
+  ip_version      = 4
+  dns_nameservers = var.dns_nameservers4
+
+}
+
 data "openstack_networking_network_v2" "floating_net" {
   name = var.floating_pool
 }
@@ -38,4 +47,9 @@ resource "openstack_networking_router_interface_v2" "servers" {
 resource "openstack_networking_router_interface_v2" "agents" {
   router_id = openstack_networking_router_v2.router.id
   subnet_id = openstack_networking_subnet_v2.agents.id
+}
+
+resource "openstack_networking_router_interface_v2" "lb" {
+  router_id = openstack_networking_router_v2.router.id
+  subnet_id = openstack_networking_subnet_v2.lb.id
 }

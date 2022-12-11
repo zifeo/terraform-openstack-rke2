@@ -41,12 +41,6 @@ spec:
           requests:
             cpu: 20m
             memory: 32M
-      snapshotController:
-        enabled: true
-        resources:
-          requests:
-            cpu: 20m
-            memory: 32M
     secret:
       enabled: true
       create: true

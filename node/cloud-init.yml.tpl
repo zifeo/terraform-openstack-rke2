@@ -104,16 +104,17 @@ runcmd:
   - 'grep -q "/dev/sdb" /etc/fstab || echo "/dev/sdb /var/lib/rancher/rke2/ ext4 defaults,nofail 0 2" >> /etc/fstab'
   - sudo mount -a
   - /usr/local/bin/install-or-upgrade-rke2.sh
+  - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   %{~ if is_server ~}
+  - echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc
+  - rm -rf /var/lib/rancher/rke2/server/manifests
   - systemctl enable rke2-server.service
   - systemctl start rke2-server.service
   - [ sh, -c, 'until [ -f /etc/rancher/rke2/rke2.yaml ]; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   - [ sh, -c, 'until [ -x /var/lib/rancher/rke2/bin/kubectl ]; do echo Waiting for $(hostname) kubectl bin && sleep 10; done;' ]
   - mv -v /tmp/manifests/* /var/lib/rancher/rke2/server/manifests 2>/dev/null || echo "No manifest files"
-  - echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc
   %{~ else ~}
   - systemctl enable rke2-agent.service
   - systemctl start rke2-agent.service
   - [ sh, -c, 'until systemctl is-active -q rke2-agent.service; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   %{~ endif ~}
-  - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc

@@ -8,7 +8,6 @@ spec:
   repo: https://vmware-tanzu.github.io/helm-charts
   version: 2.32.4
   targetNamespace: kube-system
-  bootstrap: true
   valuesContent: |-
     initContainers:
       - name: velero-plugin-for-openstack
@@ -23,6 +22,14 @@ spec:
         volumeMounts:
           - mountPath: /target
             name: plugins
+
+    nodeSelector:
+      node-role.kubernetes.io/master: "true"
+
+    tolerations:
+      - effect: NoExecute
+        key: CriticalAddonsOnly
+        operator: "Exists"
 
     resources:
       requests:
@@ -41,11 +48,12 @@ spec:
           cloud: self
           region: us-east-1
           resticRepoPrefix: swift:restic:/
-        extraEnvVars:
-          OS_AUTH_URL: ${auth_url}
-          OS_APPLICATION_CREDENTIAL_NAME: ${app_name}
-          OS_APPLICATION_CREDENTIAL_ID: ${app_id}
-          OS_APPLICATION_CREDENTIAL_SECRET: ${app_secret}
+          
+      extraEnvVars:
+        OS_AUTH_URL: ${auth_url}
+        OS_APPLICATION_CREDENTIAL_NAME: ${app_name}
+        OS_APPLICATION_CREDENTIAL_ID: ${app_id}
+        OS_APPLICATION_CREDENTIAL_SECRET: ${app_secret}
 
       volumeSnapshotLocation:
         provider: csi
