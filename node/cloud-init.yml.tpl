@@ -19,7 +19,6 @@ packages:
   - curl
   - jq
   %{~ if is_server ~}
-  - etcd-client
   - keepalived
   %{~ endif ~}
 

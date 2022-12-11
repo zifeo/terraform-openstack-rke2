@@ -29,6 +29,7 @@ spec:
         subnet-id: ${subnet_id}
         lb-provider: octavia
         manage-security-groups: true
+        max-shared-lb: 5
     controllerExtraArgs: |-
       - --use-service-account-credentials=false
     cluster:
