@@ -24,24 +24,12 @@ resource "openstack_networking_port_v2" "port" {
   count = var.nodes_count
 
   network_id         = var.network_id
-  security_group_ids = var.secgroup_id != null ? [var.secgroup_id] : null
-  no_security_groups = var.secgroup_id == null
+  security_group_ids = [var.secgroup_id]
   admin_state_up     = true
 
   fixed_ip {
     subnet_id = var.subnet_id
   }
-
-  dynamic "allowed_address_pairs" {
-    for_each = var.is_server ? [var.bootstrap_ip] : []
-    content {
-      ip_address = allowed_address_pairs.value
-    }
-  }
-}
-
-data "openstack_networking_subnet_v2" "subnet" {
-  subnet_id = var.subnet_id
 }
 
 resource "openstack_compute_instance_v2" "instance" {
@@ -91,12 +79,11 @@ resource "openstack_compute_instance_v2" "instance" {
       } : {},
       { for k, v in var.manifests : k => base64gzip(v) },
     ) : {}
-    s3_endpoint       = var.s3.endpoint
-    s3_access_key     = var.s3.access_key
-    s3_access_secret  = var.s3.access_secret
-    s3_bucket         = var.s3.bucket
-    failover_cidr     = data.openstack_networking_subnet_v2.subnet.cidr
-    ff_wait_apiserver = var.ff_wait_apiserver
+    s3_endpoint      = var.s3.endpoint
+    s3_access_key    = var.s3.access_key
+    s3_access_secret = var.s3.access_secret
+    s3_bucket        = var.s3.bucket
+    system_user      = var.system_user
   }))
 }
 

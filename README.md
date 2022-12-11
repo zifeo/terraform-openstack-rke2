@@ -122,12 +122,12 @@ little as CHF 11.—/month (at the time of writing):
 Quick benchmarks confirmed that the price/performance outperforms Scaleway
 offering (but would need to be deepened).
 
-| Flavour                                                      | CHF/month |
-| ------------------------------------------------------------ | --------- |
-| 2×2.93 (instances) + 0.09×2×(4+6) (blockstorage) + 3.34 (IP) | 11.—      |
-| single 2cpu/4go server with 1x4cpu/8go worker                | ~25.—     |
-| 3x2cpu/4go HA servers with 1x4cpu/8go worker                 | ~40.—     |
-| 3x2cpu/4go HA servers with 3x8cpu/16go workers               | ~100.—    |
+| Flavour                                                                           | CHF/month |
+| --------------------------------------------------------------------------------- | --------- |
+| 2×2.93 (instances) + 0.09×2×(4+6) (blockstorage) + 3.34 (IP) + HA (load-balancer) | 21.—      |
+| single 2cpu/4go server with 1x4cpu/8go worker                                     | ~35.—     |
+| 3x2cpu/4go HA servers with 1x4cpu/8go worker                                      | ~50.—     |
+| 3x2cpu/4go HA servers with 3x8cpu/16go workers                                    | ~110.—    |
 
 ```bash
 git clone git@github.com:zifeo/terraform-openstack-rke2.git && cd terraform-openstack-rke2/example
@@ -169,8 +169,12 @@ sudo systemctl stop rke2-server && sudo rke2 server --cluster-reset --etcd-s3 --
 # sudo systemctl stop rke2-server && sudo rm -rf /var/lib/rancher/rke2/server/db && sudo reboot
 # reboot all nodes
 
+# check san
 openssl s_client -connect 192.168.42.3:10250 </dev/null 2>/dev/null | openssl x509 -inform pem -text
 
 # defrag etcd
 kubectl -n kube-system exec $(kubectl -n kube-system get pod -l component=etcd --no-headers -o custom-columns=NAME:.metadata.name | head -1) -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt' ETCDCTL_CERT='/var/lib/rancher/rke2/server/tls/etcd/server-client.crt' ETCDCTL_KEY='/var/lib/rancher/rke2/server/tls/etcd/server-client.key' ETCDCTL_API=3 etcdctl defrag --cluster"
+
+# ssh load-balanced (beware on host keys!)
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no USER@HOST
 ```

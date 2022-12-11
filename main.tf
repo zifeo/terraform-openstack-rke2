@@ -6,8 +6,8 @@ locals {
     bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
   } : var.s3_backup
 
-  external_ip = openstack_networking_floatingip_v2.floating_ip.address
-  internal_ip = openstack_networking_port_v2.port.all_fixed_ips[0]
+  external_ip = openstack_networking_floatingip_v2.external.address
+  internal_ip = "192.168.44.3" #cidrhost(var.subnet_servers_cidr, 3)
 }
 
 module "servers" {
@@ -41,7 +41,7 @@ module "servers" {
   system_user  = each.value.system_user
   keypair_name = openstack_compute_keypair_v2.key.name
 
-  network_id   = openstack_networking_network_v2.servers.id
+  network_id   = openstack_networking_network_v2.net.id
   subnet_id    = openstack_networking_subnet_v2.servers.id
   secgroup_id  = openstack_networking_secgroup_v2.server.id
   bootstrap_ip = local.internal_ip
@@ -73,8 +73,9 @@ module "servers" {
         app_id              = openstack_identity_application_credential_v3.rke2.id
         app_secret          = openstack_identity_application_credential_v3.rke2.secret
         app_name            = openstack_identity_application_credential_v3.rke2.name
+        network_id          = openstack_networking_network_v2.net.id
         subnet_id           = openstack_networking_subnet_v2.agents.id
-        floating_network_id = var.floating_pool != "" ? data.openstack_networking_network_v2.floating_net[0].id : null
+        floating_network_id = data.openstack_networking_network_v2.floating_net.id
         cluster_name        = var.name
       }),
       "cilium.yml" : templatefile("${path.module}/manifests/cilium.yml.tpl", {
@@ -90,7 +91,6 @@ module "servers" {
   )
 
   ff_autoremove_agent = false
-  ff_wait_apiserver   = var.ff_wait_apiserver
 }
 
 module "agents" {
@@ -122,12 +122,11 @@ module "agents" {
   system_user  = each.value.system_user
   keypair_name = openstack_compute_keypair_v2.key.name
 
-  network_id   = openstack_networking_network_v2.agents.id
+  network_id   = openstack_networking_network_v2.net.id
   subnet_id    = openstack_networking_subnet_v2.agents.id
   secgroup_id  = openstack_networking_secgroup_v2.agent.id
   bootstrap_ip = local.internal_ip
   bastion_host = local.external_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
-  ff_wait_apiserver   = false
 }

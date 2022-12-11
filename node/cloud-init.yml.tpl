@@ -18,9 +18,6 @@ packages:
   - htop
   - curl
   - jq
-  %{~ if is_server ~}
-  - keepalived
-  %{~ endif ~}
 
 users:
   - default
@@ -59,41 +56,6 @@ write_files:
   content: ${v}
     %{~ endfor ~}
   %{~ endif ~}
-- path: /etc/keepalived/keepalived.conf
-  permissions: "0600"
-  owner: root:root
-  content: |
-    %{~ if ff_wait_apiserver ~}
-    vrrp_script check_apiserver {
-      script "/usr/bin/curl -L --cacert /var/lib/rancher/rke2/server/tls/serving-kube-apiserver.crt --cert /var/lib/rancher/rke2/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/rke2/server/tls/client-kube-apiserver.key --fail https://127.0.0.1:6443/readyz"
-      interval 2
-      timeout 2
-      rise 3
-      fall 3
-    }
-    %{~ endif ~}
-    vrrp_instance up {
-      %{~ if is_bootstrap ~}
-      state MASTER
-      %{~ else ~}
-      state BACKUP
-      %{~ endif ~}
-      priority 100
-      interface ens3
-      virtual_router_id 1
-      authentication {
-        auth_type PASS
-        auth_pass password
-      }
-      virtual_ipaddress {
-        ${bootstrap_ip}/32 brd ${cidrhost(failover_cidr, -1)} dev ens3
-      }
-      %{~ if ff_wait_apiserver ~}
-      track_script {
-        check_apiserver
-      }
-      %{~ endif ~}
-    }
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
   owner: root:root
@@ -116,8 +78,8 @@ write_files:
     etcd-s3-bucket: ${s3_bucket}
       %{~ endif ~}
     disable-cloud-controller: true
-    disable-kube-proxy: true
     disable: rke2-ingress-nginx
+    disable-kube-proxy: true
     cni: cilium
     node-label:
       - node.kubernetes.io/exclude-from-external-load-balancers=true
@@ -131,6 +93,7 @@ write_files:
   content: |
     token: "${rke2_token}"
     server: https://${bootstrap_ip}:9345
+    node-ip: ${node_ip}
     ${indent(4,rke2_conf)}
 %{~ endif ~}
 
@@ -147,9 +110,10 @@ runcmd:
   - [ sh, -c, 'until [ -f /etc/rancher/rke2/rke2.yaml ]; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   - [ sh, -c, 'until [ -x /var/lib/rancher/rke2/bin/kubectl ]; do echo Waiting for $(hostname) kubectl bin && sleep 10; done;' ]
   - mv -v /tmp/manifests/* /var/lib/rancher/rke2/server/manifests 2>/dev/null || echo "No manifest files"
+  - echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc
   %{~ else ~}
   - systemctl enable rke2-agent.service
   - systemctl start rke2-agent.service
   - [ sh, -c, 'until systemctl is-active -q rke2-agent.service; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   %{~ endif ~}
-  - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> ~/.bashrc
+  - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc

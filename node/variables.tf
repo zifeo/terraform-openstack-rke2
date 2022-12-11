@@ -118,7 +118,3 @@ variable "manifests" {
 variable "ff_autoremove_agent" {
   type = bool
 }
-
-variable "ff_wait_apiserver" {
-  type = bool
-}

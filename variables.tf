@@ -12,13 +12,14 @@ variable "floating_pool" {
   type = string
 }
 
-variable "rules_ext" {
-  type = list(object({
-    port     = number
-    protocol = string
-    source   = string
-    name     = optional(string)
-  }))
+variable "rules_ssh_cidr" {
+  type    = string
+  default = ""
+}
+
+variable "rules_k8s_cidr" {
+  type    = string
+  default = ""
 }
 
 variable "rules_server_server" {
@@ -163,9 +164,4 @@ variable "ff_autoremove_agent" {
 variable "ff_native_backup" {
   type    = bool
   default = true
-}
-
-variable "ff_wait_apiserver" {
-  type    = bool
-  default = false
 }

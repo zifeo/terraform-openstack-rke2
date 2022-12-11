@@ -27,9 +27,10 @@ spec:
         floating-network-id: ${floating_network_id}
         %{~ endif ~}
         subnet-id: ${subnet_id}
+        network-id: ${network_id}
         lb-provider: octavia
         manage-security-groups: true
-        max-shared-lb: 5
+        max-shared-lb: 10
     controllerExtraArgs: |-
       - --use-service-account-credentials=false
     cluster:

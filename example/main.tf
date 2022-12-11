@@ -24,7 +24,7 @@ module "rke2" {
 
   floating_pool = "ext-floating1"
   # 22 & 6443 should be restricted to a secure bastion
-  rules_ext = [
+  rules_ext_server = [
     { "port" : 22, "protocol" : "tcp", "source" : "0.0.0.0/0" },
     { "port" : 80, "protocol" : "tcp", "source" : "0.0.0.0/0" },
     { "port" : 443, "protocol" : "tcp", "source" : "0.0.0.0/0" },
@@ -60,8 +60,6 @@ module "rke2" {
     }
   ]
 
-  # HA when agents >= 3 (disable it to recover in case of quorum loss)
-  ff_wait_apiserver = false
   # enable automatically `kubectl delete node AGENT-NAME` after an agent change
   ff_autoremove_agent = true
   # rewrite kubeconfig

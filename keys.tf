@@ -8,7 +8,7 @@ resource "openstack_compute_keypair_v2" "key" {
 }
 
 resource "null_resource" "write_kubeconfig" {
-  count = var.ff_write_kubeconfig ? 1 : 0
+  count = var.ff_write_kubeconfig && length(local.ssh_cidr) > 0 ? 1 : 0
 
   triggers = {
     servers = join(",", flatten([for server in module.servers : server.id]))
@@ -27,9 +27,7 @@ resource "null_resource" "write_kubeconfig" {
   provisioner "local-exec" {
     command = <<EOF
       ssh-keygen -R ${local.external_ip} >/dev/null 2>&1
-      until ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new ${var.servers[0].system_user}@${local.external_ip} true > /dev/null 2>&1; do echo Wait for SSH availability on ${local.external_ip} && sleep 10; done
-      until ssh -o ConnectTimeout=10 ${var.servers[0].system_user}@${local.external_ip} ls /etc/rancher/rke2/rke2.yaml > /dev/null 2>&1; do echo Wait rke2.yaml generation && sleep 10; done
-      rsync --rsync-path="sudo rsync" ${var.servers[0].system_user}@${local.external_ip}:/etc/rancher/rke2/rke2.yaml rke2.yaml \
+      until rsync -e "ssh -o ConnectTimeout=5 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" --rsync-path="sudo rsync" ${var.servers[0].system_user}@${local.external_ip}:/etc/rancher/rke2/rke2.yaml rke2.yaml >/dev/null 2>&1; do echo Wait rke2.yaml generation && sleep 5; done \
       && chmod go-r rke2.yaml \
       && yq eval --inplace '.clusters[0].name = "${var.name}-cluster"' rke2.yaml \
       && yq eval --inplace '.clusters[0].cluster.server = "https://${local.external_ip}:6443"' rke2.yaml \

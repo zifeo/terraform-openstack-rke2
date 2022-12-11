@@ -8,10 +8,28 @@ resource "openstack_networking_secgroup_v2" "agent" {
   delete_default_rules = true
 }
 
-resource "openstack_networking_secgroup_rule_v2" "ext" {
+resource "openstack_networking_secgroup_v2" "lb" {
+  name                 = "${var.name}-lb"
+  delete_default_rules = true
+}
+
+resource "openstack_networking_secgroup_rule_v2" "ext_server" {
   for_each = {
-    for rule in var.rules_ext :
-    format("%s-%s-%s%s", rule["source"], rule["protocol"], rule["port"], rule["name"] != null ? "-${rule["name"]}" : "") => rule
+    for rule in concat(
+      [
+        for cidr in local.ssh_cidr :
+        { "port" : 22, "protocol" : "tcp", "source" : cidr }
+      ],
+      [
+        for cidr in local.k8s_cidr :
+        { "port" : 6443, "protocol" : "tcp", "source" : cidr }
+      ],
+      [
+        for cidr in local.rke2_cidr :
+        { "port" : 9345, "protocol" : "tcp", "source" : cidr }
+      ]
+    ) :
+    format("%s-%s-%s", rule["source"], rule["protocol"], rule["port"]) => rule
   }
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -50,34 +68,35 @@ resource "openstack_networking_secgroup_rule_v2" "default" {
   for_each = {
     for rule in [
       # bastion ssh
-      { "port" : 22, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
+      { "port" : 22, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.agent },
       # etcd
-      { "port" : 2379, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 2380, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
-      # api server
-      { "port" : 6443, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 6443, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
+      { "port" : 2379, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 2380, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
+      # api server (k8s)
+      #{ "port" : 6443, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.lb },
+      { "port" : 6443, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 6443, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.server },
       # rke2 supervisor
-      { "port" : 9345, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 9345, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
+      { "port" : 9345, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 9345, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.server },
       # cilium
-      { "port" : 8472, "protocol" : "udp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 8472, "protocol" : "udp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
-      { "port" : 8472, "protocol" : "udp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 8472, "protocol" : "udp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.agent },
-      { "port" : 4240, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 4240, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
-      { "port" : 4240, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 4240, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.agent },
-      { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
-      { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 0, "protocol" : "icmp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.agent },
+      { "port" : 8472, "protocol" : "udp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 8472, "protocol" : "udp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 8472, "protocol" : "udp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.agent },
+      { "port" : 8472, "protocol" : "udp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.agent },
+      { "port" : 4240, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 4240, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 4240, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.agent },
+      { "port" : 4240, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.agent },
+      { "port" : 0, "protocol" : "icmp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 0, "protocol" : "icmp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 0, "protocol" : "icmp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.agent },
+      { "port" : 0, "protocol" : "icmp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.agent },
       # kubelet
-      { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.server, "from" : openstack_networking_secgroup_v2.agent },
-      { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.server },
-      { "port" : 10250, "protocol" : "tcp", "to" : openstack_networking_secgroup_v2.agent, "from" : openstack_networking_secgroup_v2.agent },
+      { "port" : 10250, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 10250, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.server },
+      { "port" : 10250, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.agent },
+      { "port" : 10250, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.agent, "to" : openstack_networking_secgroup_v2.agent },
     ] :
     format("%s->%s-%s-%s", rule.from.name, rule.to.name, rule.protocol, rule.port) => rule
   }
@@ -144,12 +163,4 @@ resource "openstack_networking_secgroup_rule_v2" "agent_agent" {
   port_range_max    = each.value.port
   remote_group_id   = openstack_networking_secgroup_v2.agent.id
   security_group_id = openstack_networking_secgroup_v2.agent.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "vrrp_broadcast" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "vrrp"
-  remote_group_id   = openstack_networking_secgroup_v2.server.id
-  security_group_id = openstack_networking_secgroup_v2.server.id
 }
