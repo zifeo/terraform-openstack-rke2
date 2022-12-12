@@ -65,7 +65,6 @@ write_files:
     server: https://${bootstrap_ip}:9345
     %{~ endif ~}
     node-ip: ${node_ip}
-    node-external-ip: ${bootstrap_ip}
     write-kubeconfig-mode: "0640"
     tls-san:
       ${indent(6, yamlencode(san))}

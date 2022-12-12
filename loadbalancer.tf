@@ -87,7 +87,7 @@ resource "openstack_lb_pool_v2" "k8s" {
 resource "openstack_lb_monitor_v2" "k8s" {
   name        = "k8s"
   pool_id     = openstack_lb_pool_v2.k8s.id
-  type        = "TCP"
+  type        = "TLS-HELLO"
   delay       = 5
   timeout     = 5
   max_retries = 3
@@ -125,7 +125,7 @@ resource "openstack_lb_pool_v2" "rke2" {
 resource "openstack_lb_monitor_v2" "rke2" {
   name        = "rke2"
   pool_id     = openstack_lb_pool_v2.rke2.id
-  type        = "TCP"
+  type        = "TLS-HELLO"
   delay       = 5
   timeout     = 5
   max_retries = 3

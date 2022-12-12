@@ -91,6 +91,11 @@ module "servers" {
   )
 
   ff_autoremove_agent = false
+
+  depends_on = [
+    openstack_lb_listener_v2.k8s,
+    openstack_lb_listener_v2.rke2,
+  ]
 }
 
 module "agents" {
@@ -129,4 +134,9 @@ module "agents" {
   bastion_host = local.external_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
+
+  depends_on = [
+    openstack_lb_listener_v2.k8s,
+    openstack_lb_listener_v2.rke2,
+  ]
 }
