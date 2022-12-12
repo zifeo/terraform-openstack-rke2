@@ -13,13 +13,19 @@ variable "floating_pool" {
 }
 
 variable "rules_ssh_cidr" {
-  type    = string
-  default = ""
+  type = string
+  validation {
+    condition     = can(cidrnetmask(var.rules_ssh_cidr)) || var.rules_ssh_cidr == null
+    error_message = "Must be a valid IPv4 CIDR block or null (no access)"
+  }
 }
 
 variable "rules_k8s_cidr" {
-  type    = string
-  default = ""
+  type = string
+  validation {
+    condition     = can(cidrnetmask(var.rules_k8s_cidr)) || var.rules_k8s_cidr == null
+    error_message = "Must be a valid IPv4 CIDR block or null (no access)"
+  }
 }
 
 variable "rules_server_server" {

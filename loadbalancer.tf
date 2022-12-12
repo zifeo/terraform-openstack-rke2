@@ -1,8 +1,8 @@
 locals {
   server_nodes = flatten([for s in module.servers : [for ip in s.internal_ips : { "ip" = ip, "name" : s.names[index(s.internal_ips, ip)] }]])
   rke2_cidr    = [var.subnet_servers_cidr, var.subnet_agents_cidr]
-  k8s_cidr     = sort(concat(local.rke2_cidr, var.rules_k8s_cidr != "" && var.rules_k8s_cidr != null ? [var.rules_k8s_cidr] : []))
-  ssh_cidr     = var.rules_ssh_cidr != "" && var.rules_ssh_cidr != null ? [var.rules_ssh_cidr] : []
+  k8s_cidr     = sort(concat(local.rke2_cidr, var.rules_k8s_cidr != null ? [var.rules_k8s_cidr] : []))
+  ssh_cidr     = var.rules_ssh_cidr != null ? [var.rules_ssh_cidr] : []
 }
 
 resource "openstack_lb_loadbalancer_v2" "lb" {
@@ -140,6 +140,7 @@ resource "openstack_lb_members_v2" "rke2" {
       name          = member.value.name
       address       = member.value.ip
       protocol_port = 9345
+      monitor_port  = 6443
     }
   }
 }
