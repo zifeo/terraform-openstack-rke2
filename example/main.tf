@@ -2,10 +2,7 @@ locals {
   auth_url = "https://api.pub1.infomaniak.cloud/identity"
   region   = "dc3-a"
   config   = <<EOF
-# https://docs.rke2.io/install/install_options/install_options/#configuration-file
 # https://docs.rke2.io/install/install_options/server_config/
-node-taint:
-  - "CriticalAddonsOnly=true:NoExecute"
 
 etcd-snapshot-schedule-cron: "0 */6 * * *"
 etcd-snapshot-retention: 20
@@ -23,13 +20,9 @@ module "rke2" {
   manifests_folder = "./manifests"
 
   floating_pool = "ext-floating1"
-  # 22 & 6443 should be restricted to a secure bastion
-  rules_ext_server = [
-    { "port" : 22, "protocol" : "tcp", "source" : "0.0.0.0/0" },
-    { "port" : 80, "protocol" : "tcp", "source" : "0.0.0.0/0" },
-    { "port" : 443, "protocol" : "tcp", "source" : "0.0.0.0/0" },
-    { "port" : 6443, "protocol" : "tcp", "source" : "0.0.0.0/0" },
-  ]
+  # should be restricted to a secure bastion
+  rules_ssh_cidr = "0.0.0.0/0"
+  rules_k8s_cidr = "0.0.0.0/0"
 
   server = [{
     name = "server"

@@ -49,13 +49,9 @@ module "rke2" {
 
   name = "k8s"
 
-  floating_pool = "ext-floating1"
-  rules_ext = [
-    { "port" : 22, "protocol" : "tcp", "source" : "0.0.0.0/0" },
-    { "port" : 80, "protocol" : "tcp", "source" : "0.0.0.0/0" },
-    { "port" : 443, "protocol" : "tcp", "source" : "0.0.0.0/0" },
-    { "port" : 6443, "protocol" : "tcp", "source" : "0.0.0.0/0" },
-  ]
+  floating_pool  = "ext-floating1"
+  rules_ssh_cidr = "0.0.0.0/0"
+  rules_k8s_cidr = "0.0.0.0/0"
 
   servers = [
     {

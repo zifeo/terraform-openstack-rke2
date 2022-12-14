@@ -16,6 +16,12 @@ resource "openstack_lb_loadbalancer_v2" "lb" {
   depends_on = [
     openstack_networking_subnet_v2.lb
   ]
+
+  lifecycle {
+    ignore_changes = [
+      tags
+    ]
+  }
 }
 
 resource "openstack_networking_floatingip_v2" "external" {
