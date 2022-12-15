@@ -47,7 +47,7 @@ write_files:
       curl -sfL https://get.rke2.io | sh -
     fi
 %{ if is_server ~}
-  %{~ if is_bootstrap ~}
+  %{~ if is_first ~}
     %{~ for k, v in manifests_files ~}
 - path: /tmp/manifests/${k}
   permissions: "0600"
@@ -61,7 +61,7 @@ write_files:
   owner: root:root
   content: |
     token: "${rke2_token}"
-    %{~ if !is_bootstrap ~}
+    %{~ if !bootstrap ~}
     server: https://${bootstrap_ip}:9345
     %{~ endif ~}
     node-ip: ${node_ip}

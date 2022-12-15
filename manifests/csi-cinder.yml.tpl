@@ -37,10 +37,16 @@ spec:
             cpu: 20m
             memory: 32M
       plugin:
-        resources:
-          requests:
-            cpu: 20m
-            memory: 32M
+        nodePlugin:
+          tolerations: []
+        controllerPlugin:
+          replicas: 2
+          nodeSelector:
+            node-role.kubernetes.io/master: "true"
+          tolerations:
+            - effect: NoExecute
+              key: CriticalAddonsOnly
+              operator: "Exists"
     secret:
       enabled: true
       create: true

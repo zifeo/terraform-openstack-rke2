@@ -10,15 +10,13 @@ spec:
   targetNamespace: kube-system
   bootstrap: True
   valuesContent: |-
-    resources:
-      requests:
-        cpu: 50m
-        memory: 64Mi
-
     nodeSelector:
       node-role.kubernetes.io/master: "true"
-
     tolerations:
       - effect: NoExecute
         key: CriticalAddonsOnly
         operator: "Exists"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi

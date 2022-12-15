@@ -14,7 +14,13 @@ spec:
     k8sServiceHost: ${apiserver_host}
     k8sServicePort: 6443
     operator:
-      replicas: 1
+      replicas: 2
+      nodeSelector:
+        node-role.kubernetes.io/master: "true"
+      tolerations:
+        - effect: NoExecute
+          key: CriticalAddonsOnly
+          operator: "Exists"
     cni:
       chainingMode: "none"
     resources: {}

@@ -24,6 +24,7 @@ module "rke2" {
   rules_ssh_cidr = "0.0.0.0/0"
   rules_k8s_cidr = "0.0.0.0/0"
 
+  bootstrap = true # only on first run
   server = [{
     name = "server"
 

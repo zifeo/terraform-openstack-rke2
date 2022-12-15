@@ -6,7 +6,11 @@ variable "is_server" {
   type = bool
 }
 
-variable "is_bootstrap" {
+variable "is_first" {
+  type = bool
+}
+
+variable "bootstrap" {
   type = bool
 }
 

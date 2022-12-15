@@ -15,12 +15,13 @@ module "servers" {
 
   for_each = {
     for server in var.servers :
-    index(var.servers, server) => server
+    server.name => server
   }
 
-  name         = "${var.name}-${each.value.name}"
-  is_server    = true
-  is_bootstrap = each.key == "0"
+  name      = "${var.name}-${each.value.name}"
+  is_server = true
+  is_first  = var.servers[0].name == each.value.name
+  bootstrap = var.bootstrap
 
   nodes_count      = 1
   flavor_name      = each.value.flavor_name
@@ -103,12 +104,13 @@ module "agents" {
 
   for_each = {
     for agent in var.agents :
-    index(var.agents, agent) => agent
+    agent.name => agent
   }
 
-  name         = "${var.name}-${each.value.name}"
-  is_server    = false
-  is_bootstrap = false
+  name      = "${var.name}-${each.value.name}"
+  is_server = false
+  is_first  = false
+  bootstrap = false
 
   nodes_count      = each.value.nodes_count
   flavor_name      = each.value.flavor_name

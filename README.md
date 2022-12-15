@@ -53,6 +53,7 @@ module "rke2" {
   rules_ssh_cidr = "0.0.0.0/0"
   rules_k8s_cidr = "0.0.0.0/0"
 
+  bootstrap = true # only on first run
   servers = [
     {
       name = "server-a"
@@ -95,7 +96,7 @@ EOF
 terraform init
 terraform apply
 # or, on upgrade, to process node by node
-terraform apply -target='module.rke2.module.servers["0"]'
+terraform apply -target='module.rke2.module.servers["server-a"]'
 ```
 
 Note: it requires [rsync](https://rsync.samba.org) and
@@ -171,4 +172,11 @@ kubectl -n kube-system exec $(kubectl -n kube-system get pod -l component=etcd -
 
 # ssh load-balanced (beware on host keys!)
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no USER@HOST
+
+# increase volume size
+# shutdown instance
+# detach volumne
+# expand volume
+# recreate node
+terraform apply -target='module.rke2.module.servers["server"]' -replace='module.rke2.module.servers["server"].openstack_compute_instance_v2.instance[0]'
 ```

@@ -85,6 +85,11 @@ variable "dns_nameservers4" {
   default = ["1.1.1.1", "1.0.0.1"]
 }
 
+variable "bootstrap" {
+  type    = bool
+  default = false
+}
+
 variable "servers" {
   type = list(object({
     name               = string
@@ -105,6 +110,12 @@ variable "servers" {
     )
     error_message = "RKE requires an odd number of servers"
   }
+  validation {
+    condition = (
+      length(toset(var.servers[*].name)) == length(var.servers[*].name)
+    )
+    error_message = "server nodes must have unique names"
+  }
 }
 
 variable "agents" {
@@ -122,6 +133,12 @@ variable "agents" {
     rke2_config        = optional(string)
     rke2_volume_size   = number
   }))
+  validation {
+    condition = (
+      length(toset(var.agents[*].name)) == length(var.agents[*].name)
+    )
+    error_message = "agent nodes must have unique names"
+  }
 }
 
 variable "s3_backup" {

@@ -69,9 +69,10 @@ resource "openstack_compute_instance_v2" "instance" {
     rke2_version = var.rke2_version
     rke2_conf    = var.rke2_config != null ? var.rke2_config : ""
     is_server    = var.is_server
+    is_first     = var.is_first
+    bootstrap    = var.bootstrap && var.is_first
     bootstrap_ip = var.bootstrap_ip
     node_ip      = openstack_networking_port_v2.port[count.index].all_fixed_ips[0]
-    is_bootstrap = var.is_bootstrap
     san          = var.is_server ? var.san : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
