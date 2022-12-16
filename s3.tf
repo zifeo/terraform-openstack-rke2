@@ -5,6 +5,16 @@ resource "openstack_objectstorage_container_v1" "etcd_snapshots" {
   force_destroy = true
 }
 
+resource "openstack_objectstorage_container_v1" "restic" {
+  name          = "${var.name}-restic"
+  force_destroy = true
+}
+
+resource "openstack_objectstorage_container_v1" "velero" {
+  name          = "${var.name}-velero"
+  force_destroy = true
+}
+
 resource "openstack_identity_ec2_credential_v3" "s3" {
   count = var.ff_native_backup ? 1 : 0
 }

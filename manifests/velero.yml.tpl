@@ -43,22 +43,42 @@ spec:
 
       backupStorageLocation:
         provider: community.openstack.org/openstack
-        bucket: backup
+        bucket: ${bucket_velero}
         config:
           cloud: self
-          region: us-east-1
-          resticRepoPrefix: swift:restic:/
+          region: ${region}
+          resticRepoPrefix: swift:${bucket_restic}:/restic
           
-      extraEnvVars:
-        OS_AUTH_URL: ${auth_url}
-        OS_APPLICATION_CREDENTIAL_NAME: ${app_name}
-        OS_APPLICATION_CREDENTIAL_ID: ${app_id}
-        OS_APPLICATION_CREDENTIAL_SECRET: ${app_secret}
-
       volumeSnapshotLocation:
         provider: csi
 
       features: EnableCSI
+
+    credentials:
+      secretContents:
+        clouds.yaml: |
+          clouds:
+            self:
+              region_name: ${region}
+              auth:
+                auth_url: ${auth_url}/v3
+                application_credential_id: ${app_id}
+                application_credential_name: ${app_name}
+                application_credential_secret: ${app_secret}
+ 
+    extraVolumes:
+      - name: cloud-config-velero
+        secret:
+          secretName: velero
+          items:
+          - key: clouds.yaml
+            path: clouds.yaml
+
+    extraVolumeMounts:
+      - name: cloud-config-velero
+        mountPath: /etc/openstack/clouds.yaml
+        readOnly: true
+        subPath: clouds.yaml
 
     backupsEnabled: true
     snapshotsEnabled: true

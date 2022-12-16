@@ -60,12 +60,13 @@ module "servers" {
         app_name   = openstack_identity_application_credential_v3.rke2.name
       }),
       "velero.yml" : templatefile("${path.module}/manifests/velero.yml.tpl", {
-        auth_url   = var.identity_endpoint
-        region     = openstack_identity_application_credential_v3.rke2.region
-        project_id = openstack_identity_application_credential_v3.rke2.project_id
-        app_id     = openstack_identity_application_credential_v3.rke2.id
-        app_secret = openstack_identity_application_credential_v3.rke2.secret
-        app_name   = openstack_identity_application_credential_v3.rke2.name
+        auth_url      = var.identity_endpoint
+        region        = openstack_identity_application_credential_v3.rke2.region
+        app_id        = openstack_identity_application_credential_v3.rke2.id
+        app_secret    = openstack_identity_application_credential_v3.rke2.secret
+        app_name      = openstack_identity_application_credential_v3.rke2.name
+        bucket_restic = openstack_objectstorage_container_v1.restic.name
+        bucket_velero = openstack_objectstorage_container_v1.velero.name
       }),
       "cloud-controller-openstack.yml" : templatefile("${path.module}/manifests/cloud-controller-openstack.yml.tpl", {
         auth_url            = var.identity_endpoint
