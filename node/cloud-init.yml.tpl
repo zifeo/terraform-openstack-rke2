@@ -98,12 +98,14 @@ write_files:
     ${indent(4,rke2_conf)}
 %{~ endif ~}
 
+bootcmd:
+  - '[ ! -b /dev/sdb ] && (echo "ERROR: sdb not attached. Will sleep 10s..."; sleep 10;)'
+  - blkid -o full /dev/sdb | grep "ext4" || sudo mkfs.ext4 /dev/sdb
+
+mounts:
+  - ["/dev/sdb", "/var/lib/rancher/rke2", "ext4", "defaults,nofail", "0", "2"]
+
 runcmd:
-  - "[ ! -b /dev/sdb ] && (echo \"ERROR: sdb not attached. Will sleep 10s...\"; sleep 10;)"
-  - blkid -o full /dev/sdb | grep "ext4" || sudo mkfs.ext4 /dev/sdb -L rke2
-  - sudo mkdir -p /var/lib/rancher/rke2/
-  - 'grep -q "/dev/sdb" /etc/fstab || echo "/dev/sdb /var/lib/rancher/rke2/ ext4 defaults,nofail 0 2" >> /etc/fstab'
-  - sudo mount -a
   - /usr/local/bin/install-or-upgrade-rke2.sh
   - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   %{~ if is_server ~}
