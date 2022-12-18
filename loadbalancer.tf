@@ -34,12 +34,14 @@ resource "openstack_networking_floatingip_v2" "external" {
 }
 
 resource "openstack_lb_listener_v2" "ssh" {
-  count           = length(local.ssh_cidr) > 0 ? 1 : 0
-  name            = "server SSH"
-  protocol        = "TCP"
-  protocol_port   = 22
-  loadbalancer_id = openstack_lb_loadbalancer_v2.lb.id
-  allowed_cidrs   = local.ssh_cidr
+  count               = length(local.ssh_cidr) > 0 ? 1 : 0
+  name                = "server SSH"
+  protocol            = "TCP"
+  protocol_port       = 22
+  loadbalancer_id     = openstack_lb_loadbalancer_v2.lb.id
+  allowed_cidrs       = local.ssh_cidr
+  timeout_client_data = 5 * 60 * 1000
+  timeout_member_data = 5 * 60 * 1000
 }
 
 resource "openstack_lb_pool_v2" "ssh" {
@@ -76,11 +78,13 @@ resource "openstack_lb_members_v2" "ssh" {
 
 
 resource "openstack_lb_listener_v2" "k8s" {
-  name            = "k8s"
-  protocol        = "TCP"
-  protocol_port   = 6443
-  loadbalancer_id = openstack_lb_loadbalancer_v2.lb.id
-  allowed_cidrs   = local.k8s_cidr
+  name                = "k8s"
+  protocol            = "TCP"
+  protocol_port       = 6443
+  loadbalancer_id     = openstack_lb_loadbalancer_v2.lb.id
+  allowed_cidrs       = local.k8s_cidr
+  timeout_client_data = 2 * 60 * 1000
+  timeout_member_data = 2 * 60 * 1000
 }
 
 resource "openstack_lb_pool_v2" "k8s" {
