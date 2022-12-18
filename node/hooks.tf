@@ -1,7 +1,3 @@
-locals {
-  remote_kubectl = "sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"
-}
-
 resource "null_resource" "agent_remove" {
   count = !var.is_server && var.ff_autoremove_agent ? var.nodes_count : 0
 
@@ -23,7 +19,7 @@ resource "null_resource" "agent_remove" {
     when       = destroy
     on_failure = continue
     inline = [
-      "${local.remote_kubectl} drain ${lower(self.triggers.name)} --ignore-daemonsets --delete-emptydir-data --timeout=60s; ${local.remote_kubectl} delete node ${lower(self.triggers.name)}"
+      "sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml drain ${lower(self.triggers.name)} --ignore-daemonsets --delete-emptydir-data --timeout=60s; sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml delete node ${lower(self.triggers.name)}"
     ]
   }
 
