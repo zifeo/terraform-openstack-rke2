@@ -61,7 +61,7 @@ module "rke2" {
   # deploy etcd backup
   ff_native_backup = true
 
-  identity_endpoint     = auth_url
+  identity_endpoint     = local.auth_url
   object_store_endpoint = "s3.pub1.infomaniak.cloud"
 }
 
