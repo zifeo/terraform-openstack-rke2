@@ -103,6 +103,7 @@ variable "servers" {
     rke2_version       = string
     rke2_config        = optional(string)
     rke2_volume_size   = number
+    rke2_volume_type   = optional(string)
   }))
   validation {
     condition = (
@@ -132,6 +133,7 @@ variable "agents" {
     rke2_version       = string
     rke2_config        = optional(string)
     rke2_volume_size   = number
+    rke2_volume_type   = optional(string)
   }))
   validation {
     condition = (

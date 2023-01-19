@@ -10,9 +10,16 @@ spec:
   targetNamespace: kube-system
   bootstrap: True
   valuesContent: |-
-    replicaCount: 2
+    replicaCount: ${operator_replica}
     nodeSelector:
       node-role.kubernetes.io/master: "true"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: snapshot-controller
+            topologyKey: kubernetes.io/hostname
     tolerations:
       - effect: NoExecute
         key: CriticalAddonsOnly

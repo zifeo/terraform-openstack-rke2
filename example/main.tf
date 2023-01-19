@@ -15,26 +15,27 @@ module "rke2" {
   # source = "zifeo/rke2/openstack"
   source = "./.."
 
-  name = "cluster"
-  # rke2 manifest autoload (https://docs.rke2.io/helm/)
-  manifests_folder = "./manifests"
-
-  floating_pool = "ext-floating1"
+  # must be true for single-server cluster or only on first run for HA cluster 
+  bootstrap           = true
+  name                = "cluster"
+  ssh_public_key_file = "~/.ssh/id_rsa.pub"
+  floating_pool       = "ext-floating1"
   # should be restricted to a secure bastion
   rules_ssh_cidr = "0.0.0.0/0"
   rules_k8s_cidr = "0.0.0.0/0"
+  # auto load manifest form a folder (https://docs.rke2.io/advanced#auto-deploying-manifests)
+  manifests_folder = "./manifests"
 
-  bootstrap = true # only on first run
-  server = [{
+  servers = [{
     name = "server"
 
-    flavor_name      = "a1-ram2-disk0"
+    flavor_name      = "a2-ram4-disk0"
     image_name       = "Ubuntu 22.04 LTS Jammy Jellyfish"
     system_user      = "ubuntu"
     boot_volume_size = 4
 
-    rke2_version     = "v1.25.3+rke2r1"
-    rke2_volume_size = 6
+    rke2_version     = "v1.25.5+rke2r2"
+    rke2_volume_size = 8
     # https://docs.rke2.io/install/install_options/install_options/#configuration-file
     rke2_config = local.config
   }]
@@ -49,8 +50,8 @@ module "rke2" {
       system_user      = "ubuntu"
       boot_volume_size = 4
 
-      rke2_version     = "v1.25.3+rke2r1"
-      rke2_volume_size = 6
+      rke2_version     = "v1.25.5+rke2r2"
+      rke2_volume_size = 8
     }
   ]
 
@@ -96,7 +97,7 @@ terraform {
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = ">= 1.44.0"
+      version = ">= 1.49.0"
     }
   }
 }

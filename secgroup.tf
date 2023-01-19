@@ -8,11 +8,6 @@ resource "openstack_networking_secgroup_v2" "agent" {
   delete_default_rules = true
 }
 
-resource "openstack_networking_secgroup_v2" "lb" {
-  name                 = "${var.name}-lb"
-  delete_default_rules = true
-}
-
 resource "openstack_networking_secgroup_rule_v2" "lb_server" {
   for_each = {
     for rule in [

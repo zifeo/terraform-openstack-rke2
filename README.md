@@ -53,7 +53,7 @@ module "rke2" {
   rules_ssh_cidr = "0.0.0.0/0"
   rules_k8s_cidr = "0.0.0.0/0"
 
-  bootstrap = true # only on first run
+  bootstrap = true
   servers = [
     {
       name = "server-a"
@@ -99,12 +99,14 @@ terraform apply
 terraform apply -target='module.rke2.module.servers["server-a"]'
 ```
 
+See [example](./example/main.tf) for more options.
+
 Note: it requires [rsync](https://rsync.samba.org) and
 [yq](https://github.com/mikefarah/yq) to generate remote kube config file. You
 can disable this behaviour by setting `ff_write_kubeconfig=false` and fetch
 yourself `/etc/rancher/rke2/rke2.yaml` on server nodes.
 
-## Infomaniak OpenStack [example](./example/main.tf)
+## Infomaniak OpenStack
 
 A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as
 little as CHF 11.—/month (at the time of writing):

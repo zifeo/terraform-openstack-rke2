@@ -6,8 +6,9 @@ locals {
     bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
   } : var.s3_backup
 
-  external_ip = openstack_networking_floatingip_v2.external.address
-  internal_ip = cidrhost(var.subnet_lb_cidr, 3)
+  external_ip      = openstack_networking_floatingip_v2.external.address
+  internal_ip      = cidrhost(var.subnet_lb_cidr, 3)
+  operator_replica = min(2, length(var.servers))
 }
 
 module "servers" {
@@ -36,6 +37,7 @@ module "servers" {
   rke2_config      = each.value.rke2_config
   rke2_token       = random_string.rke2_token.result
   rke2_volume_size = each.value.rke2_volume_size
+  rke2_volume_type = each.value.rke2_volume_type
 
   s3 = local.s3
 
@@ -52,12 +54,13 @@ module "servers" {
   manifests = merge(
     {
       "cinder-csi.yml" : templatefile("${path.module}/manifests/csi-cinder.yml.tpl", {
-        auth_url   = var.identity_endpoint
-        region     = openstack_identity_application_credential_v3.rke2.region
-        project_id = openstack_identity_application_credential_v3.rke2.project_id
-        app_id     = openstack_identity_application_credential_v3.rke2.id
-        app_secret = openstack_identity_application_credential_v3.rke2.secret
-        app_name   = openstack_identity_application_credential_v3.rke2.name
+        operator_replica = local.operator_replica
+        auth_url         = var.identity_endpoint
+        region           = openstack_identity_application_credential_v3.rke2.region
+        project_id       = openstack_identity_application_credential_v3.rke2.project_id
+        app_id           = openstack_identity_application_credential_v3.rke2.id
+        app_secret       = openstack_identity_application_credential_v3.rke2.secret
+        app_name         = openstack_identity_application_credential_v3.rke2.name
       }),
       "velero.yml" : templatefile("${path.module}/manifests/velero.yml.tpl", {
         auth_url      = var.identity_endpoint
@@ -81,9 +84,13 @@ module "servers" {
         cluster_name        = var.name
       }),
       "cilium.yml" : templatefile("${path.module}/manifests/cilium.yml.tpl", {
-        apiserver_host = local.internal_ip
-        cluster_name   = var.name
-        cluster_id     = var.cluster_id
+        operator_replica = local.operator_replica
+        apiserver_host   = local.internal_ip
+        cluster_name     = var.name
+        cluster_id       = var.cluster_id
+      }),
+      "snapshot-controller.yml" : templatefile("${path.module}/manifests/snapshot-controller.yml.tpl", {
+        operator_replica = local.operator_replica
       }),
     },
     {
@@ -126,6 +133,7 @@ module "agents" {
   rke2_config      = each.value.rke2_config
   rke2_token       = random_string.rke2_token.result
   rke2_volume_size = each.value.rke2_volume_size
+  rke2_volume_type = each.value.rke2_volume_type
 
   system_user  = each.value.system_user
   keypair_name = openstack_compute_keypair_v2.key.name

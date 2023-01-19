@@ -8,16 +8,18 @@ resource "openstack_compute_servergroup_v2" "servergroup" {
   policies = [var.affinity]
 }
 
-resource "openstack_blockstorage_volume_v2" "volume" {
-  count = var.nodes_count
-  name  = "${openstack_compute_instance_v2.instance[count.index].name}-rke2"
-  size  = var.rke2_volume_size
+resource "openstack_blockstorage_volume_v3" "volume" {
+  count                = var.nodes_count
+  name                 = "${var.name}-${count.index + 1}-rke2"
+  size                 = var.rke2_volume_size
+  volume_type          = var.rke2_volume_type
+  enable_online_resize = true
 }
 
 resource "openstack_compute_volume_attach_v2" "attach" {
   count       = var.nodes_count
   instance_id = openstack_compute_instance_v2.instance[count.index].id
-  volume_id   = openstack_blockstorage_volume_v2.volume[count.index].id
+  volume_id   = openstack_blockstorage_volume_v3.volume[count.index].id
 }
 
 resource "openstack_networking_port_v2" "port" {
@@ -34,7 +36,7 @@ resource "openstack_networking_port_v2" "port" {
 
 resource "openstack_compute_instance_v2" "instance" {
   count                   = var.nodes_count
-  name                    = var.nodes_count == 1 ? var.name : "${var.name}-${count.index + 1}"
+  name                    = "${var.name}-${count.index + 1}"
   availability_zone_hints = length(var.availability_zones) > 0 ? var.availability_zones[count.index % length(var.availability_zones)] : null
 
   flavor_name  = var.flavor_name
@@ -65,12 +67,13 @@ resource "openstack_compute_instance_v2" "instance" {
 
   # yamlencode(yamldecode to debug yaml
   user_data = base64encode(templatefile("${path.module}/cloud-init.yml.tpl", {
+    rke2_device  = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${openstack_blockstorage_volume_v3.volume[count.index].id}"
     rke2_token   = var.rke2_token
     rke2_version = var.rke2_version
     rke2_conf    = var.rke2_config != null ? var.rke2_config : ""
     is_server    = var.is_server
-    is_first     = var.is_first
-    bootstrap    = var.bootstrap && var.is_first
+    is_first     = var.is_first && count.index == 0
+    bootstrap    = var.bootstrap && var.is_first && count.index == 0
     bootstrap_ip = var.bootstrap_ip
     node_ip      = openstack_networking_port_v2.port[count.index].all_fixed_ips[0]
     san          = var.is_server ? var.san : []
@@ -87,4 +90,3 @@ resource "openstack_compute_instance_v2" "instance" {
     system_user      = var.system_user
   }))
 }
-

@@ -1,11 +1,17 @@
 #cloud-config
 
+fs_setup:
+  - label: None
+    filesystem: ext4
+    device: ${rke2_device}
+mounts:
+  - ["${rke2_device}", "/var/lib/rancher/rke2", "ext4", "defaults,nofail", "0", "2"]
 resize_rootfs: True
 growpart:
   mode: auto
   devices:
     - "/"
-    - "/dev/sdb"
+    - ${rke2_device}
 
 package_update: true
 package_upgrade: true
@@ -49,7 +55,7 @@ write_files:
 %{ if is_server ~}
   %{~ if is_first ~}
     %{~ for k, v in manifests_files ~}
-- path: /tmp/manifests/${k}
+- path: /opt/manifests/${k}
   permissions: "0600"
   owner: root:root
   encoding: gz+b64
@@ -98,12 +104,7 @@ write_files:
     ${indent(4,rke2_conf)}
 %{~ endif ~}
 
-bootcmd:
-  - '[ ! -b /dev/sdb ] && (echo "ERROR: sdb not attached. Will sleep 10s..."; sleep 10;)'
-  - blkid -o full /dev/sdb | grep "ext4" || sudo mkfs.ext4 /dev/sdb
 
-mounts:
-  - ["/dev/sdb", "/var/lib/rancher/rke2", "ext4", "defaults,nofail", "0", "2"]
 
 runcmd:
   - /usr/local/bin/install-or-upgrade-rke2.sh
@@ -115,7 +116,8 @@ runcmd:
   - systemctl start rke2-server.service
   - [ sh, -c, 'until [ -f /etc/rancher/rke2/rke2.yaml ]; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
   - [ sh, -c, 'until [ -x /var/lib/rancher/rke2/bin/kubectl ]; do echo Waiting for $(hostname) kubectl bin && sleep 10; done;' ]
-  - mv -v /tmp/manifests/* /var/lib/rancher/rke2/server/manifests 2>/dev/null || echo "No manifest files"
+  - mv -v /opt/manifests/* /var/lib/rancher/rke2/server/manifests || echo "No manifest files"
+  - ls /var/lib/rancher/rke2/server/manifests
   %{~ else ~}
   - systemctl enable rke2-agent.service
   - systemctl start rke2-agent.service

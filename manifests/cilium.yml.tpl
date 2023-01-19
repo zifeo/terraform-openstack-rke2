@@ -14,7 +14,7 @@ spec:
     k8sServiceHost: ${apiserver_host}
     k8sServicePort: 6443
     operator:
-      replicas: 2
+      replicas: ${operator_replica}
       nodeSelector:
         node-role.kubernetes.io/master: "true"
       tolerations:

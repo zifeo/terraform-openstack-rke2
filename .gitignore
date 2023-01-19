@@ -6,3 +6,4 @@ crash.log
 *.tfvars
 rke2.yaml
 .terraform.lock.hcl
+*.rke2.yaml

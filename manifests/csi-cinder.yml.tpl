@@ -40,9 +40,17 @@ spec:
         nodePlugin:
           tolerations: []
         controllerPlugin:
-          replicas: 2
+          replicas: ${operator_replica}
           nodeSelector:
             node-role.kubernetes.io/master: "true"
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app: openstack-cinder-csi
+                      component: controllerplugin
+                  topologyKey: kubernetes.io/hostname
           tolerations:
             - effect: NoExecute
               key: CriticalAddonsOnly
@@ -62,7 +70,7 @@ spec:
           tenant-id = ${project_id}
           [BlockStorage]
           ignore-volume-az = true
+          rescan-on-resize = true
     storageClass:
       enabled: false
-      custom: |
-        
+    logVerbosityLevel: 5

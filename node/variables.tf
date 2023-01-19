@@ -94,6 +94,10 @@ variable "rke2_volume_size" {
   type = number
 }
 
+variable "rke2_volume_type" {
+  type = string
+}
+
 variable "s3" {
   type = object({
     endpoint      = string

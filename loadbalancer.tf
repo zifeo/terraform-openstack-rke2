@@ -11,7 +11,6 @@ resource "openstack_lb_loadbalancer_v2" "lb" {
   vip_address           = local.internal_ip
   admin_state_up        = "true"
   loadbalancer_provider = "octavia"
-  security_group_ids    = [openstack_networking_secgroup_v2.lb.id]
 
   depends_on = [
     openstack_networking_subnet_v2.lb
