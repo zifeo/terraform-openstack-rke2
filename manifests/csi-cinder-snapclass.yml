@@ -4,7 +4,9 @@ metadata:
   name: csi-cinder-snapclass
   annotations:
     snapshot.storage.kubernetes.io/is-default-class: "true"
+  labels:
+    velero.io/csi-volumesnapshot-class: "true"
 driver: cinder.csi.openstack.org
 deletionPolicy: Delete
 parameters:
-  force-create: "false"
+  force-create: "true" # force create snapshot even if volume is in-use

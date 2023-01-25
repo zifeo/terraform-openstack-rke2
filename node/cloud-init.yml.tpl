@@ -24,6 +24,7 @@ packages:
   - htop
   - curl
   - jq
+  - nfs-client
 
 users:
   - default
@@ -78,11 +79,12 @@ write_files:
       ${indent(6, yamlencode(san))}
     kube-apiserver-arg: "kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname"
       %{~ if s3_endpoint != "" ~}
-    etcd-s3: true                                    
-    etcd-s3-endpoint: ${s3_endpoint}                     
+    etcd-s3: true
+    etcd-s3-endpoint: ${s3_endpoint}
     etcd-s3-access-key: ${s3_access_key}
     etcd-s3-secret-key: ${s3_access_secret}
     etcd-s3-bucket: ${s3_bucket}
+    etcd-snapshot-compress: true
       %{~ endif ~}
     disable-cloud-controller: true
     disable: rke2-ingress-nginx
