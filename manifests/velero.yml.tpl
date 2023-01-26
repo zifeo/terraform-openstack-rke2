@@ -9,6 +9,10 @@ spec:
   version: 2.32.6 # 3.1.0
   targetNamespace: velero
   valuesContent: |-
+    image:
+      repository: velero/velero
+      tag: v1.9.4
+      pullPolicy: IfNotPresent
     initContainers:
       - name: velero-plugin-for-openstack
         image: lirt/velero-plugin-for-openstack:v0.4.1
@@ -22,29 +26,22 @@ spec:
         volumeMounts:
           - mountPath: /target
             name: plugins
-
     nodeSelector:
       node-role.kubernetes.io/master: "true"
-
     tolerations:
       - effect: NoExecute
         key: CriticalAddonsOnly
         operator: "Exists"
-
     resources:
       requests:
         cpu: 100m
         memory: 128Mi
-      limits:
-        memory: 256Mi
-
     configuration:
       provider: mixed
       namespace: velero
       features: EnableCSI
       defaultBackupTTL: 72h
       defaultResticPruneFrequency: 72h
-
       backupStorageLocation:
         name: default
         provider: community.openstack.org/openstack
@@ -52,12 +49,10 @@ spec:
         config:
           cloud: self
           region: ${region}
-          resticRepoPrefix: swift:${bucket_restic}:/restic
-          
+          resticRepoPrefix: swift:${bucket_restic}:/restic     
       volumeSnapshotLocation:
         name: default
         provider: csi
-
       extraEnvVars:
         # for restic (no support for clouds.yaml, https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#openstack-swift)
         OS_AUTH_URL: ${auth_url}/v3
@@ -66,7 +61,6 @@ spec:
         OS_APPLICATION_CREDENTIAL_SECRET: ${app_secret}
         # for community.openstack.org/openstack (env vars do not work and take precedence over clouds.yaml unless cloud set)
         OS_CLOUD: self
-
     credentials:
       # for community.openstack.org/openstack
       secretContents:
@@ -79,7 +73,6 @@ spec:
                 application_credential_id: ${app_id}
                 application_credential_name: ${app_name}
                 application_credential_secret: ${app_secret}
- 
     extraVolumes:
       - name: cloud-config-velero
         secret:
@@ -87,7 +80,6 @@ spec:
           items:
           - key: clouds.yaml
             path: clouds.yaml
-
     extraVolumeMounts:
       - name: cloud-config-velero
         mountPath: /etc/openstack/clouds.yaml
@@ -108,5 +100,3 @@ spec:
         requests:
           cpu: 100m
           memory: 128Mi
-        limits:
-          memory: 256Mi

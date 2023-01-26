@@ -10,6 +10,10 @@ spec:
   targetNamespace: kube-system
   bootstrap: True
   valuesContent: |-
+    image:
+      repository: registry.k8s.io/sig-storage/snapshot-validation-webhook
+      tag: v6.2.1
+      pullPolicy: IfNotPresent
     nodeSelector:
       node-role.kubernetes.io/master: "true"
     tolerations:

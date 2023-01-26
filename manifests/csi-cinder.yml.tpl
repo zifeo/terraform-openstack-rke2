@@ -12,31 +12,65 @@ spec:
   valuesContent: |-
     csi:
       attacher:
+        image:
+          repository: k8s.gcr.io/sig-storage/csi-attacher
+          tag: v4.0.0
+          pullPolicy: IfNotPresent
         resources:
           requests:
             cpu: 20m
             memory: 32M
       provisioner:
+        topology: "true"
+        image:
+          repository: k8s.gcr.io/sig-storage/csi-provisioner
+          tag: v3.4.0
+          pullPolicy: IfNotPresent
         resources:
           requests:
             cpu: 20m
             memory: 32M
       snapshotter:
+        image:
+          repository: k8s.gcr.io/sig-storage/csi-snapshotter
+          tag: v6.1.0
+          pullPolicy: IfNotPresent
         resources:
           requests:
             cpu: 20m
             memory: 32M
       resizer:
+        image:
+          repository: k8s.gcr.io/sig-storage/csi-resizer
+          tag: v1.6.0
+          pullPolicy: IfNotPresent
         resources:
           requests:
             cpu: 20m
             memory: 32M
       livenessprobe:
+        image:
+          repository: k8s.gcr.io/sig-storage/livenessprobe
+          tag: v2.8.0
+          pullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32M
+      nodeDriverRegistrar:
+        image:
+          repository: k8s.gcr.io/sig-storage/csi-node-driver-registrar
+          tag: v2.6.2
+          pullPolicy: IfNotPresent
         resources:
           requests:
             cpu: 20m
             memory: 32M
       plugin:
+        image:
+          repository: docker.io/k8scloudprovider/cinder-csi-plugin
+          tag: "v1.26.0"
+          pullPolicy: IfNotPresent
         nodePlugin:
           tolerations: []
         controllerPlugin:

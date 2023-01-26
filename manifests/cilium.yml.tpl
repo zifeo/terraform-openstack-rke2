@@ -21,13 +21,13 @@ spec:
         - effect: NoExecute
           key: CriticalAddonsOnly
           operator: "Exists"
+      requests:
+        cpu: 50m
+        memory: 64Mi
     cni:
       chainingMode: "none"
-    resources: {}
-      # limits:
-      #   cpu: 4000m
-      #   memory: 4Gi
-      # requests:
-      #   cpu: 100m
-      #   memory: 512Mi
+    resources: 
+      requests:
+        cpu: 50m
+        memory: 128Mi
 

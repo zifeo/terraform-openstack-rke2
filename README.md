@@ -156,6 +156,9 @@ See their technical [documentation](https://docs.infomaniak.cloud) and
 [RKE2 cheatsheet](https://gist.github.com/superseb/3b78f47989e0dbc1295486c186e944bf)
 
 ```
+# find version of bundled components
+grep -r -A 1 repository: . 
+
 # debug on nodes
 crictl
 sudo systemctl status rke2-server
