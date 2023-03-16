@@ -12,7 +12,7 @@ spec:
   valuesContent: |-
     image:
       repository: docker.io/k8scloudprovider/openstack-cloud-controller-manager
-      tag: "v1.26.0"
+      tag: "v1.26.2"
     nodeSelector:
       node-role.kubernetes.io/master: "true"
     tolerations:

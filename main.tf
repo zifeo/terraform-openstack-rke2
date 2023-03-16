@@ -89,9 +89,6 @@ module "servers" {
         cluster_name     = var.name
         cluster_id       = var.cluster_id
       }),
-      "snapshot-controller.yml" : templatefile("${path.module}/manifests/snapshot-controller.yml.tpl", {
-        operator_replica = local.operator_replica
-      }),
     },
     {
       for f in fileset(path.module, "manifests/*.{yml,yaml}") : basename(f) => file("${path.module}/${f}")

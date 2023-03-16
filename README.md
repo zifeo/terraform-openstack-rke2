@@ -26,6 +26,16 @@ persistent storage, load-balancer integration and S3 automated etcd snapshots.
 - highly-available through ip failovers (via address-pairs and VRRP)
 - out of the box support for volume snapshot and Velero
 
+### Versioning
+
+| Component                  | Version                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| RKE2                       | [v1.26.2+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.26.2%2Brke2r1) |
+| Cinder                     | 2.1.1                                                                           |
+| OpenStack Cloud Controller | v1.26.2                                                                         |
+| OpenStack Cinder           | v1.26.2                                                                         |
+| Velero                     | v1.9.4                                                                          |
+
 ### Next features
 
 - [Magnum autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/magnum)

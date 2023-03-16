@@ -69,7 +69,7 @@ spec:
       plugin:
         image:
           repository: docker.io/k8scloudprovider/cinder-csi-plugin
-          tag: "v1.26.0"
+          tag: "v1.26.2"
           pullPolicy: IfNotPresent
         nodePlugin:
           tolerations: []

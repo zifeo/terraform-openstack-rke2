@@ -55,6 +55,7 @@ resource "openstack_networking_secgroup_rule_v2" "default" {
     for rule in [
       # bastion ssh
       { "port" : 22, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.agent },
+      { "port" : 22, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
       # etcd
       { "port" : 2379, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
       { "port" : 2380, "protocol" : "tcp", "from" : openstack_networking_secgroup_v2.server, "to" : openstack_networking_secgroup_v2.server },
