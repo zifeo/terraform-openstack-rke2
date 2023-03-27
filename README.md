@@ -109,7 +109,7 @@ terraform apply
 terraform apply -target='module.rke2.module.servers["server-a"]'
 ```
 
-See [example](./example/main.tf) for more options.
+See [examples](./examples) for more options.
 
 Note: it requires [rsync](https://rsync.samba.org) and
 [yq](https://github.com/mikefarah/yq) to generate remote kube config file. You
@@ -137,7 +137,7 @@ offering (but would need to be deepened).
 | 3x2cpu/4go HA servers with 3x8cpu/16go workers                                    | ~110.—    |
 
 ```bash
-git clone git@github.com:zifeo/terraform-openstack-rke2.git && cd terraform-openstack-rke2/example
+git clone git@github.com:zifeo/terraform-openstack-rke2.git && cd terraform-openstack-rke2/examples/single-server
 cat <<EOF > terraform.tfvars
 tenant_name = "PCP-XXXXXXX"
 user_name   = "PCU-XXXXXXX"
