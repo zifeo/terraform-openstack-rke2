@@ -72,7 +72,6 @@ write_files:
     server: https://${bootstrap_ip}:9345
     %{~ endif ~}
     node-ip: ${node_ip}
-    node-external-ip: ${bootstrap_ip}
     advertise-address: ${node_ip}
     write-kubeconfig-mode: "0640"
     tls-san:
@@ -86,6 +85,7 @@ write_files:
     etcd-s3-bucket: ${s3_bucket}
     etcd-snapshot-compress: true
       %{~ endif ~}
+    cloud-provider-name: external
     disable-cloud-controller: true
     disable: rke2-ingress-nginx
     disable-kube-proxy: true

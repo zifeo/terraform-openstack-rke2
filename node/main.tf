@@ -16,12 +16,6 @@ resource "openstack_blockstorage_volume_v3" "volume" {
   enable_online_resize = true
 }
 
-resource "openstack_compute_volume_attach_v2" "attach" {
-  count       = var.nodes_count
-  instance_id = openstack_compute_instance_v2.instance[count.index].id
-  volume_id   = openstack_blockstorage_volume_v3.volume[count.index].id
-}
-
 resource "openstack_networking_port_v2" "port" {
   count = var.nodes_count
 
@@ -61,6 +55,18 @@ resource "openstack_compute_instance_v2" "instance" {
     source_type           = "image"
     volume_size           = var.boot_volume_size
     boot_index            = 0
+    destination_type      = "volume"
+    delete_on_termination = true
+  }
+
+  block_device {
+    # currently, this is the only way to enable online resize and delete_on_termination
+    # this requires 2 apply per node (1 pass to delete the server, 1 pass to create the server)
+    # https://github.com/terraform-provider-openstack/terraform-provider-openstack/issues/1545
+    # potential solution: https://github.com/hashicorp/terraform/issues/31707
+    uuid                  = openstack_blockstorage_volume_v3.volume[count.index].id
+    source_type           = "volume"
+    boot_index            = 1
     destination_type      = "volume"
     delete_on_termination = true
   }

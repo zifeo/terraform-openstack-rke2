@@ -173,6 +173,12 @@ grep -r -A 1 repository: .
 crictl
 sudo systemctl status rke2-server
 
+# kubelet log
+less /var/lib/rancher/rke2/agent/logs/kubelet.log
+
+# containerd log
+less /var/lib/rancher/rke2/agent/containerd/containerd.log
+
 # restore s3 snapshot
 sudo systemctl stop rke2-server && sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH && sudo reboot
 # remove db on other server nodes
