@@ -10,6 +10,10 @@ variable "is_first" {
   type = bool
 }
 
+variable "is_persisted" {
+  type = bool
+}
+
 variable "bootstrap" {
   type = bool
 }
@@ -66,8 +70,7 @@ variable "bootstrap_ip" {
 }
 
 variable "bastion_host" {
-  type    = string
-  default = ""
+  type = string
 }
 
 variable "system_user" {
@@ -125,4 +128,8 @@ variable "manifests" {
 
 variable "ff_autoremove_agent" {
   type = bool
+}
+
+variable "ssh_authorized_keys" {
+  type = list(string)
 }

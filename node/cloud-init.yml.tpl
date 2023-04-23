@@ -1,17 +1,17 @@
 #cloud-config
 
-fs_setup:
-  - label: None
-    filesystem: ext4
-    device: ${rke2_device}
-mounts:
-  - ["${rke2_device}", "/var/lib/rancher/rke2", "ext4", "defaults,nofail", "0", "2"]
 resize_rootfs: True
 growpart:
   mode: auto
   devices:
-    - "/"
-    - ${rke2_device}
+    - /
+    - /var/lib/rancher/rke2
+fs_setup:
+  - label: None
+    filesystem: ext4
+    device: /dev/sdb
+mounts:
+  - ["/dev/sdb", "/var/lib/rancher/rke2", "ext4", "defaults,nofail", "0", "2"]
 
 package_update: true
 package_upgrade: true
@@ -24,6 +24,7 @@ packages:
   - htop
   - curl
   - jq
+  - logrotate
   - nfs-client
 
 users:
@@ -33,6 +34,22 @@ ntp:
   enabled: true
 
 write_files:
+- path: /etc/logrotate.conf
+  append: true
+  permissions: "0644"
+  owner: root:root
+  content: | 
+    maxsize 500M
+%{ if length(ssh_authorized_keys) > 0 ~}
+- path: /home/ubuntu/.ssh/authorized_keys
+  append: true
+  permissions: "0600"
+  owner: ubuntu:ubuntu
+  content: | 
+    %{~ for k in ssh_authorized_keys ~}
+    ${k}
+    %{~ endfor ~}
+%{~ endif ~}
 - path: /usr/local/bin/wait-for-node-ready.sh
   permissions: "0755"
   owner: root:root
@@ -105,8 +122,6 @@ write_files:
     node-ip: ${node_ip}
     ${indent(4,rke2_conf)}
 %{~ endif ~}
-
-
 
 runcmd:
   - /usr/local/bin/install-or-upgrade-rke2.sh

@@ -10,37 +10,30 @@ configuration possibilities.
 
 Inspired and reworked from
 [remche/terraform-openstack-rke2](https://github.com/remche/terraform-openstack-rke2)
-to add an easier interface, high-availability, stricter security groups,
-persistent storage, load-balancer integration and S3 automated etcd snapshots.
+to add an easier interface, high-availability, load-balancing and sensible
+defaults for running production workload.
 
 ## Features
 
 - [RKE2](https://docs.rke2.io) Kubernetes distribution : lightweight, stable,
   simple and secure
-- persisted `/var/lib/rancher/rke2` for (single) server durability
+- persisted `/var/lib/rancher/rke2` for single server durability
 - configure Openstack Swift or S3-like backend for automated etcd snapshots
-- smooth updates & agent nodes autoremoval with draining
-- bundled with Openstack Cinder CSI
+- smooth updates & agent nodes autoremoval with pod draining
+- bundled with Openstack Cloud Controller and Cinder CSI
 - Cilium networking (network policy support and no Kube-proxy)
-- load balancers (Openstack Octivia) provisioning
-- highly-available through ip failovers (via address-pairs and VRRP)
+- highly-available through load balancers
 - out of the box support for volume snapshot and Velero
 
 ### Versioning
 
-| Component                  | Version                                                                         |
-| -------------------------- | ------------------------------------------------------------------------------- |
-| RKE2                       | [v1.26.2+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.26.2%2Brke2r1) |
-| Cinder                     | 2.1.1                                                                           |
-| OpenStack Cloud Controller | v1.26.2                                                                         |
-| OpenStack Cinder           | v1.26.2                                                                         |
-| Velero                     | v1.9.4                                                                          |
-
-### Next features
-
-- [Magnum autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/magnum)
-- single-ip output NAT
-- gpu bindings
+| Component                  | Version                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| OpenStack                  | 2023.1 Antelope (verified), maybe older version are supported too                                                        |
+| RKE2                       | [v1.26.4+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.26.4%2Brke2r1)                                          |
+| OpenStack Cloud Controller | [v1.26.2](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.26.2/charts/openstack-cloud-controller-manager) |
+| OpenStack Cinder           | [v1.26.2](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.26.2/charts/cinder-csi-plugin)                  |
+| Velero                     | [v2.32.6](https://github.com/vmware-tanzu/helm-charts/tree/velero-2.32.6/charts/velero)                                  |
 
 ## Getting started
 
@@ -107,6 +100,9 @@ terraform init
 terraform apply
 # or, on upgrade, to process node by node
 terraform apply -target='module.rke2.module.servers["server-a"]'
+# for servers, apply on the majority of nodes, then for the remaining ones
+# this ensures the load balancer routes are updated as well
+terraform apply -target='module.rke2.openstack_lb_members_v2.k8s'
 ```
 
 See [examples](./examples) for more options.
@@ -166,23 +162,20 @@ See their technical [documentation](https://docs.infomaniak.cloud) and
 [RKE2 cheatsheet](https://gist.github.com/superseb/3b78f47989e0dbc1295486c186e944bf)
 
 ```
-# find version of bundled components
-grep -r -A 1 repository: . 
-
-# debug on nodes
+# alias already set on the nodes
 crictl
+kubectl (server only)
+
+# logs
 sudo systemctl status rke2-server
-
-# kubelet log
+journalctl -f -u rke2-server
 less /var/lib/rancher/rke2/agent/logs/kubelet.log
-
-# containerd log
 less /var/lib/rancher/rke2/agent/containerd/containerd.log
 
-# restore s3 snapshot
+# restore s3 snapshot (see restore_cmd output of the terraform module)
 sudo systemctl stop rke2-server && sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH && sudo reboot
 # remove db on other server nodes
-# sudo systemctl stop rke2-server && sudo rm -rf /var/lib/rancher/rke2/server/db && sudo reboot
+sudo systemctl stop rke2-server && sudo rm -rf /var/lib/rancher/rke2/server/db && sudo reboot
 # reboot all nodes
 
 # check san

@@ -3,9 +3,9 @@ variable "name" {
   type = string
 }
 
-variable "ssh_public_key_file" {
-  type    = string
-  default = "~/.ssh/id_rsa.pub"
+variable "ssh_authorized_keys" {
+  type    = list(string)
+  default = ["~/.ssh/id_rsa.pub"]
 }
 
 variable "floating_pool" {

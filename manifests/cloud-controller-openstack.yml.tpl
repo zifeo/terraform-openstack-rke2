@@ -10,9 +10,6 @@ spec:
   targetNamespace: kube-system
   bootstrap: true
   valuesContent: |-
-    image:
-      repository: docker.io/k8scloudprovider/openstack-cloud-controller-manager
-      tag: "v1.26.2"
     nodeSelector:
       node-role.kubernetes.io/master: "true"
     tolerations:

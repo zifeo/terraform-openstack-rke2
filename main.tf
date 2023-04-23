@@ -19,10 +19,11 @@ module "servers" {
     server.name => server
   }
 
-  name      = "${var.name}-${each.value.name}"
-  is_server = true
-  is_first  = var.servers[0].name == each.value.name
-  bootstrap = var.bootstrap
+  name         = "${var.name}-${each.value.name}"
+  is_server    = true
+  is_first     = var.servers[0].name == each.value.name
+  is_persisted = length(var.servers) == 1
+  bootstrap    = var.bootstrap
 
   nodes_count      = 1
   flavor_name      = each.value.flavor_name
@@ -41,13 +42,15 @@ module "servers" {
 
   s3 = local.s3
 
-  system_user  = each.value.system_user
-  keypair_name = openstack_compute_keypair_v2.key.name
+  system_user         = each.value.system_user
+  keypair_name        = openstack_compute_keypair_v2.key.name
+  ssh_authorized_keys = local.ssh_authorized_keys
 
   network_id   = openstack_networking_network_v2.net.id
   subnet_id    = openstack_networking_subnet_v2.servers.id
   secgroup_id  = openstack_networking_secgroup_v2.server.id
   bootstrap_ip = local.internal_ip
+  bastion_host = local.external_ip
   san          = [local.internal_ip, local.external_ip]
 
   manifests_folder = var.manifests_folder
@@ -112,10 +115,11 @@ module "agents" {
     agent.name => agent
   }
 
-  name      = "${var.name}-${each.value.name}"
-  is_server = false
-  is_first  = false
-  bootstrap = false
+  name         = "${var.name}-${each.value.name}"
+  is_server    = false
+  is_first     = false
+  is_persisted = false
+  bootstrap    = false
 
   nodes_count      = each.value.nodes_count
   flavor_name      = each.value.flavor_name
@@ -132,8 +136,9 @@ module "agents" {
   rke2_volume_size = each.value.rke2_volume_size
   rke2_volume_type = each.value.rke2_volume_type
 
-  system_user  = each.value.system_user
-  keypair_name = openstack_compute_keypair_v2.key.name
+  system_user         = each.value.system_user
+  keypair_name        = openstack_compute_keypair_v2.key.name
+  ssh_authorized_keys = local.ssh_authorized_keys
 
   network_id   = openstack_networking_network_v2.net.id
   subnet_id    = openstack_networking_subnet_v2.agents.id

@@ -9,7 +9,7 @@ resource "openstack_compute_servergroup_v2" "servergroup" {
 }
 
 resource "openstack_blockstorage_volume_v3" "volume" {
-  count                = var.nodes_count
+  count                = var.is_persisted ? var.nodes_count : 0
   name                 = "${var.name}-${count.index + 1}-rke2"
   size                 = var.rke2_volume_size
   volume_type          = var.rke2_volume_type
@@ -60,20 +60,21 @@ resource "openstack_compute_instance_v2" "instance" {
   }
 
   block_device {
-    # currently, this is the only way to enable online resize and delete_on_termination
+    uuid                  = var.is_persisted ? openstack_blockstorage_volume_v3.volume[count.index].id : null
+    source_type           = var.is_persisted ? "volume" : "blank"
+    boot_index            = 1
+    destination_type      = "volume"
+    volume_size           = var.is_persisted ? null : var.rke2_volume_size
+    volume_type           = var.is_persisted ? null : var.rke2_volume_type
+    delete_on_termination = var.is_persisted ? false : true
+    # currently, you cannot enable online resize and delete_on_termination
     # this requires 2 apply per node (1 pass to delete the server, 1 pass to create the server)
     # https://github.com/terraform-provider-openstack/terraform-provider-openstack/issues/1545
     # potential solution: https://github.com/hashicorp/terraform/issues/31707
-    uuid                  = openstack_blockstorage_volume_v3.volume[count.index].id
-    source_type           = "volume"
-    boot_index            = 1
-    destination_type      = "volume"
-    delete_on_termination = true
   }
 
   # yamlencode(yamldecode to debug yaml
   user_data = base64encode(templatefile("${path.module}/cloud-init.yml.tpl", {
-    rke2_device  = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${openstack_blockstorage_volume_v3.volume[count.index].id}"
     rke2_token   = var.rke2_token
     rke2_version = var.rke2_version
     rke2_conf    = var.rke2_config != null ? var.rke2_config : ""
@@ -89,10 +90,11 @@ resource "openstack_compute_instance_v2" "instance" {
       } : {},
       { for k, v in var.manifests : k => base64gzip(v) },
     ) : {}
-    s3_endpoint      = var.s3.endpoint
-    s3_access_key    = var.s3.access_key
-    s3_access_secret = var.s3.access_secret
-    s3_bucket        = var.s3.bucket
-    system_user      = var.system_user
+    s3_endpoint         = var.s3.endpoint
+    s3_access_key       = var.s3.access_key
+    s3_access_secret    = var.s3.access_secret
+    s3_bucket           = var.s3.bucket
+    system_user         = var.system_user
+    ssh_authorized_keys = var.ssh_authorized_keys
   }))
 }
