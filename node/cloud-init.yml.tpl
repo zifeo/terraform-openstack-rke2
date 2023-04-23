@@ -89,20 +89,20 @@ write_files:
     server: https://${bootstrap_ip}:9345
     %{~ endif ~}
     node-ip: ${node_ip}
+    cloud-provider-name: external
     advertise-address: ${node_ip}
     write-kubeconfig-mode: "0640"
     tls-san:
       ${indent(6, yamlencode(san))}
     kube-apiserver-arg: "kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname"
-      %{~ if s3_endpoint != "" ~}
+    %{~ if s3_endpoint != "" ~}
     etcd-s3: true
     etcd-s3-endpoint: ${s3_endpoint}
     etcd-s3-access-key: ${s3_access_key}
     etcd-s3-secret-key: ${s3_access_secret}
     etcd-s3-bucket: ${s3_bucket}
     etcd-snapshot-compress: true
-      %{~ endif ~}
-    cloud-provider-name: external
+    %{~ endif ~}
     disable-cloud-controller: true
     disable: rke2-ingress-nginx
     disable-kube-proxy: true
@@ -120,6 +120,7 @@ write_files:
     token: "${rke2_token}"
     server: https://${bootstrap_ip}:9345
     node-ip: ${node_ip}
+    cloud-provider-name: external
     ${indent(4,rke2_conf)}
 %{~ endif ~}
 

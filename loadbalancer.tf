@@ -75,7 +75,6 @@ resource "openstack_lb_members_v2" "ssh" {
   }
 }
 
-
 resource "openstack_lb_listener_v2" "k8s" {
   name                = "k8s"
   protocol            = "TCP"
