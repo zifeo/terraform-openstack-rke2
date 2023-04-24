@@ -90,11 +90,11 @@ resource "openstack_compute_instance_v2" "instance" {
       } : {},
       { for k, v in var.manifests : k => base64gzip(v) },
     ) : {}
-    s3_endpoint         = var.s3.endpoint
-    s3_access_key       = var.s3.access_key
-    s3_access_secret    = var.s3.access_secret
-    s3_bucket           = var.s3.bucket
-    system_user         = var.system_user
-    ssh_authorized_keys = var.ssh_authorized_keys
+    s3_endpoint      = var.s3.endpoint
+    s3_access_key    = var.s3.access_key
+    s3_access_secret = var.s3.access_secret
+    s3_bucket        = var.s3.bucket
+    system_user      = var.system_user
+    authorized_keys  = join("\n", var.ssh_authorized_keys)
   }))
 }
