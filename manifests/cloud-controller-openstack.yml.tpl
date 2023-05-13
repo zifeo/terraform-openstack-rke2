@@ -16,6 +16,9 @@ spec:
       - effect: NoExecute
         key: CriticalAddonsOnly
         operator: "Exists"
+      - effect: NoSchedule
+        key: node.cloudprovider.kubernetes.io/uninitialized
+        value: "true"
     resources:
       requests:
         cpu: 50m
