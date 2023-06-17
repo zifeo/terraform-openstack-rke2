@@ -7,8 +7,8 @@ locals {
   } : var.s3_backup
 
   external_ip      = openstack_networking_floatingip_v2.external.address
-  internal_ip      = cidrhost(var.subnet_lb_cidr, 3)
-  operator_replica = min(2, length(var.servers))
+  internal_ip      = cidrhost(var.subnet_lb_cidr, 4)
+  operator_replica = length(var.servers) > 1 ? 2 : 1
 }
 
 module "servers" {
@@ -30,6 +30,7 @@ module "servers" {
   image_name       = each.value.image_name
   image_uuid       = each.value.image_uuid
   boot_volume_size = each.value.boot_volume_size
+  boot_volume_type = each.value.boot_volume_type
 
   availability_zones = coalesce(each.value.availability_zones, [])
   affinity           = coalesce(each.value.affinity, "soft-anti-affinity")
@@ -92,6 +93,9 @@ module "servers" {
         cluster_name     = var.name
         cluster_id       = var.cluster_id
       }),
+      "ha.yml" : templatefile("${path.module}/manifests/ha.yml.tpl", {
+        operator_replica = local.operator_replica
+      }),
     },
     {
       for f in fileset(path.module, "manifests/*.{yml,yaml}") : basename(f) => file("${path.module}/${f}")
@@ -126,6 +130,7 @@ module "agents" {
   image_name       = each.value.image_name
   image_uuid       = each.value.image_uuid
   boot_volume_size = each.value.boot_volume_size
+  boot_volume_type = each.value.boot_volume_type
 
   availability_zones = coalesce(each.value.availability_zones, [])
   affinity           = coalesce(each.value.affinity, "soft-anti-affinity")

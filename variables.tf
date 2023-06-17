@@ -100,6 +100,7 @@ variable "servers" {
     image_uuid         = optional(string)
     system_user        = string
     boot_volume_size   = number
+    boot_volume_type   = optional(string)
     rke2_version       = string
     rke2_config        = optional(string)
     rke2_volume_size   = number
@@ -130,6 +131,7 @@ variable "agents" {
     image_uuid         = optional(string)
     system_user        = string
     boot_volume_size   = number
+    boot_volume_type   = optional(string)
     rke2_version       = string
     rke2_config        = optional(string)
     rke2_volume_size   = number
@@ -174,7 +176,8 @@ variable "cluster_id" {
 }
 
 variable "object_store_endpoint" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "identity_endpoint" {

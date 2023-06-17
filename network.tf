@@ -26,7 +26,6 @@ resource "openstack_networking_subnet_v2" "lb" {
   cidr            = var.subnet_lb_cidr
   ip_version      = 4
   dns_nameservers = var.dns_nameservers4
-
 }
 
 data "openstack_networking_network_v2" "floating_net" {

@@ -5,8 +5,10 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
+    %{ if operator_replica > 1 }
     nodeSelector:
       node-role.kubernetes.io/master: "true"
+    %{ endif }
 
 ---
 apiVersion: helm.cattle.io/v1
