@@ -13,12 +13,13 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
 
 module "rke2" {
   # source = "zifeo/rke2/openstack"
-  source = "./.."
+  # version = ""
+  source = "./../.."
 
   # must be true for single-server cluster or only on first run for HA cluster 
   bootstrap           = true
-  name                = "cluster"
-  ssh_public_key_file = "~/.ssh/id_rsa.pub"
+  name                = "single-server"
+  ssh_authorized_keys = ["~/.ssh/id_rsa.pub"]
   floating_pool       = "ext-floating1"
   # should be restricted to a secure bastion
   rules_ssh_cidr = "0.0.0.0/0"
@@ -34,7 +35,7 @@ module "rke2" {
     system_user      = "ubuntu"
     boot_volume_size = 4
 
-    rke2_version     = "v1.25.5+rke2r2"
+    rke2_version     = "v1.26.4+rke2r1"
     rke2_volume_size = 8
     # https://docs.rke2.io/install/install_options/install_options/#configuration-file
     rke2_config = local.config
@@ -50,7 +51,7 @@ module "rke2" {
       system_user      = "ubuntu"
       boot_volume_size = 4
 
-      rke2_version     = "v1.25.5+rke2r2"
+      rke2_version     = "v1.26.4+rke2r1"
       rke2_volume_size = 8
     }
   ]
@@ -97,7 +98,7 @@ terraform {
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = ">= 1.49.0"
+      version = ">= 1.51.1"
     }
   }
 }

@@ -54,6 +54,7 @@ resource "openstack_compute_instance_v2" "instance" {
     uuid                  = var.image_uuid != null ? var.image_uuid : data.openstack_images_image_v2.image.id
     source_type           = "image"
     volume_size           = var.boot_volume_size
+    volume_type           = var.boot_volume_type
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
@@ -98,3 +99,11 @@ resource "openstack_compute_instance_v2" "instance" {
     authorized_keys  = join("\n", var.ssh_authorized_keys)
   }))
 }
+
+/*
+resource "local_file" "debug" {
+  count    = var.nodes_count
+  filename = "${path.module}/${var.name}-${count.index + 1}.yml"
+  content = 
+}
+*/

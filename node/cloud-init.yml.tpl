@@ -83,7 +83,7 @@ write_files:
     advertise-address: ${node_ip}
     write-kubeconfig-mode: "0640"
     tls-san:
-      ${indent(6, yamlencode(san))}
+      ${ indent(6, yamlencode(san)) }
     kube-apiserver-arg: "kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname"
     %{~ if s3_endpoint != "" ~}
     etcd-s3: true
