@@ -1,4 +1,0 @@
-terraform apply:
-  TF_VAR_user_name: "op://exponent.1password.eu/Private/Openstack%20teo-debug/username"
-  TF_VAR_password: "op://exponent.1password.eu/Private/Openstack%20teo-debug/password"
-  TF_VAR_tenant_name: "op://exponent.1password.eu/Private/Openstack%20teo-debug/project"

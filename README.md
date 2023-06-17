@@ -115,22 +115,19 @@ yourself `/etc/rancher/rke2/rke2.yaml` on server nodes.
 ## Infomaniak OpenStack
 
 A stable, performent and fully-equiped Kubernetes cluster in Switzerland for as
-little as CHF 11.—/month (at the time of writing):
+little as CHF 26.90/month (at the time of writing):
 
 - nginx-ingress with floating ip (perfect under Cloudflare proxy)
 - persistence through cinder-csi storage classes (retain, delete)
 - 1 server 1cpu/2go (= master)
 - 1 agent 1cpu/2go (= worker)
 
-Quick benchmarks confirmed that the price/performance outperforms Scaleway
-offering (but would need to be deepened).
-
-| Flavour                                                                           | CHF/month |
-| --------------------------------------------------------------------------------- | --------- |
-| 2×2.93 (instances) + 0.09×2×(4+6) (blockstorage) + 3.34 (IP) + HA (load-balancer) | 21.—      |
-| single 2cpu/4go server with 1x4cpu/8go worker                                     | ~35.—     |
-| 3x2cpu/4go HA servers with 1x4cpu/8go worker                                      | ~50.—     |
-| 3x2cpu/4go HA servers with 3x8cpu/16go workers                                    | ~110.—    |
+| Flavour                                                                            | CHF/month |
+| ---------------------------------------------------------------------------------- | --------- |
+| 2×5.88 (instances) + 0.09×2×(4+6) (block storage) + 3.34 (IP) + 10 (load-balancer) | 26.90     |
+| single 2cpu/4go server with 1x4cpu/16Go worker                                     | ~37.—     |
+| 3x2cpu/4go HA servers with 1x4cpu/16Go worker                                      | ~50.—     |
+| 3x2cpu/4go HA servers with 3x4cpu/16Go workers                                     | ~85.—     |
 
 ```bash
 git clone git@github.com:zifeo/terraform-openstack-rke2.git && cd terraform-openstack-rke2/examples/single-server

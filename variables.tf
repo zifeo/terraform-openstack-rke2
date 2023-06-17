@@ -176,7 +176,8 @@ variable "cluster_id" {
 }
 
 variable "object_store_endpoint" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "identity_endpoint" {
