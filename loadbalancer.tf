@@ -10,7 +10,7 @@ resource "openstack_lb_loadbalancer_v2" "lb" {
   vip_network_id        = openstack_networking_network_v2.net.id
   vip_address           = local.internal_ip
   admin_state_up        = "true"
-  loadbalancer_provider = "octavia"
+  loadbalancer_provider = "${var.lb_provider}"
 
   depends_on = [
     openstack_networking_subnet_v2.lb

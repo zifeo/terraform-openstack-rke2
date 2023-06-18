@@ -40,6 +40,7 @@ module "servers" {
   rke2_token       = random_string.rke2_token.result
   rke2_volume_size = each.value.rke2_volume_size
   rke2_volume_type = each.value.rke2_volume_type
+  rke2_volume_dev  = each.value.rke2_volume_dev
 
   s3 = local.s3
 
@@ -85,6 +86,7 @@ module "servers" {
         network_id          = openstack_networking_network_v2.net.id
         subnet_id           = openstack_networking_subnet_v2.lb.id
         floating_network_id = data.openstack_networking_network_v2.floating_net.id
+        lb_provider         = var.lb_provider
         cluster_name        = var.name
       }),
       "cilium.yml" : templatefile("${path.module}/manifests/cilium.yml.tpl", {
@@ -140,6 +142,7 @@ module "agents" {
   rke2_token       = random_string.rke2_token.result
   rke2_volume_size = each.value.rke2_volume_size
   rke2_volume_type = each.value.rke2_volume_type
+  rke2_volume_dev = each.value.rke2_volume_dev
 
   system_user         = each.value.system_user
   keypair_name        = openstack_compute_keypair_v2.key.name

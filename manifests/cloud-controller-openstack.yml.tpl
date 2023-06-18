@@ -37,7 +37,7 @@ spec:
         %{~ endif ~}
         subnet-id: ${subnet_id}
         network-id: ${network_id}
-        lb-provider: octavia
+        lb-provider: ${lb_provider}
         manage-security-groups: true
         max-shared-lb: 10
     controllerExtraArgs: |-
