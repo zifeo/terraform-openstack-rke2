@@ -3,7 +3,8 @@ module "rke2" {
   # version = ""
   source = "./../.."
 
-  # must be true for single-server cluster or only on the first run for HA cluster 
+  # must be true for single server cluster or
+  # only on the first run for high-availability cluster 
   bootstrap           = true
   name                = "single-server"
   ssh_authorized_keys = ["~/.ssh/id_rsa.pub"]
@@ -24,9 +25,8 @@ module "rke2" {
 
     rke2_version     = "v1.26.4+rke2r1"
     rke2_volume_size = 6
-    rke2_config      = <<EOF
-# https://docs.rke2.io/install/install_options/server_config/
-
+    # https://docs.rke2.io/install/install_options/server_config/
+    rke2_config = <<EOF
 etcd-snapshot-schedule-cron: "0 */6 * * *"
 etcd-snapshot-retention: 20
 
@@ -49,7 +49,7 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
     }
   ]
 
-  # enable automatically `kubectl delete node AGENT-NAME` after an agent change
+  # enable automatically agent removal of the cluster
   ff_autoremove_agent = true
   # rewrite kubeconfig
   ff_write_kubeconfig = true
