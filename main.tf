@@ -35,12 +35,12 @@ module "servers" {
   availability_zones = coalesce(each.value.availability_zones, [])
   affinity           = coalesce(each.value.affinity, "soft-anti-affinity")
 
-  rke2_version        = each.value.rke2_version
-  rke2_config         = each.value.rke2_config
-  rke2_token          = random_string.rke2_token.result
-  rke2_volume_size    = each.value.rke2_volume_size
-  rke2_volume_type    = each.value.rke2_volume_type
-  rke2_volume_device  = each.value.rke2_volume_device
+  rke2_version       = each.value.rke2_version
+  rke2_config        = each.value.rke2_config
+  rke2_token         = random_string.rke2_token.result
+  rke2_volume_size   = each.value.rke2_volume_size
+  rke2_volume_type   = each.value.rke2_volume_type
+  rke2_volume_device = each.value.rke2_volume_device
 
   s3 = local.s3
 
