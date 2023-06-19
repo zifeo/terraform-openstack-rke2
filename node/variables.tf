@@ -105,6 +105,12 @@ variable "rke2_volume_type" {
   type = string
 }
 
+variable "rke2_volume_device" {
+  type     = string
+  default  = "/dev/sda"
+  nullable = false
+}
+
 variable "s3" {
   type = object({
     endpoint      = string

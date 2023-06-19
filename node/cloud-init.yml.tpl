@@ -9,9 +9,9 @@ growpart:
 fs_setup:
   - label: None
     filesystem: ext4
-    device: /dev/sdb
+    device: ${rke2_device}
 mounts:
-  - ["/dev/sdb", "/var/lib/rancher/rke2", "ext4", "defaults,nofail", "0", "2"]
+  - [${rke2_device}, "/var/lib/rancher/rke2", "ext4", "defaults,nofail", "0", "2"]
 
 package_update: true
 package_upgrade: true
