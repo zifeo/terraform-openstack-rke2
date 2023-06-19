@@ -35,12 +35,12 @@ module "servers" {
   availability_zones = coalesce(each.value.availability_zones, [])
   affinity           = coalesce(each.value.affinity, "soft-anti-affinity")
 
-  rke2_version     = each.value.rke2_version
-  rke2_config      = each.value.rke2_config
-  rke2_token       = random_string.rke2_token.result
-  rke2_volume_size = each.value.rke2_volume_size
-  rke2_volume_type = each.value.rke2_volume_type
-  rke2_volume_dev  = each.value.rke2_volume_dev
+  rke2_version        = each.value.rke2_version
+  rke2_config         = each.value.rke2_config
+  rke2_token          = random_string.rke2_token.result
+  rke2_volume_size    = each.value.rke2_volume_size
+  rke2_volume_type    = each.value.rke2_volume_type
+  rke2_volume_device  = each.value.rke2_volume_device
 
   s3 = local.s3
 
@@ -137,12 +137,12 @@ module "agents" {
   availability_zones = coalesce(each.value.availability_zones, [])
   affinity           = coalesce(each.value.affinity, "soft-anti-affinity")
 
-  rke2_version     = each.value.rke2_version
-  rke2_config      = each.value.rke2_config
-  rke2_token       = random_string.rke2_token.result
-  rke2_volume_size = each.value.rke2_volume_size
-  rke2_volume_type = each.value.rke2_volume_type
-  rke2_volume_dev = each.value.rke2_volume_dev
+  rke2_version       = each.value.rke2_version
+  rke2_config        = each.value.rke2_config
+  rke2_token         = random_string.rke2_token.result
+  rke2_volume_size   = each.value.rke2_volume_size
+  rke2_volume_type   = each.value.rke2_volume_type
+  rke2_volume_device = each.value.rke2_volume_device
 
   system_user         = each.value.system_user
   keypair_name        = openstack_compute_keypair_v2.key.name

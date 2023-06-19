@@ -86,8 +86,9 @@ variable "dns_nameservers4" {
 }
 
 variable "lb_provider" {
-  type = string
-  default = "octavia"
+  type     = string
+  default  = "octavia"
+  nullable = false
 }
 
 variable "bootstrap" {
@@ -110,7 +111,7 @@ variable "servers" {
     rke2_config        = optional(string)
     rke2_volume_size   = number
     rke2_volume_type   = optional(string)
-    rke2_volume_dev    = optional(string)
+    rke2_volume_device = optional(string)
   }))
   validation {
     condition = (
@@ -142,7 +143,7 @@ variable "agents" {
     rke2_config        = optional(string)
     rke2_volume_size   = number
     rke2_volume_type   = optional(string)
-    rke2_volume_dev    = optional(string)
+    rke2_volume_device = optional(string)
   }))
   validation {
     condition = (
