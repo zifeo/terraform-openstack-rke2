@@ -7,7 +7,7 @@ locals {
   } : var.s3_backup
 
   external_ip      = openstack_networking_floatingip_v2.external.address
-  internal_ip      = cidrhost(var.subnet_lb_cidr, 4)
+  internal_ip      = var.lb_internal_ip != null ? var.lb_internal_ip : cidrhost(var.subnet_lb_cidr, 4)
   operator_replica = length(var.servers) > 1 ? 2 : 1
 }
 

@@ -18,13 +18,17 @@ module "rke2" {
   servers = [{
     name = "server"
 
-    flavor_name      = "a2-ram4-disk0"
-    image_name       = "Ubuntu 22.04 LTS Jammy Jellyfish"
+    flavor_name = "a2-ram4-disk0"
+    image_name  = "Ubuntu 22.04 LTS Jammy Jellyfish"
+    # if you want fixed image version
+    # image_uuid       = "UUID"
+    image_uuid = "8ca95333-e5c3-4d9b-90bc-f261ca434114"
+
     system_user      = "ubuntu"
-    boot_volume_size = 4
+    boot_volume_size = 8
 
     rke2_version     = "v1.26.4+rke2r1"
-    rke2_volume_size = 6
+    rke2_volume_size = 8
     # https://docs.rke2.io/install/install_options/server_config/
     rke2_config = <<EOF
 etcd-snapshot-schedule-cron: "0 */6 * * *"
@@ -39,13 +43,17 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
       name        = "pool-a"
       nodes_count = 1
 
-      flavor_name      = "a1-ram2-disk0"
-      image_name       = "Ubuntu 22.04 LTS Jammy Jellyfish"
+      flavor_name = "a1-ram2-disk0"
+      image_name  = "Ubuntu 22.04 LTS Jammy Jellyfish"
+      # if you want fixed image version
+      # image_uuid       = "UUID"
+      image_uuid = "8ca95333-e5c3-4d9b-90bc-f261ca434114"
+
       system_user      = "ubuntu"
-      boot_volume_size = 4
+      boot_volume_size = 8
 
       rke2_version     = "v1.26.4+rke2r1"
-      rke2_volume_size = 6
+      rke2_volume_size = 8
     }
   ]
 

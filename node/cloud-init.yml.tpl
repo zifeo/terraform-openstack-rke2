@@ -26,6 +26,7 @@ packages:
   - jq
   - logrotate
   - nfs-client
+  - fio
 
 users:
   - default

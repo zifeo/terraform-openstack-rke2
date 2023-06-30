@@ -91,6 +91,11 @@ variable "lb_provider" {
   nullable = false
 }
 
+variable "lb_internal_ip" {
+  type    = string
+  default = null
+}
+
 variable "bootstrap" {
   type    = bool
   default = false
