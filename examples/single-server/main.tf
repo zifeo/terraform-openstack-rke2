@@ -27,7 +27,7 @@ module "rke2" {
     system_user      = "ubuntu"
     boot_volume_size = 8
 
-    rke2_version     = "v1.26.4+rke2r1"
+    rke2_version     = "v1.26.6+rke2r1"
     rke2_volume_size = 8
     # https://docs.rke2.io/install/install_options/server_config/
     rke2_config = <<EOF
@@ -52,7 +52,7 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
       system_user      = "ubuntu"
       boot_volume_size = 8
 
-      rke2_version     = "v1.26.4+rke2r1"
+      rke2_version     = "v1.26.6+rke2r1"
       rke2_volume_size = 8
     }
   ]
@@ -95,7 +95,7 @@ terraform {
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = "~> 1.51.1"
+      version = "~> 1.49.0"
     }
   }
 }

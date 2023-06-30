@@ -6,10 +6,11 @@ metadata:
 spec:
   chart: openstack-cloud-controller-manager
   repo: https://kubernetes.github.io/cloud-provider-openstack
-  version: 1.4.0
+  version: 2.27.1
   targetNamespace: kube-system
   bootstrap: true
   valuesContent: |-
+    logVerbosityLevel: 4 # 2
     nodeSelector:
       node-role.kubernetes.io/master: "true"
     tolerations:

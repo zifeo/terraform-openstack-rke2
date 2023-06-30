@@ -109,6 +109,6 @@ resource "openstack_compute_instance_v2" "instance" {
 resource "local_file" "debug" {
   count    = var.nodes_count
   filename = "${path.module}/${var.name}-${count.index + 1}.yml"
-  content = 
+  content = ""
 }
 */

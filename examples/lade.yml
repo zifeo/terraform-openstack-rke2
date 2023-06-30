@@ -1,4 +1,5 @@
 terraform:
+  OS_CLOUD: "" # avoid mistakenly using the wrong cloud
   TF_VAR_username: "op://exponent.1password.eu/Private/Openstack%20teo-debug/username"
   TF_VAR_password: "op://exponent.1password.eu/Private/Openstack%20teo-debug/password"
   TF_VAR_project: "op://exponent.1password.eu/Private/Openstack%20teo-debug/project"

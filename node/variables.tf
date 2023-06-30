@@ -107,7 +107,7 @@ variable "rke2_volume_type" {
 
 variable "rke2_volume_device" {
   type     = string
-  default  = "/dev/sda"
+  default  = "/dev/sdb"
   nullable = false
 }
 
