@@ -30,9 +30,9 @@ defaults for running production workload.
 | Component                  | Version                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | OpenStack                  | 2023.1 Antelope (verified), maybe older version are supported too                                                        |
-| RKE2                       | [v1.26.4+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.26.4%2Brke2r1)                                          |
-| OpenStack Cloud Controller | [v1.26.2](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.26.2/charts/openstack-cloud-controller-manager) |
-| OpenStack Cinder           | [v1.26.2](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.26.2/charts/cinder-csi-plugin)                  |
+| RKE2                       | [v1.26.6+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.26.6%2Brke2r1)                                          |
+| OpenStack Cloud Controller | [v1.27.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.27.1/charts/openstack-cloud-controller-manager) |
+| OpenStack Cinder           | [v1.27.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.27.1/charts/cinder-csi-plugin)                  |
 | Velero                     | [v2.32.6](https://github.com/vmware-tanzu/helm-charts/tree/velero-2.32.6/charts/velero)                                  |
 
 ## Getting started
@@ -99,8 +99,11 @@ kubectl (server only)
 # logs
 sudo systemctl status rke2-server
 journalctl -f -u rke2-server
+sudo systemctl status rke2-agent.service
+journalctl -f -u rke2-agent
 less /var/lib/rancher/rke2/agent/logs/kubelet.log
 less /var/lib/rancher/rke2/agent/containerd/containerd.log
+less /var/log/cloud-init-output.log
 
 # restore s3 snapshot (see restore_cmd output of the terraform module)
 sudo systemctl stop rke2-server && sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH && sudo reboot

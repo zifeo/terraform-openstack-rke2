@@ -87,7 +87,7 @@ variable "dns_nameservers4" {
 
 variable "lb_provider" {
   type     = string
-  default  = "octavia"
+  default  = "amphora"
   nullable = false
 }
 

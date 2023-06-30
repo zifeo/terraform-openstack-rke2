@@ -11,8 +11,9 @@ terraform {
       version = "~> 3.2.1"
     }
     openstack = {
-      source  = "terraform-provider-openstack/openstack"
-      version = "~> 1.51.1"
+      source = "terraform-provider-openstack/openstack"
+      # 1.5x.x misses a bool state value for openstack_objectstorage_container_v1
+      version = "~> 1.49.0"
     }
   }
 }
