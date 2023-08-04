@@ -24,7 +24,6 @@ resource "null_resource" "agent_remove" {
       "sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml delete node ${lower(self.triggers.name)}"
     ]
   }
-
 }
 
 resource "null_resource" "wait_for_rke2" {
