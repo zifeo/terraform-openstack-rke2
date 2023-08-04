@@ -57,8 +57,8 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
     }
   ]
 
-  # enable automatically agent removal of the cluster
-  ff_autoremove_agent = true
+  # enable automatically agent removal of the cluster (wait max for 30s)
+  ff_autoremove_agent = "30s"
   # rewrite kubeconfig
   ff_write_kubeconfig = true
   # deploy etcd backup
