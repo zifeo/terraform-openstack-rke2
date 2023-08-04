@@ -137,7 +137,7 @@ variable "manifests" {
 }
 
 variable "ff_autoremove_agent" {
-  type = bool
+  type = string
 }
 
 variable "ssh_authorized_keys" {

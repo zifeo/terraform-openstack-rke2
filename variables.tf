@@ -203,8 +203,8 @@ variable "ff_write_kubeconfig" {
 }
 
 variable "ff_autoremove_agent" {
-  type    = bool
-  default = true
+  type    = string
+  default = null
 }
 
 variable "ff_native_backup" {

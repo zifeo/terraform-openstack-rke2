@@ -12,8 +12,8 @@ terraform {
     }
     openstack = {
       source = "terraform-provider-openstack/openstack"
-      # 1.5x.x misses a bool state value for openstack_objectstorage_container_v1
-      version = "~> 1.49.0"
+      # 1.5x.x is affected by https://github.com/terraform-provider-openstack/terraform-provider-openstack/issues/1601
+      version = "~> 1.52.1"
     }
   }
 }

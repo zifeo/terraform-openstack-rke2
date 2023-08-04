@@ -105,7 +105,7 @@ module "servers" {
     var.manifests,
   )
 
-  ff_autoremove_agent = false
+  ff_autoremove_agent = null
 
   depends_on = [
     openstack_lb_listener_v2.k8s,
