@@ -33,4 +33,23 @@ spec:
       requests:
         cpu: 50m
         memory: 128Mi
-
+    hubble:
+      enabled: true
+      metrics:
+        enabled:
+          - dns
+          - drop
+          - flow
+          - flows-to-world
+          - httpV2
+          - port-distribution
+          - tcp
+          - icmp
+      relay:
+        enabled: true
+        resources:
+          requests:
+            cpu: 25m
+            memory: 128Mi
+          limits:
+            memory: 128Mi
