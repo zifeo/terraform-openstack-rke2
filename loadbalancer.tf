@@ -56,10 +56,10 @@ resource "openstack_lb_monitor_v2" "ssh" {
   name             = "SSH"
   pool_id          = openstack_lb_pool_v2.ssh[0].id
   type             = "TCP"
-  delay            = 5
-  timeout          = 5
-  max_retries      = 3
-  max_retries_down = 3
+  delay            = 2
+  timeout          = 2
+  max_retries      = 5
+  max_retries_down = 5
 }
 
 resource "openstack_lb_members_v2" "ssh" {
@@ -97,10 +97,10 @@ resource "openstack_lb_monitor_v2" "k8s" {
   name             = "k8s"
   pool_id          = openstack_lb_pool_v2.k8s.id
   type             = "TLS-HELLO"
-  delay            = 10
-  timeout          = 5
-  max_retries      = 3
-  max_retries_down = 3
+  delay            = 2
+  timeout          = 2
+  max_retries      = 5
+  max_retries_down = 5
 }
 
 resource "openstack_lb_members_v2" "k8s" {
@@ -135,10 +135,10 @@ resource "openstack_lb_monitor_v2" "rke2" {
   name             = "rke2"
   pool_id          = openstack_lb_pool_v2.rke2.id
   type             = "TLS-HELLO"
-  delay            = 10
-  timeout          = 5
-  max_retries      = 3
-  max_retries_down = 3
+  delay            = 2
+  timeout          = 2
+  max_retries      = 5
+  max_retries_down = 5
 }
 
 resource "openstack_lb_members_v2" "rke2" {

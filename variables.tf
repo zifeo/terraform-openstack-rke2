@@ -211,3 +211,8 @@ variable "ff_native_backup" {
   type    = bool
   default = true
 }
+
+variable "ff_wait_ready" {
+  type    = bool
+  default = true
+}
