@@ -27,7 +27,7 @@ resource "null_resource" "agent_remove" {
 }
 
 resource "null_resource" "wait_for_rke2" {
-  count = var.nodes_count
+  count = var.ff_wait_ready ? var.nodes_count : 0
   triggers = {
     agent        = openstack_compute_instance_v2.instance[count.index].id
     host         = openstack_compute_instance_v2.instance[count.index].access_ip_v4

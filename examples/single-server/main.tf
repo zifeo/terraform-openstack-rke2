@@ -68,6 +68,11 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
   object_store_endpoint = "s3.pub1.infomaniak.cloud"
 }
 
+output "restore_cmd" {
+  value     = module.rke2.restore_cmd
+  sensitive = true
+}
+
 variable "project" {
   type = string
 }

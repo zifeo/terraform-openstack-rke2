@@ -106,6 +106,7 @@ module "servers" {
   )
 
   ff_autoremove_agent = null
+  ff_wait_ready       = var.ff_wait_ready
 
   depends_on = [
     openstack_lb_listener_v2.k8s,
@@ -155,6 +156,7 @@ module "agents" {
   bastion_host = local.external_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
+  ff_wait_ready       = var.ff_wait_ready
 
   depends_on = [
     openstack_lb_listener_v2.k8s,
