@@ -106,10 +106,15 @@ less /var/lib/rancher/rke2/agent/containerd/containerd.log
 less /var/log/cloud-init-output.log
 
 # restore s3 snapshot (see restore_cmd output of the terraform module)
-sudo systemctl stop rke2-server && sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH && sudo reboot
+sudo systemctl stop rke2-server
+sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH
+sudo systemctl start rke2-server
 # remove db on other server nodes
-sudo systemctl stop rke2-server && sudo rm -rf /var/lib/rancher/rke2/server/db && sudo reboot
-# reboot all nodes
+sudo systemctl stop rke2-server
+sudo rm -rf /var/lib/rancher/rke2/server/db
+sudo systemctl start rke2-server
+# reboot all nodes one by one to make sure all is stable
+sudo reboot
 
 # check san
 openssl s_client -connect 192.168.42.3:10250 </dev/null 2>/dev/null | openssl x509 -inform pem -text

@@ -58,7 +58,7 @@ resource "openstack_lb_monitor_v2" "ssh" {
   type             = "TCP"
   delay            = 2
   timeout          = 2
-  max_retries      = 5
+  max_retries      = 1
   max_retries_down = 5
 }
 
@@ -99,7 +99,7 @@ resource "openstack_lb_monitor_v2" "k8s" {
   type             = "TLS-HELLO"
   delay            = 2
   timeout          = 2
-  max_retries      = 5
+  max_retries      = 1
   max_retries_down = 5
 }
 
@@ -137,7 +137,7 @@ resource "openstack_lb_monitor_v2" "rke2" {
   type             = "TLS-HELLO"
   delay            = 2
   timeout          = 2
-  max_retries      = 5
+  max_retries      = 1
   max_retries_down = 5
 }
 
