@@ -116,7 +116,9 @@ write_files:
 %{~ endif ~}
 
 runcmd:
-  - echo "${authorized_keys}" >> /home/${system_user}/.ssh/authorized_keys
+  %{~ for key in authorized_keys ~}
+  - echo "${key}" >> /home/${system_user}/.ssh/authorized_keys
+  %{~ endfor ~}
   - /usr/local/bin/install-or-upgrade-rke2.sh
   - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   %{~ if is_server ~}

@@ -101,7 +101,7 @@ resource "openstack_compute_instance_v2" "instance" {
     s3_access_secret = var.s3.access_secret
     s3_bucket        = var.s3.bucket
     system_user      = var.system_user
-    authorized_keys  = join("\n", var.ssh_authorized_keys)
+    authorized_keys  = var.ssh_authorized_keys
   }))
 }
 
