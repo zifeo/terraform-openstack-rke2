@@ -5,13 +5,15 @@ growpart:
   mode: auto
   devices:
     - /
-    - /var/lib/rancher/rke2
+    - /mnt
 fs_setup:
   - label: None
     filesystem: ext4
     device: ${rke2_device}
 mounts:
-  - [${rke2_device}, "/var/lib/rancher/rke2", "ext4", "defaults,nofail", "0", "2"]
+  - ["${rke2_device}", "/mnt", "ext4", "defaults,nofail", "0", "2" ]
+  - ["/mnt/rke2", "/var/lib/rancher/rke2", "none", "defaults,bind", "0", "0"]
+  - ["/mnt/kubelet", "/var/lib/kubelet", "none", "defaults,bind", "0", "0"]
 
 package_update: true
 package_upgrade: true
