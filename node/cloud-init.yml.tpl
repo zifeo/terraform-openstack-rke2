@@ -43,6 +43,13 @@ write_files:
   owner: root:root
   content: | 
     maxsize 500M
+- path: /etc/modules-load.d/ipvs.conf
+  permissions: "0644"
+  owner: root:root
+  content: |
+    # Loads kernel modules needed for kube-vip to work properly
+    ip_vs
+    ip_vs_rr
 - path: /usr/local/bin/wait-for-node-ready.sh
   permissions: "0755"
   owner: root:root
@@ -122,6 +129,7 @@ runcmd:
   - echo "${key}" >> /home/${system_user}/.ssh/authorized_keys
   %{~ endfor ~}
   - /usr/local/bin/install-or-upgrade-rke2.sh
+  - mod
   - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   %{~ if is_server ~}
   - echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc

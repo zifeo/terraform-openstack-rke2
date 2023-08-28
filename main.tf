@@ -98,6 +98,9 @@ module "servers" {
       "ha.yml" : templatefile("${path.module}/manifests/ha.yml.tpl", {
         operator_replica = local.operator_replica
       }),
+      "kube-vip.yml" : templatefile("${path.module}/manifests/kube-vip.yml.tpl", {
+        vip_address = "192.168.44.5"
+      })
     },
     {
       for f in fileset(path.module, "manifests/*.{yml,yaml}") : basename(f) => file("${path.module}/${f}")
