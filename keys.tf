@@ -35,13 +35,13 @@ resource "null_resource" "write_kubeconfig" {
       ssh-keygen -R ${local.external_ip} >/dev/null 2>&1
       until rsync -e "ssh -o ConnectTimeout=5 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" --rsync-path="sudo rsync" ${var.servers[0].system_user}@${local.external_ip}:/etc/rancher/rke2/rke2.yaml rke2.yaml >/dev/null 2>&1; do echo Wait rke2.yaml generation && sleep 5; done \
       && chmod go-r rke2.yaml \
-      && yq eval --inplace '.clusters[0].name = "${var.name}-cluster"' rke2.yaml \
-      && yq eval --inplace '.clusters[0].cluster.server = "https://${local.external_ip}:6443"' rke2.yaml \
-      && yq eval --inplace '.users[0].name = "${var.name}-user"' rke2.yaml \
-      && yq eval --inplace '.contexts[0].context.cluster = "${var.name}-cluster"' rke2.yaml \
-      && yq eval --inplace '.contexts[0].context.user = "${var.name}-user"' rke2.yaml \
-      && yq eval --inplace '.contexts[0].name = "${var.name}"' rke2.yaml \
-      && yq eval --inplace '.current-context = "${var.name}"' rke2.yaml \
+      && python3 -m yq -y --in-place '.clusters[0].name = "${var.name}-cluster"' rke2.yaml \
+      && python3 -m yq -y --in-place '.clusters[0].cluster.server = "https://${local.external_ip}:6443"' rke2.yaml \
+      && python3 -m yq -y --in-place '.users[0].name = "${var.name}-user"' rke2.yaml \
+      && python3 -m yq -y --in-place '.contexts[0].context.cluster = "${var.name}-cluster"' rke2.yaml \
+      && python3 -m yq -y --in-place '.contexts[0].context.user = "${var.name}-user"' rke2.yaml \
+      && python3 -m yq -y --in-place '.contexts[0].name = "${var.name}"' rke2.yaml \
+      && python3 -m yq -y --in-place '."current-context" = "${var.name}"' rke2.yaml \
       && mv rke2.yaml ${var.name}.rke2.yaml
     EOF
   }
