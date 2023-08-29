@@ -99,7 +99,7 @@ module "servers" {
         operator_replica = local.operator_replica
       }),
       "kube-vip.yml" : templatefile("${path.module}/manifests/kube-vip.yml.tpl", {
-        vip_address = "192.168.44.5"
+        vip_address = local.internal_ip
       })
     },
     {
