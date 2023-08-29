@@ -129,7 +129,6 @@ runcmd:
   - echo "${key}" >> /home/${system_user}/.ssh/authorized_keys
   %{~ endfor ~}
   - /usr/local/bin/install-or-upgrade-rke2.sh
-  - mod
   - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   %{~ if is_server ~}
   - echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc
