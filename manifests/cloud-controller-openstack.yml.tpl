@@ -10,7 +10,7 @@ spec:
   targetNamespace: kube-system
   bootstrap: true
   valuesContent: |-
-    logVerbosityLevel: 4 # 2
+    logVerbosityLevel: 2
     nodeSelector:
       node-role.kubernetes.io/master: "true"
     tolerations:

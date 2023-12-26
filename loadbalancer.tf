@@ -8,7 +8,7 @@ locals {
 resource "openstack_lb_loadbalancer_v2" "lb" {
   name                  = "${var.name}-lb"
   vip_network_id        = openstack_networking_network_v2.net.id
-  vip_address           = local.internal_ip
+  vip_subnet_id         = openstack_networking_subnet_v2.lb.id
   admin_state_up        = "true"
   loadbalancer_provider = var.lb_provider
 
@@ -26,10 +26,6 @@ resource "openstack_lb_loadbalancer_v2" "lb" {
 resource "openstack_networking_floatingip_v2" "external" {
   pool    = var.floating_pool
   port_id = openstack_lb_loadbalancer_v2.lb.vip_port_id
-
-  depends_on = [
-    openstack_networking_router_interface_v2.lb
-  ]
 }
 
 resource "openstack_lb_listener_v2" "ssh" {

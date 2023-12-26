@@ -69,6 +69,11 @@ variable "subnet_servers_cidr" {
   default = "192.168.42.0/24"
 }
 
+variable "subnet_servers_vip" {
+  type    = string
+  default = null
+}
+
 variable "subnet_agents_cidr" {
   type    = string
   default = "192.168.43.0/24"
@@ -89,11 +94,6 @@ variable "lb_provider" {
   type     = string
   default  = "amphora"
   nullable = false
-}
-
-variable "lb_internal_ip" {
-  type    = string
-  default = null
 }
 
 variable "additional_san" {
@@ -176,6 +176,72 @@ variable "s3_backup" {
     access_secret = ""
     bucket        = ""
   }
+}
+
+variable "backup_schedule" {
+  type    = string
+  default = null
+}
+
+variable "backup_retention" {
+  type    = number
+  default = null
+}
+
+variable "kube_apiserver_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
+variable "kube_scheduler_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
+variable "kube_controller_manager_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
+variable "etcd_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
 }
 
 variable "manifests_folder" {

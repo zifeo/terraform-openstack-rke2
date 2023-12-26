@@ -4,11 +4,11 @@ terraform {
   required_providers {
     null = {
       source  = "hashicorp/null"
-      version = "~> 3.2.1"
+      version = "~> 3.2.2"
     }
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = "~> 1.52.1"
+      version = "~> 1.53.0"
     }
   }
 }

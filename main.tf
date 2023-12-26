@@ -6,8 +6,8 @@ locals {
     bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
   } : var.s3_backup
 
-  external_ip      = openstack_networking_floatingip_v2.external.address
-  internal_ip      = var.lb_internal_ip != null ? var.lb_internal_ip : cidrhost(var.subnet_lb_cidr, 4)
+  external_ip      = openstack_networking_floatingip_v2.floating_ip.address
+  internal_vip     = var.subnet_servers_vip != null ? var.subnet_servers_vip : cidrhost(var.subnet_servers_cidr, 4)
   operator_replica = length(var.servers) > 1 ? 2 : 1
 }
 
@@ -42,7 +42,9 @@ module "servers" {
   rke2_volume_type   = each.value.rke2_volume_type
   rke2_volume_device = each.value.rke2_volume_device
 
-  s3 = local.s3
+  s3               = local.s3
+  backup_schedule  = var.backup_schedule
+  backup_retention = var.backup_retention
 
   system_user         = each.value.system_user
   keypair_name        = openstack_compute_keypair_v2.key.name
@@ -51,9 +53,9 @@ module "servers" {
   network_id   = openstack_networking_network_v2.net.id
   subnet_id    = openstack_networking_subnet_v2.servers.id
   secgroup_id  = openstack_networking_secgroup_v2.server.id
-  bootstrap_ip = local.internal_ip
+  internal_vip = local.internal_vip
   bastion_host = local.external_ip
-  san          = distinct(concat([local.external_ip, local.internal_ip], var.additional_san))
+  san          = distinct(concat([local.external_ip, local.internal_vip], var.additional_san))
 
   manifests_folder = var.manifests_folder
   manifests = merge(
@@ -91,7 +93,7 @@ module "servers" {
       }),
       "cilium.yml" : templatefile("${path.module}/manifests/cilium.yml.tpl", {
         operator_replica = local.operator_replica
-        apiserver_host   = local.internal_ip
+        apiserver_host   = local.internal_vip
         cluster_name     = var.name
         cluster_id       = var.cluster_id
       }),
@@ -105,13 +107,13 @@ module "servers" {
     var.manifests,
   )
 
+  kube_apiserver_resources          = var.kube_apiserver_resources
+  kube_scheduler_resources          = var.kube_scheduler_resources
+  kube_controller_manager_resources = var.kube_controller_manager_resources
+  etcd_resources                    = var.etcd_resources
+
   ff_autoremove_agent = null
   ff_wait_ready       = var.ff_wait_ready
-
-  depends_on = [
-    openstack_lb_listener_v2.k8s,
-    openstack_lb_listener_v2.rke2,
-  ]
 }
 
 module "agents" {
@@ -152,14 +154,13 @@ module "agents" {
   network_id   = openstack_networking_network_v2.net.id
   subnet_id    = openstack_networking_subnet_v2.agents.id
   secgroup_id  = openstack_networking_secgroup_v2.agent.id
-  bootstrap_ip = local.internal_ip
+  internal_vip = local.internal_vip
   bastion_host = local.external_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_wait_ready       = var.ff_wait_ready
 
   depends_on = [
-    openstack_lb_listener_v2.k8s,
-    openstack_lb_listener_v2.rke2,
+    module.servers[0].first_id
   ]
 }

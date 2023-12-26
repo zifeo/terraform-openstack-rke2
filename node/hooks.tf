@@ -47,7 +47,7 @@ resource "null_resource" "wait_for_rke2" {
   provisioner "remote-exec" {
     on_failure = continue
     inline = [
-      "test \"$(sudo systemctl is-active ${var.is_server ? "rke2-server" : "rke2-agent.service"})\" = active"
+      "test \"$(sudo systemctl is-active ${var.is_server ? "rke2-server.service" : "rke2-agent.service"})\" = active"
     ]
   }
 }

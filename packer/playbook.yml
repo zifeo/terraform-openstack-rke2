@@ -1,0 +1,12 @@
+- name: Provision
+  hosts: all
+  become: true
+  tasks:
+    - name: Update apt repository cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Install net-tools package
+      ansible.builtin.apt:
+        name: net-tools
+        state: present

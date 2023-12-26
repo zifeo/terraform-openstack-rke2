@@ -97,10 +97,12 @@ crictl
 kubectl (server only)
 
 # logs
-sudo systemctl status rke2-server
+sudo systemctl status rke2-server.service
 journalctl -f -u rke2-server
+
 sudo systemctl status rke2-agent.service
 journalctl -f -u rke2-agent
+
 less /var/lib/rancher/rke2/agent/logs/kubelet.log
 less /var/lib/rancher/rke2/agent/containerd/containerd.log
 less /var/log/cloud-init-output.log
@@ -128,4 +130,106 @@ kubectl -n kube-system exec $(kubectl -n kube-system get pod -l component=etcd -
 # expand volume
 # recreate node
 terraform apply -target='module.rke2.module.servers["server"]' -replace='module.rke2.module.servers["server"].openstack_compute_instance_v2.instance[0]'
+```
+
+## Migration guide
+
+### From v2 to v3
+
+```
+# use the previous patch version to setup an additional san: 192.168.42.4
+# this will become the new VIP inside the cluster and replace the load-balancer
+# run an full upgrade with it, then switch to the new major, then you can upgrade
+# 1. create the new external IP for servers access with:
+terraform apply -target='module.rke2.openstack_networking_floatingip_associate_v2.fip'
+# 2. pick a server different from the initial one (used to bootstrap):
+terraform apply -target='module.rke2.module.servers["server-c"].openstack_networking_port_v2.port'
+# 3. give to that server the control of the VIP
+ssh ubuntu@server-c
+sudo su
+modprobe ip_vs
+modprobe ip_vs_rr
+cat <<EOF > /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kube-vip
+  namespace: kube-system
+spec:
+  containers:
+    - name: kube-vip
+      image: ghcr.io/kube-vip/kube-vip:v0.6.4
+      imagePullPolicy: IfNotPresent
+      args:
+        - manager
+      env:
+        - name: vip_arp
+          value: "true"
+        - name: port
+          value: "6443"
+        - name: vip_interface
+          value: ens3
+        - name: vip_cidr
+          value: "32"
+        - name: cp_enable
+          value: "true"
+        - name: cp_namespace
+          value: kube-system
+        - name: vip_ddns
+          value: "false"
+        - name: svc_enable
+          value: "false"
+        - name: vip_leaderelection
+          value: "true"
+        - name: vip_leasename
+          value: plndr-cp-lock
+        - name: vip_leaseduration
+          value: "15"
+        - name: vip_renewdeadline
+          value: "10"
+        - name: vip_retryperiod
+          value: "2"
+        - name: enable_node_labeling
+          value: "true"
+        - name: lb_enable
+          value: "true"
+        - name: lb_port
+          value: "6443"
+        - name: lb_fwdmethod
+          value: local
+        - name: address
+          value: VIP # change here with your VIP
+        - name: prometheus_server
+          value: ":2112"
+      resources:
+        requests:
+          cpu: 100m
+          memory: 64Mi
+        limits:
+          memory: 64Mi
+      securityContext:
+        capabilities:
+          add:
+            - NET_ADMIN
+            - NET_RAW
+      volumeMounts:
+        - mountPath: /etc/kubernetes/admin.conf
+          name: kubeconfig
+  restartPolicy: Always
+  hostAliases:
+    - hostnames:
+        - kubernetes
+      ip: 127.0.0.1
+  hostNetwork: true
+  volumes:
+    - name: kubeconfig
+      hostPath:
+        path: /etc/rancher/rke2/rke2.yaml
+EOF
+# 4. apply the migration to the initial server:
+terraform apply -target='module.rke2.module.servers["server-a"]'
+# 5. manually fetch the new kubeconfig file there and replace the old one
+ssh ubuntu@server-a
+# 6. continues with other nodes step-by-step and ensure all is up-to-date with a final:
+terraform apply
 ```

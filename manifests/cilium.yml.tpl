@@ -10,7 +10,7 @@ spec:
       id: ${cluster_id}
     eni:
       enabled: true
-    kubeProxyReplacement: strict
+    kubeProxyReplacement: "strict" 
     k8sServiceHost: ${apiserver_host}
     k8sServicePort: 6443
     operator:
@@ -24,12 +24,13 @@ spec:
         - effect: NoSchedule
           key: node.cloudprovider.kubernetes.io/uninitialized
           operator: "Exists"
-      requests:
-        cpu: 50m
-        memory: 64Mi
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
     cni:
       chainingMode: "none"
-    resources: 
+    resources:
       requests:
         cpu: 50m
         memory: 128Mi

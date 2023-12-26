@@ -19,12 +19,20 @@ resource "openstack_blockstorage_volume_v3" "volume" {
 resource "openstack_networking_port_v2" "port" {
   count = var.nodes_count
 
+  name               = "${var.name}-${count.index + 1}"
   network_id         = var.network_id
   security_group_ids = [var.secgroup_id]
   admin_state_up     = true
 
   fixed_ip {
     subnet_id = var.subnet_id
+  }
+
+  dynamic "allowed_address_pairs" {
+    for_each = var.is_server ? [var.internal_vip] : []
+    content {
+      ip_address = allowed_address_pairs.value
+    }
   }
 }
 
@@ -87,7 +95,7 @@ resource "openstack_compute_instance_v2" "instance" {
     is_server    = var.is_server
     is_first     = var.is_first && count.index == 0
     bootstrap    = var.bootstrap && var.is_first && count.index == 0
-    bootstrap_ip = var.bootstrap_ip
+    internal_vip = var.internal_vip
     node_ip      = openstack_networking_port_v2.port[count.index].all_fixed_ips[0]
     san          = var.is_server ? var.san : []
     manifests_files = var.is_server ? merge(
@@ -96,12 +104,32 @@ resource "openstack_compute_instance_v2" "instance" {
       } : {},
       { for k, v in var.manifests : k => base64gzip(v) },
     ) : {}
-    s3_endpoint      = var.s3.endpoint
-    s3_access_key    = var.s3.access_key
-    s3_access_secret = var.s3.access_secret
-    s3_bucket        = var.s3.bucket
-    system_user      = var.system_user
-    authorized_keys  = var.ssh_authorized_keys
+    s3               = var.s3
+    backup_schedule  = var.backup_schedule
+    backup_retention = var.backup_retention
+    control_plane_requests = join(",", [for limit in [
+      try("kube-apiserver-cpu=${var.kube_apiserver_resources.requests.cpu}", ""),
+      try("kube-apiserver-memory=${var.kube_apiserver_resources.requests.memory}", ""),
+      try("kube-scheduler-cpu=${var.kube_scheduler_resources.requests.cpu}", ""),
+      try("kube-scheduler-memory=${var.kube_scheduler_resources.requests.memory}", ""),
+      try("kube-controller-manager-cpu=${var.kube_controller_manager_resources.requests.cpu}", ""),
+      try("kube-controller-manager-memory=${var.kube_controller_manager_resources.requests.memory}", ""),
+      try("etcd-cpu=${var.etcd_resources.requests.cpu}", ""),
+      try("etcd-memory=${var.etcd_resources.requests.memory}", ""),
+    ] : limit if limit != ""])
+    control_plane_limits = join(",", [for limit in [
+      try("kube-apiserver-cpu=${var.kube_apiserver_resources.limits.cpu}", ""),
+      try("kube-apiserver-memory=${var.kube_apiserver_resources.limits.memory}", ""),
+      try("kube-scheduler-cpu=${var.kube_scheduler_resources.limits.cpu}", ""),
+      try("kube-scheduler-memory=${var.kube_scheduler_resources.limits.memory}", ""),
+      try("kube-controller-manager-cpu=${var.kube_controller_manager_resources.limits.cpu}", ""),
+      try("kube-controller-manager-memory=${var.kube_controller_manager_resources.limits.memory}", ""),
+      try("etcd-cpu=${var.etcd_resources.limits.cpu}", ""),
+      try("etcd-memory=${var.etcd_resources.limits.memory}", ""),
+    ] : limit if limit != ""])
+    system_user       = var.system_user
+    authorized_keys   = var.ssh_authorized_keys
+    ff_wait_apiserver = false
   }))
 }
 
