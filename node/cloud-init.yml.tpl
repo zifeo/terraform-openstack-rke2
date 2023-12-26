@@ -5,15 +5,13 @@ growpart:
   mode: auto
   devices:
     - /
-    - /mnt
+    - ${rke2_device}
+  ignore_growroot_disabled: false
 fs_setup:
   - label: None
     filesystem: ext4
     device: ${rke2_device}
-mounts:
-  - ["${rke2_device}", "/mnt", "ext4", "defaults,nofail", "0", "2" ]
-  - ["/mnt/rke2", "/var/lib/rancher/rke2", "none", "defaults,bind", "0", "0"]
-  - ["/mnt/kubelet", "/var/lib/kubelet", "none", "defaults,bind", "0", "0"]
+# no mounts as managed by systemd
 
 package_update: true
 package_upgrade: true
@@ -44,6 +42,41 @@ write_files:
   owner: root:root
   content: | 
     maxsize 500M
+- path: /etc/systemd/system/mnt.mount
+  content: |
+    [Unit]
+    After=local-fs.target
+    [Mount]
+    What=${rke2_device}
+    Where=/mnt
+    Type=ext4
+    Options=defaults
+    [Install]
+    WantedBy=multi-user.target
+- path: /etc/systemd/system/var-lib-rancher-rke2.mount
+  content: |
+    [Unit]
+    Requires=mnt.mount
+    After=mnt.mount
+    [Mount]
+    What=/mnt/rke2
+    Where=/var/lib/rancher/rke2
+    Type=none
+    Options=bind
+    [Install]
+    WantedBy=multi-user.target
+- path: /etc/systemd/system/var-lib-kubelet.mount
+  content: |
+    [Unit]
+    Requires=mnt.mount
+    After=mnt.mount
+    [Mount]
+    What=/mnt/kubelet
+    Where=/var/lib/kubelet
+    Type=none
+    Options=bind
+    [Install]
+    WantedBy=multi-user.target
 - path: /usr/local/bin/install-or-upgrade-rke2.sh
   permissions: "0755"
   owner: root:root
@@ -210,6 +243,10 @@ write_files:
 %{~ endif ~}
 
 runcmd:
+  - mkdir -p /mnt /var/lib/rancher/rke2 /var/lib/kubelet
+  - systemctl daemon-reload
+  - systemctl enable mnt.mount var-lib-rancher-rke2.mount var-lib-kubelet.mount
+  - systemctl start mnt.mount var-lib-rancher-rke2.mount var-lib-kubelet.mount
   %{~ for key in authorized_keys ~}
   - echo "${key}" >> /home/${system_user}/.ssh/authorized_keys
   %{~ endfor ~}
