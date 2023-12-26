@@ -36,6 +36,9 @@ spec:
       requests:
         cpu: 100m
         memory: 128Mi
+      limits:
+        cpu: null
+        memory: null
     configuration:
       provider: mixed
       namespace: velero
@@ -100,3 +103,6 @@ spec:
         requests:
           cpu: 100m
           memory: 128Mi
+        limits:
+          cpu: null
+          memory: null

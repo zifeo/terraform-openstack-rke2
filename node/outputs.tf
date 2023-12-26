@@ -9,3 +9,7 @@ output "internal_ips" {
 output "id" {
   value = openstack_compute_instance_v2.instance[*].id
 }
+
+output "first_id" {
+  value = openstack_compute_instance_v2.instance[0].id
+}

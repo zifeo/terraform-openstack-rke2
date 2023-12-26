@@ -68,7 +68,7 @@ variable "secgroup_id" {
   type = string
 }
 
-variable "bootstrap_ip" {
+variable "internal_vip" {
   type    = string
   default = ""
 }
@@ -111,6 +111,16 @@ variable "rke2_volume_device" {
   nullable = false
 }
 
+variable "backup_schedule" {
+  type    = string
+  default = null
+}
+
+variable "backup_retention" {
+  type    = number
+  default = null
+}
+
 variable "s3" {
   type = object({
     endpoint      = string
@@ -119,11 +129,67 @@ variable "s3" {
     bucket        = string
   })
   default = {
+    endpoint      = ""
     access_key    = ""
     access_secret = ""
     bucket        = ""
-    endpoint      = ""
   }
+}
+
+variable "kube_apiserver_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
+variable "kube_scheduler_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
+variable "kube_controller_manager_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
+variable "etcd_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
 }
 
 variable "manifests_folder" {

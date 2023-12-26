@@ -16,7 +16,7 @@ module "rke2" {
   manifests_folder = "./manifests"
 
   servers = [{
-    name = "server"
+    name = "server-a"
 
     flavor_name = "a2-ram4-disk0"
     image_name  = "Ubuntu 22.04 LTS Jammy Jellyfish"
@@ -27,20 +27,18 @@ module "rke2" {
     system_user      = "ubuntu"
     boot_volume_size = 8
 
-    rke2_version     = "v1.26.6+rke2r1"
+    rke2_version     = "v1.28.4+rke2r1"
     rke2_volume_size = 8
     # https://docs.rke2.io/install/install_options/server_config/
     rke2_config = <<EOF
-etcd-snapshot-schedule-cron: "0 */6 * * *"
-etcd-snapshot-retention: 20
-
-control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=128M,kube-scheduler-cpu=75m,kube-scheduler-memory=128M,kube-controller-manager-cpu=75m,kube-controller-manager-memory=128M,etcd-cpu=75m,etcd-memory=128M
-  EOF
-  }]
+# https://docs.rke2.io/install/install_options/server_config/
+EOF
+    }
+  ]
 
   agents = [
     {
-      name        = "pool-a"
+      name        = "pool"
       nodes_count = 1
 
       flavor_name = "a1-ram2-disk0"
@@ -52,10 +50,41 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
       system_user      = "ubuntu"
       boot_volume_size = 8
 
-      rke2_version     = "v1.26.6+rke2r1"
+      rke2_version     = "v1.28.4+rke2r1"
       rke2_volume_size = 8
     }
   ]
+
+  backup_schedule  = "0 */6 * * *"
+  backup_retention = 20
+
+  kube-apiserver-resources = {
+    requests = {
+      cpu    = "75m"
+      memory = "128M"
+    }
+  }
+
+  kube-scheduler-resources = {
+    requests = {
+      cpu    = "75m"
+      memory = "128M"
+    }
+  }
+
+  kube-controller-manager-resources = {
+    requests = {
+      cpu    = "75m"
+      memory = "128M"
+    }
+  }
+
+  etcd-resources = {
+    requests = {
+      cpu    = "75m"
+      memory = "128M"
+    }
+  }
 
   # enable automatically agent removal of the cluster (wait max for 30s)
   ff_autoremove_agent = "30s"
@@ -71,6 +100,10 @@ control-plane-resource-requests: kube-apiserver-cpu=75m,kube-apiserver-memory=12
 output "restore_cmd" {
   value     = module.rke2.restore_cmd
   sensitive = true
+}
+
+output "ip" {
+  value = module.rke2.external_ip
 }
 
 variable "project" {
@@ -100,7 +133,7 @@ terraform {
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = "~> 1.49.0"
+      version = "~> 1.53.0"
     }
   }
 }
