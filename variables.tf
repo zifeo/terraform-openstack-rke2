@@ -96,6 +96,11 @@ variable "lb_internal_ip" {
   default = null
 }
 
+variable "additional_san" {
+  type    = list(string)
+  default = []
+}
+
 variable "bootstrap" {
   type    = bool
   default = false

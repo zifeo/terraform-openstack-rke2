@@ -53,7 +53,7 @@ module "servers" {
   secgroup_id  = openstack_networking_secgroup_v2.server.id
   bootstrap_ip = local.internal_ip
   bastion_host = local.external_ip
-  san          = [local.internal_ip, local.external_ip]
+  san          = distinct(concat([local.external_ip, local.internal_ip], var.additional_san))
 
   manifests_folder = var.manifests_folder
   manifests = merge(
