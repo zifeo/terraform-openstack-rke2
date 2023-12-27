@@ -2,12 +2,12 @@ output "external_ip" {
   value = local.external_ip
 }
 
-output "load_balancer_id" {
-  value = openstack_lb_loadbalancer_v2.lb.id
+output "network_id" {
+  value = openstack_networking_network_v2.net.id
 }
 
-output "load_balancer_ip" {
-  value = openstack_networking_floatingip_v2.external.address
+output "lb_subnet_id" {
+  value = openstack_networking_subnet_v2.lb.id
 }
 
 output "restore_cmd" {
