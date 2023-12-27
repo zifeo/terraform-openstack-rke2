@@ -17,12 +17,12 @@ defaults for running production workload.
 
 - [RKE2](https://docs.rke2.io) Kubernetes distribution : lightweight, stable,
   simple and secure
-- persisted `/var/lib/rancher/rke2` for single server durability
-- configure Openstack Swift or S3-like backend for automated etcd snapshots
+- persisted `/var/lib/rancher/rke2` when there is a single server
+- automated etcd snapshots with Openstack Swift support or other S3-like backend
 - smooth updates & agent nodes autoremoval with pod draining
-- bundled with Openstack Cloud Controller and Cinder CSI
+- integrated Openstack Cloud Controller (load-balancer, etc.) and Cinder CSI
 - Cilium networking (network policy support and no kube-proxy)
-- highly-available through load balancers
+- highly-available via kube-vip and dynamic peering (no load-balancer required)
 - out of the box support for volume snapshot and Velero
 
 ### Versioning
@@ -30,9 +30,9 @@ defaults for running production workload.
 | Component                  | Version                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | OpenStack                  | 2023.1 Antelope (verified), maybe older version are supported too                                                        |
-| RKE2                       | [v1.26.6+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.26.6%2Brke2r1)                                          |
-| OpenStack Cloud Controller | [v1.27.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.27.1/charts/openstack-cloud-controller-manager) |
-| OpenStack Cinder           | [v1.27.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.27.1/charts/cinder-csi-plugin)                  |
+| RKE2                       | [v1.28.4+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.28.4+rke2r1)                                            |
+| OpenStack Cloud Controller | [v1.28.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.28.1/charts/openstack-cloud-controller-manager) |
+| OpenStack Cinder           | [v1.28.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.28.1/charts/cinder-csi-plugin)                  |
 | Velero                     | [v2.32.6](https://github.com/vmware-tanzu/helm-charts/tree/velero-2.32.6/charts/velero)                                  |
 
 ## Getting started
@@ -230,6 +230,31 @@ EOF
 terraform apply -target='module.rke2.module.servers["server-a"]'
 # 5. manually fetch the new kubeconfig file there and replace the old one
 ssh ubuntu@server-a
-# 6. continues with other nodes step-by-step and ensure all is up-to-date with a final:
+# 6. import the load-balancer and its ip elsewhere if used (otherwise they will be destroyed)
+cat <<EOF > lb.tf
+resource "openstack_lb_loadbalancer_v2" "lb" {
+  name                  = "lb"
+  vip_network_id        = module.rke2.network_id
+  vip_subnet_id         = module.rke2.lb_subnet_id
+  admin_state_up        = "true"
+  loadbalancer_provider = "octavia"
+  lifecycle {
+    ignore_changes = [
+      tags
+    ]
+  }
+}
+resource "openstack_networking_floatingip_v2" "external" {
+  pool    = "ext-floating1"
+  port_id = openstack_lb_loadbalancer_v2.lb.vip_port_id
+}
+EOF
+terraform state show module.rke2.openstack_lb_loadbalancer_v2.lb
+terraform import openstack_lb_loadbalancer_v2.lb ID
+terraform state rm module.rke2.openstack_lb_loadbalancer_v2.lb
+terraform state show module.rke2.openstack_networking_floatingip_v2.external
+terraform import openstack_networking_floatingip_v2.external ID
+terraform state rm module.rke2.openstack_networking_floatingip_v2.external
+# 7. continues with other nodes step-by-step and ensure all is up-to-date with a final:
 terraform apply
 ```

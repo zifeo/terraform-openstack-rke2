@@ -6,7 +6,7 @@ metadata:
 spec:
   chart: openstack-cinder-csi
   repo: https://kubernetes.github.io/cloud-provider-openstack
-  version: 2.27.1
+  version: 2.28.1
   targetNamespace: kube-system
   bootstrap: true
   valuesContent: |-

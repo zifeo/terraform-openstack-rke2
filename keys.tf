@@ -14,10 +14,10 @@ resource "openstack_compute_keypair_v2" "key" {
 }
 
 resource "null_resource" "write_kubeconfig" {
-  count = var.ff_write_kubeconfig && length(local.ssh_cidr) > 0 ? 1 : 0
+  count = var.ff_write_kubeconfig && var.rules_ssh_cidr != null ? 1 : 0
 
   triggers = {
-    servers = join(",", flatten([for server in module.servers : server.id]))
+    servers = join(",", flatten([for server in module.servers : server.ids]))
   }
 
   depends_on = [
