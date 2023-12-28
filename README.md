@@ -236,7 +236,6 @@ resource "openstack_lb_loadbalancer_v2" "lb" {
   name                  = "lb"
   vip_network_id        = module.rke2.network_id
   vip_subnet_id         = module.rke2.lb_subnet_id
-  admin_state_up        = "true"
   loadbalancer_provider = "octavia"
   lifecycle {
     ignore_changes = [
