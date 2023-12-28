@@ -1,6 +1,5 @@
 resource "openstack_networking_network_v2" "net" {
   name                  = "${var.name}-net"
-  admin_state_up        = "true"
   port_security_enabled = "true"
 }
 
@@ -34,7 +33,6 @@ data "openstack_networking_network_v2" "floating_net" {
 
 resource "openstack_networking_router_v2" "router" {
   name                = "${var.name}-router"
-  admin_state_up      = true
   external_network_id = data.openstack_networking_network_v2.floating_net.id
 }
 
@@ -69,7 +67,7 @@ resource "openstack_networking_port_v2" "dummy" {
   name               = "${var.name}-vip"
   network_id         = openstack_networking_network_v2.net.id
   security_group_ids = [openstack_networking_secgroup_v2.server.id]
-  admin_state_up     = true
+  admin_state_up     = false
 
   fixed_ip {
     subnet_id  = openstack_networking_subnet_v2.servers.id
