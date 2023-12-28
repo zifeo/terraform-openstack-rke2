@@ -7,4 +7,3 @@ crash.log
 rke2.yaml
 .terraform.lock.hcl
 *.rke2.yaml
-*.img
