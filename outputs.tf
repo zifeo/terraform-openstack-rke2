@@ -20,7 +20,6 @@ output "ssh_cmd" {
   sensitive = true
 }
 
-
 output "ssh_config" {
   value     = <<EOF
 Host ${var.name}

@@ -90,23 +90,22 @@ sudo reboot
 ### From v2 to v3
 
 ```
-# use the previous patch version (2.0.7) to setup an additional san for 192.168.42.4
+# 1. use the previous patch version (2.0.7) to setup an additional san for 192.168.42.4
 # this will become the new VIP inside the cluster and replace the load-balancer:
 source  = "zifeo/rke2/openstack"
 version = "2.0.7"
 # ...
 additional_san = ["192.168.42.4"]
-# run an full upgrade with it, node by node:
+# 2. run an full upgrade with it, node by node:
 terraform apply -target='module.rke2.module.servers["your-server-pool"]'
-# and so on for each node pool
-# you can now switch to the new major:
+# 3. you can now switch to the new major and remove the additional_san:
 source  = "zifeo/rke2/openstack"
 version = "3.0.0"
-# 1. create the new external IP for servers access with:
+# 4. create the new external IP for admin access (that will be different from the load-balancer) with:
 terraform apply -target='module.rke2.openstack_networking_floatingip_associate_v2.fip'
-# 2. pick a server different from the initial one (used to bootstrap):
+# 5. pick a server different from the initial one (used to bootstrap):
 terraform apply -target='module.rke2.module.servers["server-c"].openstack_networking_port_v2.port'
-# 3. give to that server the control of the VIP
+# 6. give to that server the control of the VIP
 ssh ubuntu@server-c
 sudo su
 modprobe ip_vs
@@ -160,7 +159,7 @@ spec:
         - name: lb_fwdmethod
           value: local
         - name: address
-          value: VIP # change here with your VIP
+          value: 192.168.42.4
         - name: prometheus_server
           value: ":2112"
       resources:
@@ -188,17 +187,17 @@ spec:
       hostPath:
         path: /etc/rancher/rke2/rke2.yaml
 EOF
-# 4. apply the migration to the initial server:
+# 7. you should see a pod in kube-system starting with kube-vip (investigate if failling)
+# then apply the migration to the initial/bootstraping server:
 terraform apply -target='module.rke2.module.servers["server-a"]'
-# 5. manually fetch the new kubeconfig file there and replace the old one
-ssh ubuntu@server-a
-# 6. import the load-balancer and its ip elsewhere if used (otherwise they will be destroyed)
+terraform apply -target='module.rke2.openstack_networking_secgroup_rule_v2.outside_servers'
+# 8. the cluster IP has now changed, and you should update your kubeconfig with the new ip (look in horizon)
+# 9. import the load-balancer and its ip elsewhere if used (otherwise they will be destroyed)
 cat <<EOF > lb.tf
 resource "openstack_lb_loadbalancer_v2" "lb" {
   name                  = "lb"
   vip_network_id        = module.rke2.network_id
   vip_subnet_id         = module.rke2.lb_subnet_id
-  loadbalancer_provider = "octavia"
   lifecycle {
     ignore_changes = [
       tags
@@ -216,7 +215,9 @@ terraform state rm module.rke2.openstack_lb_loadbalancer_v2.lb
 terraform state show module.rke2.openstack_networking_floatingip_v2.external
 terraform import openstack_networking_floatingip_v2.external ID
 terraform state rm module.rke2.openstack_networking_floatingip_v2.external
-# 7. continues with other nodes step-by-step and ensure all is up-to-date with a final:
+# 10. continues by upgrading other nodes step-by-step as you would do it normally:
+terraform apply -target='module.rke2.module.POOL["NODE"]'
+# 11. once all the nodes are upgraded, make sure that everything is well applied:
 terraform apply
 ```
 
