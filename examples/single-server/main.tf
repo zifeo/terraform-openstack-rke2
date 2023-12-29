@@ -97,13 +97,9 @@ EOF
   object_store_endpoint = "s3.pub1.infomaniak.cloud"
 }
 
-output "restore_cmd" {
-  value     = module.rke2.restore_cmd
+output "cluster" {
+  value     = module.rke2
   sensitive = true
-}
-
-output "ip" {
-  value = module.rke2.external_ip
 }
 
 variable "project" {
