@@ -52,11 +52,11 @@ kubectl --kubeconfig single-server.rke2.yaml get nodes
 # k8s-pool-a-1   Ready    <none>                      119s    v1.21.5+rke2r2
 # k8s-server-1   Ready    control-plane,etcd,master   2m22s   v1.21.5+rke2r2
 
+# get SSH and restore helpers
+terraform output -json
+
 # on upgrade, process node pool by node pool
 terraform apply -target='module.rke2.module.servers["server-a"]'
-# for servers, apply on the majority of nodes, then for the remaining ones
-# this ensures the load balancer routes are updated as well
-terraform apply -target='module.rke2.openstack_lb_members_v2.k8s'
 ```
 
 See [examples](./examples) for more options or this
@@ -68,68 +68,21 @@ Note: it requires [rsync](https://rsync.samba.org) and
 can disable this behavior by setting `ff_write_kubeconfig=false` and fetch
 yourself `/etc/rancher/rke2/rke2.yaml` on server nodes.
 
-## Infomaniak OpenStack
-
-A stable, performant and fully equipped Kubernetes cluster in Switzerland for as
-little as CHF 26.90/month (at the time of writing):
-
-- load-balancer with floating IP (perfect under Cloudflare proxy)
-- 1 server 2cpu/4Go (= master)
-- 1 agent 2cpu/4Go (= worker)
-
-| Flavour                                                                            | CHF/month |
-| ---------------------------------------------------------------------------------- | --------- |
-| 2×5.88 (instances) + 0.09×2×(4+6) (block storage) + 3.34 (IP) + 10 (load-balancer) | 26.90     |
-| single 2cpu/4go server with 1x4cpu/16Go worker                                     | ~37.—     |
-| 3x2cpu/4go HA servers with 1x4cpu/16Go worker                                      | ~50.—     |
-| 3x2cpu/4go HA servers with 3x4cpu/16Go workers                                     | ~85.—     |
-
-See their technical [documentation](https://docs.infomaniak.cloud) and
-[pricing](https://www.infomaniak.com/fr/hebergement/public-cloud/tarifs).
-
-## More on RKE2 & OpenStack
-
-[RKE2 cheat sheet](https://gist.github.com/superseb/3b78f47989e0dbc1295486c186e944bf)
+## Restoring a backup
 
 ```
-# alias already set on the nodes
-crictl
-kubectl (server only)
-
-# logs
-sudo systemctl status rke2-server.service
-journalctl -f -u rke2-server
-
-sudo systemctl status rke2-agent.service
-journalctl -f -u rke2-agent
-
-less /var/lib/rancher/rke2/agent/logs/kubelet.log
-less /var/lib/rancher/rke2/agent/containerd/containerd.log
-less /var/log/cloud-init-output.log
-
-# restore s3 snapshot (see restore_cmd output of the terraform module)
+# ssh into one of the server nodes (see terraform output -json)
+# restore s3 snapshot (see restore_cmd output of the terraform module):
 sudo systemctl stop rke2-server
 sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=BUCKET_NAME --etcd-s3-access-key=ACCESS_KEY --etcd-s3-secret-key=SECRET_KEY --cluster-reset-restore-path=SNAPSHOT_PATH
 sudo systemctl start rke2-server
-# remove db on other server nodes
+# exit and ssh on the other server nodes to remove the etcd db
+# (recall that you may need to ssh into one node as a bastion then to the others):
 sudo systemctl stop rke2-server
-sudo rm -rf /var/lib/rancher/rke2/server/db
+sudo rm -rf /var/lib/rancher/rke2/server
 sudo systemctl start rke2-server
 # reboot all nodes one by one to make sure all is stable
 sudo reboot
-
-# check san
-openssl s_client -connect 192.168.42.3:10250 </dev/null 2>/dev/null | openssl x509 -inform pem -text
-
-# defrag etcd
-kubectl -n kube-system exec $(kubectl -n kube-system get pod -l component=etcd --no-headers -o custom-columns=NAME:.metadata.name | head -1) -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt' ETCDCTL_CERT='/var/lib/rancher/rke2/server/tls/etcd/server-client.crt' ETCDCTL_KEY='/var/lib/rancher/rke2/server/tls/etcd/server-client.key' ETCDCTL_API=3 etcdctl defrag --cluster"
-
-# increase volume size
-# shutdown instance
-# detach volumne
-# expand volume
-# recreate node
-terraform apply -target='module.rke2.module.servers["server"]' -replace='module.rke2.module.servers["server"].openstack_compute_instance_v2.instance[0]'
 ```
 
 ## Migration guide
@@ -137,9 +90,18 @@ terraform apply -target='module.rke2.module.servers["server"]' -replace='module.
 ### From v2 to v3
 
 ```
-# use the previous patch version to setup an additional san: 192.168.42.4
-# this will become the new VIP inside the cluster and replace the load-balancer
-# run an full upgrade with it, then switch to the new major, then you can upgrade
+# use the previous patch version (2.0.7) to setup an additional san for 192.168.42.4
+# this will become the new VIP inside the cluster and replace the load-balancer:
+source  = "zifeo/rke2/openstack"
+version = "2.0.7"
+# ...
+additional_san = ["192.168.42.4"]
+# run an full upgrade with it, node by node:
+terraform apply -target='module.rke2.module.servers["your-server-pool"]'
+# and so on for each node pool
+# you can now switch to the new major:
+source  = "zifeo/rke2/openstack"
+version = "3.0.0"
 # 1. create the new external IP for servers access with:
 terraform apply -target='module.rke2.openstack_networking_floatingip_associate_v2.fip'
 # 2. pick a server different from the initial one (used to bootstrap):
@@ -256,4 +218,61 @@ terraform import openstack_networking_floatingip_v2.external ID
 terraform state rm module.rke2.openstack_networking_floatingip_v2.external
 # 7. continues with other nodes step-by-step and ensure all is up-to-date with a final:
 terraform apply
+```
+
+## Infomaniak OpenStack
+
+A stable, performant and fully equipped Kubernetes cluster in Switzerland for as
+little as CHF 16.90/month (at the time of writing):
+
+- 1 floating IP for admin access (ssh and kubernetes api)
+- 1 server 2cpu/4Go (= master)
+- 1 agent 2cpu/4Go (= worker)
+
+| Flavour                                                       | CHF/month |
+| ------------------------------------------------------------- | --------- |
+| 2×5.88 (instances) + 0.09×2×(4+6) (block storage) + 3.34 (IP) | 16.90     |
+| single 2cpu/4go server with 1x4cpu/16Go worker                | ~27.—     |
+| 3x2cpu/4go HA servers with 1x4cpu/16Go worker                 | ~40.—     |
+| 3x2cpu/4go HA servers with 3x4cpu/16Go workers                | ~75.—     |
+
+You may also want to add a load-balancer and bind an additional floating IP for
+public access (e.g. for an ingress controller like ingress-nginx), that will add
+10.00 (load-balancer) + 3.34 (IP) = CHF 13.34/month.
+
+See their technical [documentation](https://docs.infomaniak.cloud) and
+[pricing](https://www.infomaniak.com/fr/hebergement/public-cloud/tarifs).
+
+## More on RKE2 & OpenStack
+
+[RKE2 cheat sheet](https://gist.github.com/superseb/3b78f47989e0dbc1295486c186e944bf)
+
+```
+# alias already set on the nodes
+crictl
+kubectl (server only)
+
+# logs
+sudo systemctl status rke2-server.service
+journalctl -f -u rke2-server
+
+sudo systemctl status rke2-agent.service
+journalctl -f -u rke2-agent
+
+less /var/lib/rancher/rke2/agent/logs/kubelet.log
+less /var/lib/rancher/rke2/agent/containerd/containerd.log
+less /var/log/cloud-init-output.log
+
+# check san
+openssl s_client -connect 192.168.42.3:10250 </dev/null 2>/dev/null | openssl x509 -inform pem -text
+
+# defrag etcd
+kubectl -n kube-system exec $(kubectl -n kube-system get pod -l component=etcd --no-headers -o custom-columns=NAME:.metadata.name | head -1) -- sh -c "ETCDCTL_ENDPOINTS='https://127.0.0.1:2379' ETCDCTL_CACERT='/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt' ETCDCTL_CERT='/var/lib/rancher/rke2/server/tls/etcd/server-client.crt' ETCDCTL_KEY='/var/lib/rancher/rke2/server/tls/etcd/server-client.key' ETCDCTL_API=3 etcdctl defrag --cluster"
+
+# increase volume size
+# shutdown instance
+# detach volumne
+# expand volume
+# recreate node
+terraform apply -target='module.rke2.module.servers["server"]' -replace='module.rke2.module.servers["server"].openstack_compute_instance_v2.instance[0]'
 ```
