@@ -224,22 +224,25 @@ terraform apply
 ## Infomaniak OpenStack
 
 A stable, performant and fully equipped Kubernetes cluster in Switzerland for as
-little as CHF 16.90/month (at the time of writing):
+little as CHF 18.—/month (at the time of writing):
 
-- 1 floating IP for admin access (ssh and kubernetes api)
 - 1 server 2cpu/4Go (= master)
-- 1 agent 2cpu/4Go (= worker)
+- 1 agent 1cpu/2Go (= worker)
+- 1 floating IP for admin access (ssh and kubernetes api)
+- 1 floating IP for private network gateway
 
-| Flavour                                                       | CHF/month |
-| ------------------------------------------------------------- | --------- |
-| 2×5.88 (instances) + 0.09×2×(4+6) (block storage) + 3.34 (IP) | 16.90     |
-| single 2cpu/4go server with 1x4cpu/16Go worker                | ~27.—     |
-| 3x2cpu/4go HA servers with 1x4cpu/16Go worker                 | ~40.—     |
-| 3x2cpu/4go HA servers with 3x4cpu/16Go workers                | ~75.—     |
+| Flavour                                                              | CHF/month |
+| -------------------------------------------------------------------- | --------- |
+| 5.88 + 2.93 (instances) + 0.09×2×(6+8) (block storage) + 2×3.34 (IP) | 18.—      |
+| 1x2cpu/4go server with 1x4cpu/16Go worker                            | ~28.—     |
+| 3x2cpu/4go HA servers with 1x4cpu/16Go worker                        | ~41.—     |
+| 3x2cpu/4go HA servers with 3x4cpu/16Go workers                       | ~76.—     |
 
 You may also want to add a load-balancer and bind an additional floating IP for
 public access (e.g. for an ingress controller like ingress-nginx), that will add
-10.00 (load-balancer) + 3.34 (IP) = CHF 13.34/month.
+10.00 (load-balancer) + 3.34 (IP) = CHF 13.34/month. Note that physical
+load-balancer can be shared by many Kubernetes load-balancers when there is no
+port collision.
 
 See their technical [documentation](https://docs.infomaniak.cloud) and
 [pricing](https://www.infomaniak.com/fr/hebergement/public-cloud/tarifs).

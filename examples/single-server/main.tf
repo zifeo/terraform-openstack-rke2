@@ -25,7 +25,7 @@ module "rke2" {
     image_uuid = "8ca95333-e5c3-4d9b-90bc-f261ca434114"
 
     system_user      = "ubuntu"
-    boot_volume_size = 8
+    boot_volume_size = 6
 
     rke2_version     = "v1.28.4+rke2r1"
     rke2_volume_size = 8
@@ -48,38 +48,38 @@ EOF
       image_uuid = "8ca95333-e5c3-4d9b-90bc-f261ca434114"
 
       system_user      = "ubuntu"
-      boot_volume_size = 8
+      boot_volume_size = 6
 
       rke2_version     = "v1.28.4+rke2r1"
       rke2_volume_size = 8
     }
   ]
 
-  backup_schedule  = "0 */6 * * *"
+  backup_schedule  = "0 6 1 * *" # once a month
   backup_retention = 20
 
-  kube-apiserver-resources = {
+  kube_apiserver_resources = {
     requests = {
       cpu    = "75m"
       memory = "128M"
     }
   }
 
-  kube-scheduler-resources = {
+  kube_scheduler_resources = {
     requests = {
       cpu    = "75m"
       memory = "128M"
     }
   }
 
-  kube-controller-manager-resources = {
+  kube_controller_manager_resources = {
     requests = {
       cpu    = "75m"
       memory = "128M"
     }
   }
 
-  etcd-resources = {
+  etcd_resources = {
     requests = {
       cpu    = "75m"
       memory = "128M"

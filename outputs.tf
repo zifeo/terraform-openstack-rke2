@@ -2,6 +2,10 @@ output "external_ip" {
   value = local.external_ip
 }
 
+output "outgoing_ip" {
+  value = openstack_networking_router_v2.router.external_network_id.ip_address
+}
+
 output "network_id" {
   value = openstack_networking_network_v2.net.id
 }
