@@ -30,7 +30,7 @@ defaults for running production workload.
 | Component                  | Version                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | OpenStack                  | 2023.1 Antelope (verified), maybe older version are supported too                                                        |
-| RKE2                       | [v1.28.4+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.28.4+rke2r1)                                            |
+| RKE2                       | [v1.29.0+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.29.0+rke2r1)                                            |
 | OpenStack Cloud Controller | [v1.28.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.28.1/charts/openstack-cloud-controller-manager) |
 | OpenStack Cinder           | [v1.28.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.28.1/charts/cinder-csi-plugin)                  |
 | Velero                     | [v2.32.6](https://github.com/vmware-tanzu/helm-charts/tree/velero-2.32.6/charts/velero)                                  |
@@ -110,7 +110,7 @@ ssh ubuntu@server-c
 sudo su
 modprobe ip_vs
 modprobe ip_vs_rr
-cat <<EOF > /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yml
+cat <<EOF > /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yaml
 apiVersion: v1
 kind: Pod
 metadata:

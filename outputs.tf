@@ -3,7 +3,7 @@ output "external_ip" {
 }
 
 output "outgoing_ip" {
-  value = openstack_networking_router_v2.router.external_network_id.ip_address
+  value = openstack_networking_router_v2.router.external_fixed_ip[0].ip_address
 }
 
 output "network_id" {

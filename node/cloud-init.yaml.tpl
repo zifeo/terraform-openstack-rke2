@@ -99,6 +99,42 @@ write_files:
   encoding: gz+b64
   content: ${v}
     %{~ endfor ~}
+- path: /usr/local/bin/customize-chart.sh
+  permissions: "0755"
+  owner: root:root
+  content: |
+    #!/bin/bash
+    CHART_FILE=$1
+    CHART_NAME=$(basename $CHART_FILE .yaml)
+    DELTA=$2
+    TAR_FILE=chart.tar
+    FILE=values.yaml
+    TAR_OPTS="--owner=0 --group=0 --mode=gou-s+r --numeric-owner --no-acls --no-selinux --no-xattrs"
+    echo "Customizing $CHART_FILE with $DELTA"
+    cat $CHART_FILE | yq -r .spec.chartContent | base64 -d | gunzip - > $TAR_FILE
+    tar -xOf $TAR_FILE $CHART_NAME/$FILE > $FILE
+    yq -i e '. *= load("'$DELTA'")' $FILE
+    tar --delete -b 8192 -f $TAR_FILE $CHART_NAME/$FILE
+    tar --transform="s|.*|$CHART_NAME/$FILE|" $TAR_OPTS -vrf $TAR_FILE $FILE
+    gzip -9 $TAR_FILE
+    cat $TAR_FILE.gz | base64 -w 0 > $TAR_FILE.gz.b64
+    yq -i e '.spec.chartContent = load_str("'$TAR_FILE'.gz.b64")' $CHART_FILE
+    rm $TAR_FILE.gz $TAR_FILE.gz.b64 $FILE
+- path: /usr/local/bin/customize-charts.sh
+  permissions: "0755"
+  owner: root:root
+  content: |
+    #!/bin/bash
+    PATCHES_DIR="/opt/rke2/manifests/patches"
+    CHARTS_DIR="/var/lib/rancher/rke2/server/manifests"
+    ls $PATCHES_DIR
+    ls $CHARTS_DIR
+    for patch in $PATCHES_DIR/*; do
+      patch_name=$(basename "$patch")
+      if [ -f "$CHARTS_DIR/$patch_name" ]; then
+        /usr/local/bin/customize-chart.sh "$CHARTS_DIR/$patch_name" "$patch"
+      fi
+    done
   %{~ endif ~}
 - path: /etc/modules-load.d/ipvs.conf
   permissions: "0644"
@@ -107,7 +143,7 @@ write_files:
     # loads kernel modules for kube-vip
     ip_vs
     ip_vs_rr
-- path: /opt/rke2/kube-vip.yml
+- path: /opt/rke2/kube-vip.yaml
   permissions: "0600"
   owner: root:root
   content: |
@@ -164,10 +200,10 @@ write_files:
           value: ":2112"
         resources:
           requests:
-            cpu: 100m
-            memory: 64Mi
+            cpu: 25m
+            memory: 32Mi
           limits:
-            memory: 64Mi
+            memory: 32Mi
         securityContext:
           capabilities:
             add:
@@ -254,19 +290,26 @@ runcmd:
   - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   - echo 'alias ctr="sudo /var/lib/rancher/rke2/bin/ctr --address /run/k3s/containerd/containerd.sock --namespace k8s.io"' >> /home/${system_user}/.bashrc
   %{~ if is_server ~}
-  - systemctl restart systemd-modules-load.service
+  - systemctl restart systemd-modules-load.service # ensure ipvs is loaded
   - echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc
   - rm -rf /var/lib/rancher/rke2/server/manifests # single-node cleanup
   - systemctl enable rke2-server.service
   - systemctl start rke2-server.service
-  - [ sh, -c, 'until [ -d /var/lib/rancher/rke2/agent/pod-manifests/ ]; do echo Waiting for $(hostname) static pods && sleep 5; done;' ]
-  - mv -v /opt/rke2/kube-vip.yml /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yml
+  - [ sh, -c, 'until [ -d /var/lib/rancher/rke2/agent/pod-manifests/ ]; do echo Waiting for $(hostname) static pods && sleep 1; done;' ]
+  - mv -v /opt/rke2/kube-vip.yaml /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yaml
   - ls /var/lib/rancher/rke2/agent/pod-manifests
-  - mv -v /opt/rke2/manifests/* /var/lib/rancher/rke2/server/manifests || echo "No manifest files"
+    %{~ if is_first ~}
+  - wget https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
+  - [ sh, -c, 'until [ -d /var/lib/rancher/rke2/server/manifests ]; do echo Waiting for $(hostname) manifests && sleep 1; done;' ]
+  - /usr/local/bin/customize-charts.sh
+  - mv -v /opt/rke2/manifests/*.yaml /var/lib/rancher/rke2/server/manifests
   - ls /var/lib/rancher/rke2/server/manifests
-  - [ sh, -c, 'until systemctl is-active -q rke2-server.service; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
+    %{~ else ~}
+  - rm /var/lib/rancher/rke2/server/manifests/*
+    %{~ endif ~}
+  - [ sh, -c, 'until systemctl is-active -q rke2-server.service; do echo Waiting for $(hostname) rke2 to start && sleep 1; done;' ]
   %{~ else ~}
   - systemctl enable rke2-agent.service
   - systemctl start rke2-agent.service
-  - [ sh, -c, 'until systemctl is-active -q rke2-agent.service; do echo Waiting for $(hostname) rke2 to start && sleep 10; done;' ]
+  - [ sh, -c, 'until systemctl is-active -q rke2-agent.service; do echo Waiting for $(hostname) rke2 to start && sleep 1; done;' ]
   %{~ endif ~}

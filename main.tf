@@ -60,7 +60,7 @@ module "servers" {
   manifests_folder = var.manifests_folder
   manifests = merge(
     {
-      "cinder-csi.yml" : templatefile("${path.module}/manifests/csi-cinder.yml.tpl", {
+      "cinder-csi.yaml" : templatefile("${path.module}/manifests/csi-cinder.yaml.tpl", {
         operator_replica = local.operator_replica
         auth_url         = var.identity_endpoint
         region           = openstack_identity_application_credential_v3.rke2.region
@@ -69,7 +69,7 @@ module "servers" {
         app_secret       = openstack_identity_application_credential_v3.rke2.secret
         app_name         = openstack_identity_application_credential_v3.rke2.name
       }),
-      "velero.yml" : templatefile("${path.module}/manifests/velero.yml.tpl", {
+      "velero.yaml" : templatefile("${path.module}/manifests/velero.yaml.tpl", {
         auth_url      = var.identity_endpoint
         region        = openstack_identity_application_credential_v3.rke2.region
         app_id        = openstack_identity_application_credential_v3.rke2.id
@@ -78,7 +78,7 @@ module "servers" {
         bucket_restic = openstack_objectstorage_container_v1.restic.name
         bucket_velero = openstack_objectstorage_container_v1.velero.name
       }),
-      "cloud-controller-openstack.yml" : templatefile("${path.module}/manifests/cloud-controller-openstack.yml.tpl", {
+      "cloud-controller-openstack.yaml" : templatefile("${path.module}/manifests/cloud-controller-openstack.yaml.tpl", {
         auth_url            = var.identity_endpoint
         region              = openstack_identity_application_credential_v3.rke2.region
         project_id          = openstack_identity_application_credential_v3.rke2.project_id
@@ -91,14 +91,20 @@ module "servers" {
         lb_provider         = var.lb_provider
         cluster_name        = var.name
       }),
-      "cilium.yml" : templatefile("${path.module}/manifests/cilium.yml.tpl", {
+      (var.ff_patches ? "patches/rke2-cilium.yaml" : "cilium.yaml") : templatefile(var.ff_patches ? "${path.module}/patches/rke2-cilium.yaml.tpl" : "${path.module}/manifests/cilium.yaml.tpl", {
         operator_replica = local.operator_replica
         apiserver_host   = local.internal_vip
         cluster_name     = var.name
         cluster_id       = var.cluster_id
       }),
-      "ha.yml" : templatefile("${path.module}/manifests/ha.yml.tpl", {
+      (var.ff_patches ? "patches/rke2-coredns.yaml" : "coredns.yaml") : templatefile(var.ff_patches ? "${path.module}/patches/rke2-coredns.yaml.tpl" : "${path.module}/manifests/coredns.yaml.tpl", {
         operator_replica = local.operator_replica
+      }),
+      (var.ff_patches ? "patches/rke2-metrics-server.yaml" : "metrics-server.yaml") : templatefile(var.ff_patches ? "${path.module}/patches/rke2-metrics-server.yaml.tpl" : "${path.module}/manifests/metrics-server.yaml.tpl", {
+      }),
+      (var.ff_patches ? "patches/rke2-snapshot-controller.yaml" : "snapshot-controller.yaml") : templatefile(var.ff_patches ? "${path.module}/patches/rke2-snapshot-controller.yaml.tpl" : "${path.module}/manifests/snapshot-controller.yaml.tpl", {
+      }),
+      (var.ff_patches ? "patches/rke2-snapshot-validation-webhook.yaml" : "snapshot-validation-webhook.yaml") : templatefile(var.ff_patches ? "${path.module}/patches/rke2-snapshot-validation-webhook.yaml.tpl" : "${path.module}/manifests/snapshot-validation-webhook.yaml.tpl", {
       }),
     },
     {
@@ -160,7 +166,4 @@ module "agents" {
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_wait_ready       = var.ff_wait_ready
 
-  depends_on = [
-    module.servers[0].first_id
-  ]
 }

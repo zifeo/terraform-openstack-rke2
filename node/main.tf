@@ -86,7 +86,7 @@ resource "openstack_compute_instance_v2" "instance" {
   }
 
   # yamlencode(yamldecode to debug yaml
-  user_data = base64encode(templatefile("${path.module}/cloud-init.yml.tpl", {
+  user_data = base64encode(templatefile("${path.module}/cloud-init.yaml.tpl", {
     rke2_token   = var.rke2_token
     rke2_version = var.rke2_version
     rke2_conf    = var.rke2_config != null ? var.rke2_config : ""
@@ -135,7 +135,7 @@ resource "openstack_compute_instance_v2" "instance" {
 /*
 resource "local_file" "debug" {
   count    = var.nodes_count
-  filename = "${path.module}/${var.name}-${count.index + 1}.yml"
+  filename = "${path.module}/${var.name}-${count.index + 1}.yaml"
   content = ""
 }
 */
