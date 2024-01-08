@@ -22,7 +22,9 @@ spec:
         value: "true"
     resources:
       requests:
-        cpu: 50m
+        cpu: 25m
+        memory: 64Mi
+      limits:
         memory: 64Mi
     cloudConfig:
       global:

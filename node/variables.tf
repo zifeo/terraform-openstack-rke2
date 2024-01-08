@@ -202,6 +202,10 @@ variable "manifests" {
   default = {}
 }
 
+variable "ssh_authorized_keys" {
+  type = list(string)
+}
+
 variable "ff_autoremove_agent" {
   type = string
 }
@@ -209,8 +213,4 @@ variable "ff_autoremove_agent" {
 variable "ff_wait_ready" {
   type    = bool
   default = false
-}
-
-variable "ssh_authorized_keys" {
-  type = list(string)
 }

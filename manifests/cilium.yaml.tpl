@@ -27,13 +27,17 @@ spec:
       resources:
         requests:
           cpu: 50m
+          memory: 64Mi
+        limits:
           memory: 128Mi
     cni:
       chainingMode: "none"
     resources:
       requests:
         cpu: 50m
-        memory: 128Mi
+        memory: 256Mi
+      limits:
+        memory: 512Mi
     hubble:
       enabled: true
       metrics:
@@ -43,9 +47,10 @@ spec:
           - flow
           - flows-to-world
           - httpV2
+          - icmp
+          - kafka
           - port-distribution
           - tcp
-          - icmp
       relay:
         enabled: true
         resources:
