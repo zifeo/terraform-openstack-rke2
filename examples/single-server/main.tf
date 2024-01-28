@@ -92,6 +92,8 @@ EOF
   ff_write_kubeconfig = true
   # deploy etcd backup
   ff_native_backup = true
+  # wait for the cluster to be ready when deploying
+  ff_wait_ready = true
 
   identity_endpoint     = "https://api.pub1.infomaniak.cloud/identity"
   object_store_endpoint = "s3.pub1.infomaniak.cloud"
