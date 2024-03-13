@@ -153,7 +153,7 @@ write_files:
     spec:
       containers:
       - name: kube-vip
-        image: ghcr.io/kube-vip/kube-vip:v0.6.4
+        image: ghcr.io/kube-vip/kube-vip:v0.7.2
         imagePullPolicy: IfNotPresent
         args:
         - manager

@@ -34,7 +34,7 @@ defaults for running production workload.
 | OpenStack Cloud Controller | [v1.28.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.28.1/charts/openstack-cloud-controller-manager) |
 | OpenStack Cinder           | [v1.28.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.28.1/charts/cinder-csi-plugin)                  |
 | Velero                     | [v2.32.6](https://github.com/vmware-tanzu/helm-charts/tree/velero-2.32.6/charts/velero)                                  |
-
+| Kube-vip                   | [v0.7.2](https://github.com/kube-vip/kube-vip/releases/tag/v0.7.2)                                                       |
 ## Getting started
 
 ```bash
@@ -119,7 +119,7 @@ metadata:
 spec:
   containers:
     - name: kube-vip
-      image: ghcr.io/kube-vip/kube-vip:v0.6.4
+      image: ghcr.io/kube-vip/kube-vip:v0.7.2
       imagePullPolicy: IfNotPresent
       args:
         - manager
