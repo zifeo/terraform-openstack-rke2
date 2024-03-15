@@ -39,6 +39,10 @@ spec:
       limits:
         cpu: null
         memory: null
+    kubectl:
+      image:
+        repository: docker.io/bitnami/kubectl
+        tag: "1.29-debian-11"
     configuration:
       provider: mixed
       namespace: velero
