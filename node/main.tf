@@ -3,11 +3,6 @@ data "openstack_images_image_v2" "image" {
   most_recent = true
 }
 
-resource "openstack_compute_servergroup_v2" "servergroup" {
-  name     = "${var.name}-servergroup"
-  policies = [var.affinity]
-}
-
 resource "openstack_blockstorage_volume_v3" "volume" {
   count                = var.is_persisted ? var.nodes_count : 0
   name                 = "${var.name}-${count.index + 1}-rke2"
@@ -53,7 +48,7 @@ resource "openstack_compute_instance_v2" "instance" {
   }
 
   scheduler_hints {
-    group = openstack_compute_servergroup_v2.servergroup.id
+    group = var.group_id
   }
 
   metadata = {

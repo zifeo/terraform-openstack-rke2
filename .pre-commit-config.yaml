@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/tofuutils/pre-commit-opentofu
-    rev: 65ac74a0fd483b19b93293918c088067a9979e6d
+    rev: v1.0.2
     hooks:
       - id: tofu_fmt
       - id: tofu_checkov

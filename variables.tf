@@ -109,7 +109,7 @@ variable "bootstrap" {
 variable "servers" {
   type = list(object({
     name               = string
-    affinity           = optional(string)
+    group_id           = optional(string)
     availability_zones = optional(list(string))
     flavor_name        = string
     image_name         = string
@@ -141,7 +141,7 @@ variable "agents" {
   type = list(object({
     name               = string
     nodes_count        = number
-    affinity           = optional(string)
+    group_id           = optional(string)
     availability_zones = optional(list(string))
     flavor_name        = string
     image_name         = string
