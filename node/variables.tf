@@ -47,7 +47,7 @@ variable "availability_zones" {
   type = list(string)
 }
 
-variable "affinity" {
+variable "group_id" {
   type = string
 }
 

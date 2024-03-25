@@ -11,6 +11,16 @@ locals {
   operator_replica = length(var.servers) > 1 ? 2 : 1
 }
 
+resource "openstack_compute_servergroup_v2" "servers" {
+  name     = "${var.name}-servers"
+  policies = ["anti-affinity"]
+}
+
+resource "openstack_compute_servergroup_v2" "agents" {
+  name     = "${var.name}-servers"
+  policies = ["soft-anti-affinity"]
+}
+
 module "servers" {
   source = "./node"
 
@@ -33,7 +43,7 @@ module "servers" {
   boot_volume_type = each.value.boot_volume_type
 
   availability_zones = coalesce(each.value.availability_zones, [])
-  affinity           = coalesce(each.value.affinity, "soft-anti-affinity")
+  group_id           = each.value.group_id != null ? each.value.group_id : openstack_compute_servergroup_v2.servers.id
 
   rke2_version       = each.value.rke2_version
   rke2_config        = each.value.rke2_config
@@ -144,7 +154,7 @@ module "agents" {
   boot_volume_type = each.value.boot_volume_type
 
   availability_zones = coalesce(each.value.availability_zones, [])
-  affinity           = coalesce(each.value.affinity, "soft-anti-affinity")
+  group_id           = each.value.group_id != null ? each.value.group_id : openstack_compute_servergroup_v2.agents.id
 
   rke2_version       = each.value.rke2_version
   rke2_config        = each.value.rke2_config
