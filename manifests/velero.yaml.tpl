@@ -67,6 +67,9 @@ spec:
         OS_APPLICATION_CREDENTIAL_SECRET: ${app_secret}
         # for community.openstack.org/openstack (env vars do not work and take precedence over clouds.yaml unless cloud set)
         OS_CLOUD: self
+
+      # uploaderType: restic
+  
     credentials:
       # for community.openstack.org/openstack
       secretContents:
@@ -95,12 +98,11 @@ spec:
     backupsEnabled: true
     snapshotsEnabled: true
 
-    # deployRestic: true
-    # will be replace by 
     deployNodeAgent: true
     nodeAgent:
       podVolumePath: /var/lib/kubelet/pods
-      privileged: true
+      containerSecurityContext:
+        privileged: false
       resources:
         requests:
           cpu: 100m
