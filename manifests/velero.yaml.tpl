@@ -47,28 +47,23 @@ spec:
       namespace: velero
       features: EnableCSI
       defaultBackupTTL: 72h
-      defaultResticPruneFrequency: 72h
       backupStorageLocation:
         - name: default
           provider: community.openstack.org/openstack
           bucket: ${bucket_velero}
           config:
             cloud: self
-            region: ${region}
-            resticRepoPrefix: swift:${bucket_restic}:/restic     
+            region: ${region}    
       volumeSnapshotLocation:
         - name: default
           provider: csi
       extraEnvVars:
-        # for restic (no support for clouds.yaml, https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#openstack-swift)
         OS_AUTH_URL: ${auth_url}/v3
         OS_APPLICATION_CREDENTIAL_ID: ${app_id}
         OS_APPLICATION_CREDENTIAL_NAME: ${app_name}
         OS_APPLICATION_CREDENTIAL_SECRET: ${app_secret}
         # for community.openstack.org/openstack (env vars do not work and take precedence over clouds.yaml unless cloud set)
         OS_CLOUD: self
-
-      # uploaderType: restic
   
     credentials:
       # for community.openstack.org/openstack
