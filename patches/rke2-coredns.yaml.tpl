@@ -1,7 +1,3 @@
-
-%{ if operator_replica > 1 }
-nodeSelector:
-  node-role.kubernetes.io/master: "true"
 resources:
   requests:
     cpu: "100m"
@@ -10,5 +6,10 @@ resources:
     cpu: "100m" # because of autoscaler
     memory: "128Mi"
 autoscaler:
-  enabled: false
-%{ endif }
+  min: ${operator_replica}
+  resources:
+    requests:
+      cpu: "20m"
+      memory: "10Mi"
+    limits:
+      memory: "10Mi"

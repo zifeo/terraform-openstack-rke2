@@ -26,8 +26,6 @@ spec:
         volumeMounts:
           - mountPath: /target
             name: plugins
-    nodeSelector:
-      node-role.kubernetes.io/master: "true"
     tolerations:
       - effect: NoExecute
         key: CriticalAddonsOnly
@@ -38,7 +36,7 @@ spec:
         memory: 128Mi
       limits:
         cpu: null
-        memory: null
+        memory: 256Mi
     kubectl:
       image:
         repository: docker.io/bitnami/kubectl
@@ -53,7 +51,7 @@ spec:
           bucket: ${bucket_velero}
           config:
             cloud: self
-            region: ${region}    
+            region: ${region}
       volumeSnapshotLocation:
         - name: default
           provider: csi
@@ -64,7 +62,6 @@ spec:
         OS_APPLICATION_CREDENTIAL_SECRET: ${app_secret}
         # for community.openstack.org/openstack (env vars do not work and take precedence over clouds.yaml unless cloud set)
         OS_CLOUD: self
-  
     credentials:
       # for community.openstack.org/openstack
       secretContents:
@@ -89,10 +86,8 @@ spec:
         mountPath: /etc/openstack/clouds.yaml
         readOnly: true
         subPath: clouds.yaml
-
     backupsEnabled: true
     snapshotsEnabled: true
-
     deployNodeAgent: true
     nodeAgent:
       podVolumePath: /var/lib/kubelet/pods

@@ -39,10 +39,6 @@ resource "openstack_compute_instance_v2" "instance" {
   key_pair     = var.keypair_name
   config_drive = true
 
-  connection {
-    user = var.system_user
-  }
-
   network {
     port = openstack_networking_port_v2.port[count.index].id
   }

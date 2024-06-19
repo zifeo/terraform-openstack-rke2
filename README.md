@@ -73,7 +73,7 @@ yourself `/etc/rancher/rke2/rke2.yaml` on server nodes.
 
 ```
 # remove server url from rke2 config
-vim /etc/rancher/rke2/config.yaml
+sudo vim /etc/rancher/rke2/config.yaml
 # ssh into one of the server nodes (see terraform output -json)
 # restore s3 snapshot (see restore_cmd output of the terraform module):
 sudo systemctl stop rke2-server
