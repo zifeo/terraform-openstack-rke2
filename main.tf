@@ -117,6 +117,39 @@ module "servers" {
       "patches/rke2-snapshot-validation-webhook.yaml" : templatefile("${path.module}/patches/rke2-snapshot-validation-webhook.yaml.tpl", {
       }),
     },
+    var.ff_infomaniak_sc ? merge([for perf in ["perf1", "perf2", "perf3"] : {
+      "sc-ceph-${perf}-delete.yaml" : templatefile("${path.module}/manifests/csi-cinder-sc.yaml.tpl", {
+        name          = "ceph-${perf}-delete"
+        reclaimPolicy = "Delete"
+        is_default    = false
+        parameters = {
+          type = "CEPH_1_${perf}"
+        }
+      })
+    }]...) : {},
+    var.ff_infomaniak_sc ? merge([for perf in ["perf1", "perf2", "perf3"] : {
+      "sc-ceph-${perf}-retain.yaml" : templatefile("${path.module}/manifests/csi-cinder-sc.yaml.tpl", {
+        name          = "ceph-${perf}-retain"
+        reclaimPolicy = "Retain"
+        is_default    = perf == "perf1"
+        parameters = {
+          type = "CEPH_1_${perf}"
+        }
+      })
+      }]...) : {
+      "csi-cinder-retain.yaml" : templatefile("${path.module}/manifests/csi-cinder-sc.yaml.tpl", {
+        name          = "csi-cinder-retain",
+        reclaimPolicy = "Retain"
+        is_default    = true
+        parameters    = {}
+      }),
+      "csi-cinder-delete.yaml" : templatefile("${path.module}/manifests/csi-cinder-sc.yaml.tpl", {
+        name          = "csi-cinder-delete"
+        reclaimPolicy = "Delete"
+        is_default    = false
+        parameters    = {}
+      })
+    },
     {
       for f in fileset(path.module, "manifests/*.{yml,yaml}") : basename(f) => file("${path.module}/${f}")
     },
