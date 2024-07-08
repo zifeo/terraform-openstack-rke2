@@ -287,3 +287,8 @@ variable "ff_wait_ready" {
   type    = bool
   default = true
 }
+
+variable "ff_infomaniak_sc" {
+  type    = bool
+  default = false
+}
