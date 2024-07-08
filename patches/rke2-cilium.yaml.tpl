@@ -10,13 +10,6 @@ operator:
   replicas: ${operator_replica}
   nodeSelector:
     node-role.kubernetes.io/master: "true"
-  tolerations:
-    - effect: NoExecute
-      key: CriticalAddonsOnly
-      operator: "Exists"
-    - effect: NoSchedule
-      key: node.cloudprovider.kubernetes.io/uninitialized
-      operator: "Exists"
   resources:
     requests:
       cpu: 50m

@@ -5,7 +5,7 @@ variable "name" {
 
 variable "ssh_authorized_keys" {
   type    = list(string)
-  default = ["~/.ssh/id_rsa.pub"]
+  default = []
 }
 
 variable "floating_pool" {
