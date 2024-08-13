@@ -11,9 +11,8 @@ terraform {
       version = "~> 3.2.2"
     }
     openstack = {
-      source = "terraform-provider-openstack/openstack"
-      # 1.5x.x is affected by https://github.com/terraform-provider-openstack/terraform-provider-openstack/issues/1601
-      version = "~> 1.53.0"
+      source  = "terraform-provider-openstack/openstack"
+      version = "~> 2.1.0"
     }
   }
 }
