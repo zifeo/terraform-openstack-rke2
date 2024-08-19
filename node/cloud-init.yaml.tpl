@@ -281,6 +281,20 @@ runcmd:
   - /usr/local/bin/install-or-upgrade-rke2.sh
   - echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   - echo 'alias ctr="sudo /var/lib/rancher/rke2/bin/ctr --address /run/k3s/containerd/containerd.sock --namespace k8s.io"' >> /home/${system_user}/.bashrc
+  - >
+    for MNT in /mnt; do
+      RETRIES=0; MAX_RETRIES=30;
+      until mountpoint -q "$MNT"; do
+        RETRIES=$((RETRIES + 1));
+        if [ $RETRIES -ge $MAX_RETRIES ]; then
+          echo "ERROR: $MNT not mounted after $MAX_RETRIES retries.";
+          exit 1;
+        fi;
+        echo "$MNT not mounted yet, retrying in 10 seconds...";
+        sleep 5;
+      done;
+      echo "$MNT mounted successfully.";
+    done;
   %{~ if is_server ~}
   - systemctl restart systemd-modules-load.service # ensure ipvs is loaded
   - echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc
