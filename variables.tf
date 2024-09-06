@@ -84,6 +84,11 @@ variable "subnet_lb_cidr" {
   default = "192.168.44.0/24"
 }
 
+variable "vip_interface" {
+  type    = string
+  default = "ens3"
+}
+
 variable "dns_nameservers4" {
   type = list(string)
   # Cloudflare
