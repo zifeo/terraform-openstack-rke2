@@ -157,7 +157,7 @@ write_files:
         - name: port
           value: "6443"
         - name: vip_interface
-          value: ens3
+          value: "${vip_interface}"
         - name: vip_cidr
           value: "32"
         - name: cp_enable

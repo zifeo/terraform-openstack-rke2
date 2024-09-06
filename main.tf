@@ -60,12 +60,13 @@ module "servers" {
   keypair_name        = openstack_compute_keypair_v2.key.name
   ssh_authorized_keys = local.ssh_authorized_keys
 
-  network_id   = openstack_networking_network_v2.net.id
-  subnet_id    = openstack_networking_subnet_v2.servers.id
-  secgroup_id  = openstack_networking_secgroup_v2.server.id
-  internal_vip = local.internal_vip
-  bastion_host = local.external_ip
-  san          = distinct(concat([local.external_ip, local.internal_vip], var.additional_san))
+  network_id    = openstack_networking_network_v2.net.id
+  subnet_id     = openstack_networking_subnet_v2.servers.id
+  secgroup_id   = openstack_networking_secgroup_v2.server.id
+  internal_vip  = local.internal_vip
+  vip_interface = var.vip_interface
+  bastion_host  = local.external_ip
+  san           = distinct(concat([local.external_ip, local.internal_vip], var.additional_san))
 
   manifests_folder = var.manifests_folder
   manifests = merge(
@@ -200,11 +201,12 @@ module "agents" {
   keypair_name        = openstack_compute_keypair_v2.key.name
   ssh_authorized_keys = local.ssh_authorized_keys
 
-  network_id   = openstack_networking_network_v2.net.id
-  subnet_id    = openstack_networking_subnet_v2.agents.id
-  secgroup_id  = openstack_networking_secgroup_v2.agent.id
-  internal_vip = local.internal_vip
-  bastion_host = local.external_ip
+  network_id    = openstack_networking_network_v2.net.id
+  subnet_id     = openstack_networking_subnet_v2.agents.id
+  secgroup_id   = openstack_networking_secgroup_v2.agent.id
+  internal_vip  = local.internal_vip
+  vip_interface = var.vip_interface
+  bastion_host  = local.external_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_wait_ready       = var.ff_wait_ready
