@@ -35,8 +35,8 @@ resource "openstack_networking_secgroup_rule_v2" "agent_outside6" {
 resource "openstack_networking_secgroup_rule_v2" "outside_servers" {
   for_each = {
     for rule in concat(
-      var.rules_ssh_cidr != null ? [{ "port" : 22, "protocol" : "tcp", "source" : var.rules_ssh_cidr }] : [],
-      var.rules_k8s_cidr != null ? [{ "port" : 6443, "protocol" : "tcp", "source" : var.rules_k8s_cidr }] : [],
+      var.rules_ssh_cidr != null ? [for r in var.rules_ssh_cidr : { "port" : 22, "protocol" : "tcp", "source" : r }] : [],
+      var.rules_k8s_cidr != null ? [for r in var.rules_k8s_cidr : { "port" : 6443, "protocol" : "tcp", "source" : r }] : [],
     ) :
     format("%s-%s-%s", rule["source"], rule["protocol"], rule["port"]) => rule
   }

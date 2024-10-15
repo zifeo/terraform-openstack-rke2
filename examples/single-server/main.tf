@@ -10,8 +10,8 @@ module "rke2" {
   ssh_authorized_keys = ["~/.ssh/id_rsa.pub"]
   floating_pool       = "ext-floating1"
   # should be restricted to a secure bastion
-  rules_ssh_cidr = "0.0.0.0/0"
-  rules_k8s_cidr = "0.0.0.0/0"
+  rules_ssh_cidr = ["0.0.0.0/0"]
+  rules_k8s_cidr = ["0.0.0.0/0"]
   # auto load manifest form a folder (https://docs.rke2.io/advanced#auto-deploying-manifests)
   manifests_folder = "./manifests"
 
@@ -27,7 +27,7 @@ module "rke2" {
     system_user      = "ubuntu"
     boot_volume_size = 6
 
-    rke2_version     = "v1.28.4+rke2r1"
+    rke2_version     = "v1.30.3+rke2r1"
     rke2_volume_size = 8
     # https://docs.rke2.io/install/install_options/server_config/
     rke2_config = <<EOF
@@ -50,7 +50,7 @@ EOF
       system_user      = "ubuntu"
       boot_volume_size = 6
 
-      rke2_version     = "v1.28.4+rke2r1"
+      rke2_version     = "v1.30.3+rke2r1"
       rke2_volume_size = 8
     }
   ]
