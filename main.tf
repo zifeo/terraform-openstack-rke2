@@ -104,7 +104,6 @@ module "servers" {
       }),
       "patches/rke2-cilium.yaml" : templatefile("${path.module}/patches/rke2-cilium.yaml.tpl", {
         operator_replica = local.operator_replica
-        apiserver_host   = local.internal_vip
         cluster_name     = var.name
         cluster_id       = var.cluster_id
       }),
