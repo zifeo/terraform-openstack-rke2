@@ -3,7 +3,7 @@ cluster:
   id: ${cluster_id}
 eni:
   enabled: true
-kubeProxyReplacement: "true"
+kubeProxyReplacement: "${ff_kubeproxy ? false : true}"
 k8sServiceHost: 127.0.0.1
 k8sServicePort: 6443
 operator:

@@ -218,3 +218,18 @@ variable "ff_wait_ready" {
   type    = bool
   default = false
 }
+
+variable "ff_kubeproxy" {
+  type        = bool
+  default     = false
+}
+
+variable "cluster_cidr" {
+  type        = string
+  default     = "10.42.0.0/16"
+}
+
+variable "service_cidr" {
+  type        = string
+  default     = "10.43.0.0/16"
+}

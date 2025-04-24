@@ -223,6 +223,8 @@ write_files:
     server: "https://${internal_vip}:9345"
     %{~ endif ~}
     node-ip: "${node_ip}"
+    cluster-cidr: "${cluster_cidr}"
+    service-cidr: "${service_cidr}"
     cloud-provider-name: external
     advertise-address: "${node_ip}"
     write-kubeconfig-mode: "0640"
@@ -250,7 +252,7 @@ write_files:
     control-plane-resource-limits: "${control_plane_limits}"
     %{~ endif ~}
     disable-cloud-controller: true
-    disable-kube-proxy: true
+    disable-kube-proxy: ${ff_kubeproxy ? "false" : "true"}
     disable: rke2-ingress-nginx
     cni: cilium
     node-label:

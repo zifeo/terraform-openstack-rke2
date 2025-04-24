@@ -121,6 +121,9 @@ resource "openstack_compute_instance_v2" "instance" {
     system_user       = var.system_user
     authorized_keys   = var.ssh_authorized_keys
     ff_wait_apiserver = false
+    ff_kubeproxy      = var.ff_kubeproxy
+    cluster_cidr      = var.cluster_cidr
+    service_cidr      = var.service_cidr
   }))
 }
 

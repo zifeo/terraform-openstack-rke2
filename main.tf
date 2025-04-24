@@ -106,6 +106,7 @@ module "servers" {
         operator_replica = local.operator_replica
         cluster_name     = var.name
         cluster_id       = var.cluster_id
+        ff_kubeproxy     = var.ff_kubeproxy
       }),
       "patches/rke2-coredns.yaml" : templatefile("${path.module}/patches/rke2-coredns.yaml.tpl", {
         operator_replica = local.operator_replica
