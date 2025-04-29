@@ -164,6 +164,9 @@ module "servers" {
 
   ff_autoremove_agent = null
   ff_wait_ready       = var.ff_wait_ready
+  ff_kubeproxy      = var.ff_kubeproxy
+  cluster_cidr      = var.cluster_cidr
+  service_cidr      = var.service_cidr
 }
 
 module "agents" {
@@ -210,5 +213,7 @@ module "agents" {
 
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_wait_ready       = var.ff_wait_ready
-
+  ff_kubeproxy      = var.ff_kubeproxy
+  cluster_cidr      = var.cluster_cidr
+  service_cidr      = var.service_cidr
 }

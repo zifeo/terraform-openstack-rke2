@@ -221,7 +221,7 @@ variable "ff_wait_ready" {
 
 variable "ff_kubeproxy" {
   type        = bool
-  default     = false
+
 }
 
 variable "cluster_cidr" {
