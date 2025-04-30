@@ -161,12 +161,14 @@ module "servers" {
   kube_scheduler_resources          = var.kube_scheduler_resources
   kube_controller_manager_resources = var.kube_controller_manager_resources
   etcd_resources                    = var.etcd_resources
+  kube_proxy_resources = var.kube_proxy_resources
 
   ff_autoremove_agent = null
   ff_wait_ready       = var.ff_wait_ready
   ff_kubeproxy      = var.ff_kubeproxy
   cluster_cidr      = var.cluster_cidr
   service_cidr      = var.service_cidr
+  extra_node_labels = var.extra_node_labels
 }
 
 module "agents" {
@@ -216,4 +218,5 @@ module "agents" {
   ff_kubeproxy      = var.ff_kubeproxy
   cluster_cidr      = var.cluster_cidr
   service_cidr      = var.service_cidr
+  extra_node_labels = var.extra_node_labels
 }

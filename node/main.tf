@@ -107,6 +107,8 @@ resource "openstack_compute_instance_v2" "instance" {
       try("kube-controller-manager-memory=${var.kube_controller_manager_resources.requests.memory}", ""),
       try("etcd-cpu=${var.etcd_resources.requests.cpu}", ""),
       try("etcd-memory=${var.etcd_resources.requests.memory}", ""),
+      try("kube-proxy-cpu=${var.kube_proxy_resources.requests.cpu}", ""),
+      try("kube-proxy-memory=${var.kube_proxy_resources.requests.memory}", ""),
     ] : limit if limit != ""])
     control_plane_limits = join(",", [for limit in [
       try("kube-apiserver-cpu=${var.kube_apiserver_resources.limits.cpu}", ""),
@@ -117,6 +119,8 @@ resource "openstack_compute_instance_v2" "instance" {
       try("kube-controller-manager-memory=${var.kube_controller_manager_resources.limits.memory}", ""),
       try("etcd-cpu=${var.etcd_resources.limits.cpu}", ""),
       try("etcd-memory=${var.etcd_resources.limits.memory}", ""),
+      try("kube-proxy-cpu=${var.kube_proxy_resources.limits.cpu}", ""),
+      try("kube-proxy-memory=${var.kube_proxy_resources.limits.memory}", ""),
     ] : limit if limit != ""])
     system_user       = var.system_user
     authorized_keys   = var.ssh_authorized_keys
@@ -124,6 +128,7 @@ resource "openstack_compute_instance_v2" "instance" {
     ff_kubeproxy      = var.ff_kubeproxy
     cluster_cidr      = var.cluster_cidr
     service_cidr      = var.service_cidr
+    extra_node_labels = var.extra_node_labels
   }))
 }
 

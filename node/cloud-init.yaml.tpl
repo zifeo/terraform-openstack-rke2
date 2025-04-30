@@ -256,7 +256,7 @@ write_files:
     disable: rke2-ingress-nginx
     cni: cilium
     node-label:
-      - node.kubernetes.io/exclude-from-external-load-balancers=true
+      - "node.kubernetes.io/exclude-from-external-load-balancers=true"
     node-taint:
       - CriticalAddonsOnly=true:NoExecute
     ${indent(4,rke2_conf)}

@@ -196,6 +196,20 @@ variable "etcd_resources" {
   default = null
 }
 
+variable "kube_proxy_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
 variable "manifests_folder" {
   type    = string
   default = ""
@@ -226,10 +240,15 @@ variable "ff_kubeproxy" {
 
 variable "cluster_cidr" {
   type        = string
-  default     = "10.42.0.0/16"
+  default     = "10.44.0.0/16"
 }
 
 variable "service_cidr" {
   type        = string
-  default     = "10.43.0.0/16"
+  default     = "10.45.0.0/16"
+}
+
+variable "extra_node_labels" {
+  type    = list(string)
+  default = []  
 }
