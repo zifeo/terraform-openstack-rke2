@@ -312,7 +312,7 @@ variable "ff_infomaniak_sc" {
   default = false
 }
 
-variable "ff_kubeproxy" {
+variable "ff_with_kubeproxy" {
   type        = bool
   default     = false
 }

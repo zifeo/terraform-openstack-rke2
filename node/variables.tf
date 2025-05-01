@@ -233,7 +233,7 @@ variable "ff_wait_ready" {
   default = false
 }
 
-variable "ff_kubeproxy" {
+variable "ff_with_kubeproxy" {
   type        = bool
 
 }
