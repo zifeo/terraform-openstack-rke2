@@ -269,6 +269,10 @@ write_files:
     server: https://${internal_vip}:9345
     node-ip: ${node_ip}
     cloud-provider-name: external
+    node-label:
+    %{ if ff_kubeproxy }
+      - "submariner.io/gateway=true"
+    %{ endif }
     ${indent(4,rke2_conf)}
 %{~ endif ~}
 

@@ -168,7 +168,6 @@ module "servers" {
   ff_kubeproxy      = var.ff_kubeproxy
   cluster_cidr      = var.cluster_cidr
   service_cidr      = var.service_cidr
-  extra_node_labels = var.extra_node_labels
 }
 
 module "agents" {
@@ -218,5 +217,4 @@ module "agents" {
   ff_kubeproxy      = var.ff_kubeproxy
   cluster_cidr      = var.cluster_cidr
   service_cidr      = var.service_cidr
-  extra_node_labels = var.extra_node_labels
 }

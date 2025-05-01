@@ -247,8 +247,3 @@ variable "service_cidr" {
   type        = string
   default     = "10.45.0.0/16"
 }
-
-variable "extra_node_labels" {
-  type    = list(string)
-  default = []  
-}
