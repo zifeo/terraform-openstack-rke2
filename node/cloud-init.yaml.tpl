@@ -252,7 +252,7 @@ write_files:
     control-plane-resource-limits: "${control_plane_limits}"
     %{~ endif ~}
     disable-cloud-controller: true
-    disable-kube-proxy: ${ff_kubeproxy ? "false" : "true"}
+    disable-kube-proxy: ${ff_with_kubeproxy ? "false" : "true"}
     disable: rke2-ingress-nginx
     cni: cilium
     node-label:
@@ -270,7 +270,7 @@ write_files:
     node-ip: ${node_ip}
     cloud-provider-name: external
     node-label:
-    %{ if ff_kubeproxy }
+    %{ if ff_with_kubeproxy }
       - "submariner.io/gateway=true"
     %{ endif }
     ${indent(4,rke2_conf)}
