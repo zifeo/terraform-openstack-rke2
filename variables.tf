@@ -84,6 +84,16 @@ variable "subnet_lb_cidr" {
   default = "192.168.44.0/24"
 }
 
+variable "cluster_cidr" {
+  type    = string
+  default = "10.42.0.0/16"
+}
+
+variable "service_cidr" {
+  type    = string
+  default = "10.43.0.0/16"
+}
+
 variable "vip_interface" {
   type    = string
   default = "ens3"
@@ -313,16 +323,18 @@ variable "ff_infomaniak_sc" {
 }
 
 variable "ff_with_kubeproxy" {
-  type        = bool
-  default     = false
+  type    = bool
+  default = false
 }
 
-variable "cluster_cidr" {
-  type        = string
-  default     = "10.42.0.0/16"
+variable "server_node_labels" {
+  type = map(string)
+  default = {
+    "node.kubernetes.io/exclude-from-external-load-balancers" = "true"
+  }
 }
 
-variable "service_cidr" {
-  type        = string
-  default     = "10.43.0.0/16"
+variable "agent_node_labels" {
+  type    = map(string)
+  default = {}
 }

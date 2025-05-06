@@ -255,11 +255,12 @@ write_files:
     disable-kube-proxy: ${ff_with_kubeproxy ? "false" : "true"}
     disable: rke2-ingress-nginx
     cni: cilium
-    node-label:
-      - "node.kubernetes.io/exclude-from-external-load-balancers=true"
     node-taint:
       - CriticalAddonsOnly=true:NoExecute
-    ${indent(4,rke2_conf)}
+    node-label:
+  %{ for k, v in server_node_labels ~}
+    - ${k}=${v}
+  %{ endfor ~}
 %{~ else ~}
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
@@ -270,10 +271,9 @@ write_files:
     node-ip: ${node_ip}
     cloud-provider-name: external
     node-label:
-    %{ if ff_with_kubeproxy }
-      - "submariner.io/gateway=true"
-    %{ endif }
-    ${indent(4,rke2_conf)}
+  %{ for k, v in agent_node_labels ~}
+    - ${k}=${v}
+  %{ endfor ~}
 %{~ endif ~}
 
 runcmd:

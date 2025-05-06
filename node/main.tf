@@ -88,6 +88,8 @@ resource "openstack_compute_instance_v2" "instance" {
     internal_vip  = var.internal_vip
     vip_interface = var.vip_interface
     node_ip       = openstack_networking_port_v2.port[count.index].all_fixed_ips[0]
+    cluster_cidr  = var.cluster_cidr
+    service_cidr  = var.service_cidr
     san           = var.is_server ? var.san : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
@@ -122,12 +124,12 @@ resource "openstack_compute_instance_v2" "instance" {
       try("kube-proxy-cpu=${var.kube_proxy_resources.limits.cpu}", ""),
       try("kube-proxy-memory=${var.kube_proxy_resources.limits.memory}", ""),
     ] : limit if limit != ""])
-    system_user       = var.system_user
-    authorized_keys   = var.ssh_authorized_keys
-    ff_wait_apiserver = false
-    ff_with_kubeproxy = var.ff_with_kubeproxy
-    cluster_cidr      = var.cluster_cidr
-    service_cidr      = var.service_cidr
+    system_user        = var.system_user
+    authorized_keys    = var.ssh_authorized_keys
+    ff_wait_apiserver  = false
+    ff_with_kubeproxy  = var.ff_with_kubeproxy
+    server_node_labels = var.server_node_labels
+    agent_node_labels  = var.agent_node_labels
   }))
 }
 

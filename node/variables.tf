@@ -59,6 +59,16 @@ variable "subnet_id" {
   type = string
 }
 
+variable "cluster_cidr" {
+  type    = string
+  default = "10.42.0.0/16"
+}
+
+variable "service_cidr" {
+  type    = string
+  default = "10.43.0.0/16"
+}
+
 variable "san" {
   type    = list(string)
   default = []
@@ -234,16 +244,17 @@ variable "ff_wait_ready" {
 }
 
 variable "ff_with_kubeproxy" {
-  type        = bool
-
+  type = bool
 }
 
-variable "cluster_cidr" {
-  type        = string
-  default     = "10.42.0.0/16"
+variable "server_node_labels" {
+  type = map(string)
+  default = {
+    "node.kubernetes.io/exclude-from-external-load-balancers" = "true"
+  }
 }
 
-variable "service_cidr" {
-  type        = string
-  default     = "10.43.0.0/16"
+variable "agent_node_labels" {
+  type    = map(string)
+  default = {}
 }
