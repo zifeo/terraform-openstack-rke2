@@ -64,6 +64,7 @@ module "servers" {
   subnet_id     = openstack_networking_subnet_v2.servers.id
   cluster_cidr  = var.cluster_cidr
   service_cidr  = var.service_cidr
+  cni           = var.cni
   secgroup_id   = openstack_networking_secgroup_v2.server.id
   internal_vip  = local.internal_vip
   vip_interface = var.vip_interface
@@ -169,6 +170,7 @@ module "servers" {
   ff_wait_ready       = var.ff_wait_ready
   ff_with_kubeproxy   = var.ff_with_kubeproxy
   server_node_labels  = var.server_node_labels
+  agent_node_labels   = var.agent_node_labels
 }
 
 module "agents" {
@@ -210,6 +212,7 @@ module "agents" {
   subnet_id     = openstack_networking_subnet_v2.agents.id
   cluster_cidr  = var.cluster_cidr
   service_cidr  = var.service_cidr
+  cni           = var.cni
   secgroup_id   = openstack_networking_secgroup_v2.agent.id
   internal_vip  = local.internal_vip
   vip_interface = var.vip_interface
@@ -218,5 +221,6 @@ module "agents" {
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_wait_ready       = var.ff_wait_ready
   ff_with_kubeproxy   = var.ff_with_kubeproxy
+  server_node_labels  = var.server_node_labels
   agent_node_labels   = var.agent_node_labels
 }

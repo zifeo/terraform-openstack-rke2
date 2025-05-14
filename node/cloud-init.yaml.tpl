@@ -254,7 +254,7 @@ write_files:
     disable-cloud-controller: true
     disable-kube-proxy: ${ff_with_kubeproxy ? "false" : "true"}
     disable: rke2-ingress-nginx
-    cni: cilium
+    cni: "${cni}"
     node-taint:
       - CriticalAddonsOnly=true:NoExecute
     node-label:

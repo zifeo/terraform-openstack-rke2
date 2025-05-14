@@ -94,6 +94,11 @@ variable "service_cidr" {
   default = "10.43.0.0/16"
 }
 
+variable "cni" {
+  type    = string
+  default = "cilium"
+}
+
 variable "vip_interface" {
   type    = string
   default = "ens3"

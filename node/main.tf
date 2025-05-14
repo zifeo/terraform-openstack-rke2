@@ -90,6 +90,7 @@ resource "openstack_compute_instance_v2" "instance" {
     node_ip       = openstack_networking_port_v2.port[count.index].all_fixed_ips[0]
     cluster_cidr  = var.cluster_cidr
     service_cidr  = var.service_cidr
+    cni           = var.cni
     san           = var.is_server ? var.san : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
