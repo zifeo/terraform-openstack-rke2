@@ -256,9 +256,13 @@ write_files:
     disable: rke2-ingress-nginx
     cni: "${cni}"
     node-taint:
-      - CriticalAddonsOnly=true:NoExecute
-    node-label:
-  %{ for k, v in server_node_labels ~}
+      - CriticalAddonsOnly=true:NoExecute  
+  %{ for k, v in node_taints ~}
+    - "${k}=${v}"
+  %{ endfor ~}  
+  node-label:
+      - node.kubernetes.io/exclude-from-external-load-balancers=true
+  %{ for k, v in node_labels ~}
     - ${k}=${v}
   %{ endfor ~}
 %{~ else ~}
@@ -270,9 +274,13 @@ write_files:
     server: https://${internal_vip}:9345
     node-ip: ${node_ip}
     cloud-provider-name: external
-    node-label:
-  %{ for k, v in agent_node_labels ~}
-    - ${k}=${v}
+    node-taint:
+  %{ for k, v in node_taints ~}
+    - "${k}=${v}"
+  %{ endfor ~}
+  node-label:
+  %{ for k, v in node_labels ~}
+    - "${k}=${v}"
   %{ endfor ~}
 %{~ endif ~}
 

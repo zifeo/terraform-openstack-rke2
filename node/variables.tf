@@ -249,10 +249,10 @@ variable "ff_with_kubeproxy" {
   type = bool
 }
 
-variable "server_node_labels" {
+variable "node_taints" {
   type = map(string)
 }
 
-variable "agent_node_labels" {
+variable "node_labels" {
   type    = map(string)
-}
+} 

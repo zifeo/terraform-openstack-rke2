@@ -142,6 +142,8 @@ variable "servers" {
     rke2_volume_size   = number
     rke2_volume_type   = optional(string)
     rke2_volume_device = optional(string)
+    node_taints = optional(map(string), {})
+    node_labels  = optional(map(string), {})  
   }))
   validation {
     condition = (
@@ -174,6 +176,8 @@ variable "agents" {
     rke2_volume_size   = number
     rke2_volume_type   = optional(string)
     rke2_volume_device = optional(string)
+    node_taints = optional(map(string), {})
+    node_labels  = optional(map(string), {})
   }))
   validation {
     condition = (
@@ -330,16 +334,4 @@ variable "ff_infomaniak_sc" {
 variable "ff_with_kubeproxy" {
   type    = bool
   default = false
-}
-
-variable "server_node_labels" {
-  type = map(string)
-  default = {
-    "node.kubernetes.io/exclude-from-external-load-balancers" = "true"
-  }
-}
-
-variable "agent_node_labels" {
-  type    = map(string)
-  default = {}
 }

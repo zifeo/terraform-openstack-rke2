@@ -169,8 +169,9 @@ module "servers" {
   ff_autoremove_agent = null
   ff_wait_ready       = var.ff_wait_ready
   ff_with_kubeproxy   = var.ff_with_kubeproxy
-  server_node_labels  = var.server_node_labels
-  agent_node_labels   = var.agent_node_labels
+  
+  node_taints = each.value.node_taints
+  node_labels = each.value.node_labels
 }
 
 module "agents" {
@@ -221,6 +222,7 @@ module "agents" {
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_wait_ready       = var.ff_wait_ready
   ff_with_kubeproxy   = var.ff_with_kubeproxy
-  server_node_labels  = var.server_node_labels
-  agent_node_labels   = var.agent_node_labels
+ 
+  node_taints = each.value.node_taints
+  node_labels = each.value.node_labels
 }

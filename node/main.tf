@@ -129,8 +129,8 @@ resource "openstack_compute_instance_v2" "instance" {
     authorized_keys    = var.ssh_authorized_keys
     ff_wait_apiserver  = false
     ff_with_kubeproxy  = var.ff_with_kubeproxy
-    server_node_labels = var.server_node_labels
-    agent_node_labels  = var.agent_node_labels
+    node_taints  = var.node_taints
+    node_labels  = var.node_labels
   }))
 }
 
