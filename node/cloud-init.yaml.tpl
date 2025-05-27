@@ -223,6 +223,8 @@ write_files:
     server: "https://${internal_vip}:9345"
     %{~ endif ~}
     node-ip: "${node_ip}"
+    cluster-cidr: "${cluster_cidr}"
+    service-cidr: "${service_cidr}"
     cloud-provider-name: external
     advertise-address: "${node_ip}"
     write-kubeconfig-mode: "0640"
@@ -250,14 +252,19 @@ write_files:
     control-plane-resource-limits: "${control_plane_limits}"
     %{~ endif ~}
     disable-cloud-controller: true
-    disable-kube-proxy: true
+    disable-kube-proxy: ${ff_with_kubeproxy ? "false" : "true"}
     disable: rke2-ingress-nginx
-    cni: cilium
-    node-label:
-      - node.kubernetes.io/exclude-from-external-load-balancers=true
+    cni: "${cni}"
     node-taint:
-      - CriticalAddonsOnly=true:NoExecute
-    ${indent(4,rke2_conf)}
+      - CriticalAddonsOnly=true:NoExecute  
+  %{ for k, v in node_taints ~}
+    - "${k}=${v}"
+  %{ endfor ~}  
+  node-label:
+      - node.kubernetes.io/exclude-from-external-load-balancers=true
+  %{ for k, v in node_labels ~}
+    - ${k}=${v}
+  %{ endfor ~}
 %{~ else ~}
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
@@ -267,7 +274,14 @@ write_files:
     server: https://${internal_vip}:9345
     node-ip: ${node_ip}
     cloud-provider-name: external
-    ${indent(4,rke2_conf)}
+    node-taint:
+  %{ for k, v in node_taints ~}
+    - "${k}=${v}"
+  %{ endfor ~}
+  node-label:
+  %{ for k, v in node_labels ~}
+    - "${k}=${v}"
+  %{ endfor ~}
 %{~ endif ~}
 
 runcmd:

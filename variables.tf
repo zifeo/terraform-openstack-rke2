@@ -84,6 +84,21 @@ variable "subnet_lb_cidr" {
   default = "192.168.44.0/24"
 }
 
+variable "cluster_cidr" {
+  type    = string
+  default = "10.42.0.0/16"
+}
+
+variable "service_cidr" {
+  type    = string
+  default = "10.43.0.0/16"
+}
+
+variable "cni" {
+  type    = string
+  default = "cilium"
+}
+
 variable "vip_interface" {
   type    = string
   default = "ens3"
@@ -127,6 +142,8 @@ variable "servers" {
     rke2_volume_size   = number
     rke2_volume_type   = optional(string)
     rke2_volume_device = optional(string)
+    node_taints = optional(map(string), {})
+    node_labels  = optional(map(string), {})  
   }))
   validation {
     condition = (
@@ -159,6 +176,8 @@ variable "agents" {
     rke2_volume_size   = number
     rke2_volume_type   = optional(string)
     rke2_volume_device = optional(string)
+    node_taints = optional(map(string), {})
+    node_labels  = optional(map(string), {})
   }))
   validation {
     condition = (
@@ -249,6 +268,20 @@ variable "etcd_resources" {
   default = null
 }
 
+variable "kube_proxy_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
 variable "manifests_folder" {
   type    = string
   default = ""
@@ -294,6 +327,11 @@ variable "ff_wait_ready" {
 }
 
 variable "ff_infomaniak_sc" {
+  type    = bool
+  default = false
+}
+
+variable "ff_with_kubeproxy" {
   type    = bool
   default = false
 }

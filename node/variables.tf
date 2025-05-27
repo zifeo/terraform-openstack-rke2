@@ -59,6 +59,18 @@ variable "subnet_id" {
   type = string
 }
 
+variable "cluster_cidr" {
+  type    = string
+}
+
+variable "service_cidr" {
+  type    = string
+}
+
+variable "cni" {
+  type    = string
+}
+
 variable "san" {
   type    = list(string)
   default = []
@@ -196,6 +208,20 @@ variable "etcd_resources" {
   default = null
 }
 
+variable "kube_proxy_resources" {
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}
+
 variable "manifests_folder" {
   type    = string
   default = ""
@@ -218,3 +244,15 @@ variable "ff_wait_ready" {
   type    = bool
   default = false
 }
+
+variable "ff_with_kubeproxy" {
+  type = bool
+}
+
+variable "node_taints" {
+  type = map(string)
+}
+
+variable "node_labels" {
+  type    = map(string)
+} 

@@ -88,6 +88,9 @@ resource "openstack_compute_instance_v2" "instance" {
     internal_vip  = var.internal_vip
     vip_interface = var.vip_interface
     node_ip       = openstack_networking_port_v2.port[count.index].all_fixed_ips[0]
+    cluster_cidr  = var.cluster_cidr
+    service_cidr  = var.service_cidr
+    cni           = var.cni
     san           = var.is_server ? var.san : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
@@ -107,6 +110,8 @@ resource "openstack_compute_instance_v2" "instance" {
       try("kube-controller-manager-memory=${var.kube_controller_manager_resources.requests.memory}", ""),
       try("etcd-cpu=${var.etcd_resources.requests.cpu}", ""),
       try("etcd-memory=${var.etcd_resources.requests.memory}", ""),
+      try("kube-proxy-cpu=${var.kube_proxy_resources.requests.cpu}", ""),
+      try("kube-proxy-memory=${var.kube_proxy_resources.requests.memory}", ""),
     ] : limit if limit != ""])
     control_plane_limits = join(",", [for limit in [
       try("kube-apiserver-cpu=${var.kube_apiserver_resources.limits.cpu}", ""),
@@ -117,10 +122,15 @@ resource "openstack_compute_instance_v2" "instance" {
       try("kube-controller-manager-memory=${var.kube_controller_manager_resources.limits.memory}", ""),
       try("etcd-cpu=${var.etcd_resources.limits.cpu}", ""),
       try("etcd-memory=${var.etcd_resources.limits.memory}", ""),
+      try("kube-proxy-cpu=${var.kube_proxy_resources.limits.cpu}", ""),
+      try("kube-proxy-memory=${var.kube_proxy_resources.limits.memory}", ""),
     ] : limit if limit != ""])
-    system_user       = var.system_user
-    authorized_keys   = var.ssh_authorized_keys
-    ff_wait_apiserver = false
+    system_user        = var.system_user
+    authorized_keys    = var.ssh_authorized_keys
+    ff_wait_apiserver  = false
+    ff_with_kubeproxy  = var.ff_with_kubeproxy
+    node_taints  = var.node_taints
+    node_labels  = var.node_labels
   }))
 }
 
