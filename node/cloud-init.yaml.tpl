@@ -274,14 +274,18 @@ write_files:
     server: https://${internal_vip}:9345
     node-ip: ${node_ip}
     cloud-provider-name: external
+    %{~ if length(node_taints) > 0 ~}
     node-taint:
-  %{ for k, v in node_taints ~}
-    - "${k}=${v}"
-  %{ endfor ~}
-  node-label:
-  %{ for k, v in node_labels ~}
-    - "${k}=${v}"
-  %{ endfor ~}
+      %{ for k, v in node_taints ~}
+      - "${k}=${v}"
+      %{ endfor ~}
+    %{~ endif ~}
+    %{~ if length(node_labels) > 0 ~}
+    node-label:
+      %{ for k, v in node_labels ~}
+      - "${k}=${v}"
+      %{ endfor ~}
+    %{~ endif ~}
 %{~ endif ~}
 
 runcmd:
