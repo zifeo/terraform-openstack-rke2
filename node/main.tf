@@ -131,6 +131,7 @@ resource "openstack_compute_instance_v2" "instance" {
     ff_with_kubeproxy  = var.ff_with_kubeproxy
     node_taints  = var.node_taints
     node_labels  = var.node_labels
+    registries = var.registries
   }))
 }
 
