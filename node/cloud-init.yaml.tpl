@@ -44,7 +44,8 @@ write_files:
 - path: /etc/systemd/system/mnt.mount
   content: |
     [Unit]
-    After=local-fs.target
+    After=local-fs-pre.target
+    Before=local-fs.target
     [Mount]
     What=${rke2_device}
     Where=/mnt
