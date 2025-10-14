@@ -49,4 +49,3 @@ encryption:
   enabled: ${enable_encryption}
   type: ${encryption_type}
   nodeEncryption: ${enable_node_encryption}
-  endpointEncryption: ${enable_endpoint_encryption}

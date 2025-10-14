@@ -345,8 +345,3 @@ variable "enable_cilium_node_encryption" {
   type    = bool
   default = false
 }
-
-variable "enable_cilium_endpoint_encryption" {
-  type    = bool
-  default = false
-}

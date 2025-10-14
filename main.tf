@@ -113,7 +113,6 @@ module "servers" {
         enable_encryption = var.enable_cilium_encryption
         encryption_type = "wireguard"
         enable_node_encryption = var.enable_cilium_node_encryption
-        enable_endpoint_encryption = var.enable_cilium_endpoint_encryption
       }),
       "patches/rke2-coredns.yaml" : templatefile("${path.module}/patches/rke2-coredns.yaml.tpl", {
         operator_replica = local.operator_replica
