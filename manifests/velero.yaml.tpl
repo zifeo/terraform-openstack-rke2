@@ -39,7 +39,7 @@ spec:
         memory: 256Mi
     kubectl:
       image:
-        repository: docker.io/bitnami/kubectl
+        repository: docker.io/bitnamilegacy/kubectl
         tag: "1.29-debian-11"
     configuration:
       namespace: velero
