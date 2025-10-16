@@ -45,3 +45,7 @@ hubble:
         memory: 128Mi
       limits:
         memory: 128Mi
+encryption:
+  enabled: ${enable_encryption}
+  type: ${encryption_type}
+  nodeEncryption: ${enable_node_encryption}
