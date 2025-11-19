@@ -125,7 +125,7 @@ write_files:
     ls $CHARTS_DIR
     for patch in /opt/rke2/manifests/patches/*; do
       patch_name=$(basename "$patch")
-      if [ -f "$CHARTS_DIR/$patch_name" ] && [ "$(yq e 'length' ""$CHARTS_DIR/$patch_name")" -ne "0" ]; then
+      if [ -f "$CHARTS_DIR/$patch_name" ] && [ "$(yq e 'length' "$CHARTS_DIR/$patch_name")" -ne "0" ]; then
         /usr/local/bin/customize-chart.sh "$CHARTS_DIR/$patch_name" "$patch"
       fi
     done
