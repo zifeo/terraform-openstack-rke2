@@ -6,20 +6,13 @@ metadata:
 spec:
   chart: openstack-cloud-controller-manager
   repo: https://kubernetes.github.io/cloud-provider-openstack
-  version: 2.28.3
+  version: 2.34.1
   targetNamespace: kube-system
   bootstrap: true
   valuesContent: |-
     logVerbosityLevel: 2
     nodeSelector:
-      node-role.kubernetes.io/master: "true"
-    tolerations:
-      - effect: NoExecute
-        key: CriticalAddonsOnly
-        operator: "Exists"
-      - effect: NoSchedule
-        key: node.cloudprovider.kubernetes.io/uninitialized
-        value: "true"
+      node-role.kubernetes.io/control-plane: "true"
     resources:
       requests:
         cpu: 25m

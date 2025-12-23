@@ -27,9 +27,8 @@ spec:
           - mountPath: /target
             name: plugins
     tolerations:
-      - effect: NoExecute
-        key: CriticalAddonsOnly
-        operator: "Exists"
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
     resources:
       requests:
         cpu: 100m

@@ -85,7 +85,7 @@ write_files:
     export INSTALL_RKE2_VERSION=${rke2_version}
     which rke2 >/dev/null 2>&1 && RKE2_VERSION=$(rke2 --version | head -1 | cut -f 3 -d " ")
     if ([ -z "$RKE2_VERSION" ]) || ([ -n "$INSTALL_RKE2_VERSION" ] && [ "$INSTALL_RKE2_VERSION" != "$RKE2_VERSION" ]); then
-      curl -sfL https://get.rke2.io | sh -
+      curl -sfL https://get.rke2.io | sh - || { echo "Failed to download or install rke2"; exit 1; }
     fi
 %{ if is_server ~}
     %{~ for k, v in manifests_files ~}
@@ -257,7 +257,7 @@ write_files:
     disable: rke2-ingress-nginx
     cni: "${cni}"
     node-taint:
-      - CriticalAddonsOnly=true:NoExecute  
+      - "node-role.kubernetes.io/control-plane:NoSchedule"
   %{ for k, v in node_taints ~}
     - "${k}=${v}"
   %{ endfor ~}  
