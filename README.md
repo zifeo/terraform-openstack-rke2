@@ -30,9 +30,9 @@ defaults for running production workload.
 | Component                  | Version                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | OpenStack                  | 2023.1 Antelope (verified), maybe older version are supported too                                                        |
-| RKE2                       | [v1.29.0+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.29.0+rke2r1)                                            |
-| OpenStack Cloud Controller | [v1.28.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.28.1/charts/openstack-cloud-controller-manager) |
-| OpenStack Cinder           | [v1.28.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.28.1/charts/cinder-csi-plugin)                  |
+| RKE2                       | [v1.31.14+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.31.14+rke2r1)                                          |
+| OpenStack Cloud Controller | [v1.34.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.34.1/charts/openstack-cloud-controller-manager) |
+| OpenStack Cinder           | [v1.34.1](https://github.com/kubernetes/cloud-provider-openstack/tree/v1.34.1/charts/cinder-csi-plugin)                  |
 | Velero                     | [v6.0.0](https://github.com/vmware-tanzu/helm-charts/tree/velero-6.0.0/charts/velero)                                    |
 | Kube-vip                   | [v0.7.2](https://github.com/kube-vip/kube-vip/releases/tag/v0.7.2)                                                       |
 
