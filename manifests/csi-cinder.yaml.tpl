@@ -6,7 +6,7 @@ metadata:
 spec:
   chart: openstack-cinder-csi
   repo: https://kubernetes.github.io/cloud-provider-openstack
-  version: 2.28.1
+  version: 2.34.1
   targetNamespace: kube-system
   bootstrap: true
   valuesContent: |-
@@ -53,7 +53,7 @@ spec:
         controllerPlugin:
           replicas: ${operator_replica}
           nodeSelector:
-            node-role.kubernetes.io/master: "true"
+            node-role.kubernetes.io/control-plane: "true"
           affinity:
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -63,9 +63,8 @@ spec:
                       component: controllerplugin
                   topologyKey: kubernetes.io/hostname
           tolerations:
-            - effect: NoExecute
-              key: CriticalAddonsOnly
-              operator: "Exists"
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
         resources:
           requests:
             cpu: 25m

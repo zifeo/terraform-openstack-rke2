@@ -1,21 +1,20 @@
 cluster:
   name: ${cluster_name}
   id: ${cluster_id}
-eni:
-  enabled: true
+enableIPv4Masquerade: true
 kubeProxyReplacement: "${ff_with_kubeproxy ? false : true}"
 k8sServiceHost: 127.0.0.1
 k8sServicePort: 6443
 operator:
   replicas: ${operator_replica}
   nodeSelector:
-    node-role.kubernetes.io/master: "true"
+    node-role.kubernetes.io/control-plane: "true"
   resources:
     requests:
       cpu: 50m
-      memory: 64Mi
+      memory: 256Mi
     limits:
-      memory: 128Mi
+      memory: 384Mi
 cni:
   chainingMode: "none"
 resources:
