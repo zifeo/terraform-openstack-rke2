@@ -288,6 +288,13 @@ write_files:
       %{ endfor ~}
     %{~ endif ~}
 %{~ endif ~}
+%{ if registries != null }
+- path: /etc/rancher/rke2/registries.yaml
+  permissions: "0600"
+  owner: root:root
+  content: |
+    ${ indent(4, yamlencode(registries)) }
+%{~ endif ~}
 
 runcmd:
   - mkdir -p /mnt /var/lib/rancher/rke2 /var/lib/kubelet

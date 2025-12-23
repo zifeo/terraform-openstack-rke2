@@ -41,6 +41,7 @@ module "servers" {
   image_uuid       = each.value.image_uuid
   boot_volume_size = each.value.boot_volume_size
   boot_volume_type = each.value.boot_volume_type
+  registries  = var.registries
 
   availability_zones = coalesce(each.value.availability_zones, [])
   group_id           = each.value.group_id != null ? each.value.group_id : openstack_compute_servergroup_v2.servers.id
@@ -197,6 +198,7 @@ module "agents" {
   image_uuid       = each.value.image_uuid
   boot_volume_size = each.value.boot_volume_size
   boot_volume_type = each.value.boot_volume_type
+  registries  = var.registries
 
   availability_zones = coalesce(each.value.availability_zones, [])
   group_id           = each.value.group_id != null ? each.value.group_id : openstack_compute_servergroup_v2.agents.id

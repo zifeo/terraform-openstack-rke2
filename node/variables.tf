@@ -255,4 +255,28 @@ variable "node_taints" {
 
 variable "node_labels" {
   type    = map(string)
-} 
+}
+
+variable "registries" {
+  type = object({
+    mirrors = optional(map(object({
+      endpoint = list(string)
+      rewrite  = optional(map(string))
+    })))
+    configs = optional(map(object({
+      auth = optional(object({
+        username : optional(string)
+        password : optional(string)
+        token    : optional(string)
+      }))
+      tls = optional(object({
+        ca_file                : optional(string)
+        cert_file              : optional(string)
+        key_file               : optional(string)
+        insecure_skip_verify   : optional(bool)
+      }))
+    })))
+  })
+
+  default = null
+}
