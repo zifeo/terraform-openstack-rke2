@@ -142,8 +142,8 @@ variable "servers" {
     rke2_volume_size   = number
     rke2_volume_type   = optional(string)
     rke2_volume_device = optional(string)
-    node_taints = optional(map(string), {})
-    node_labels  = optional(map(string), {})  
+    node_taints        = optional(map(string), {})
+    node_labels        = optional(map(string), {})
   }))
   validation {
     condition = (
@@ -176,8 +176,8 @@ variable "agents" {
     rke2_volume_size   = number
     rke2_volume_type   = optional(string)
     rke2_volume_device = optional(string)
-    node_taints = optional(map(string), {})
-    node_labels  = optional(map(string), {})
+    node_taints        = optional(map(string), {})
+    node_labels        = optional(map(string), {})
   }))
   validation {
     condition = (
@@ -356,13 +356,13 @@ variable "registries" {
       auth = optional(object({
         username : optional(string)
         password : optional(string)
-        token    : optional(string)
+        token : optional(string)
       }))
       tls = optional(object({
-        ca_file                : optional(string)
-        cert_file              : optional(string)
-        key_file               : optional(string)
-        insecure_skip_verify   : optional(bool)
+        ca_file : optional(string)
+        cert_file : optional(string)
+        key_file : optional(string)
+        insecure_skip_verify : optional(bool)
       }))
     })))
   })

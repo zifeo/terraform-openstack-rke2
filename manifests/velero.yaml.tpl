@@ -10,18 +10,18 @@ spec:
   targetNamespace: velero
   valuesContent: |-
     image:
-      repository: velero/velero
+      repository: docker.io/velero/velero
       tag: v1.13.0
       pullPolicy: IfNotPresent
     initContainers:
       - name: velero-plugin-for-openstack
-        image: lirt/velero-plugin-for-openstack:v0.7.0
+        image: docker.io/lirt/velero-plugin-for-openstack:v0.7.0
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /target
             name: plugins
       - name: velero-plugin-for-csi
-        image: velero/velero-plugin-for-csi:v0.7.0
+        image: docker.io/velero/velero-plugin-for-csi:v0.7.0
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /target
