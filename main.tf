@@ -41,7 +41,7 @@ module "servers" {
   image_uuid       = each.value.image_uuid
   boot_volume_size = each.value.boot_volume_size
   boot_volume_type = each.value.boot_volume_type
-  registries  = var.registries
+  registries       = var.registries
 
   availability_zones = coalesce(each.value.availability_zones, [])
   group_id           = each.value.group_id != null ? each.value.group_id : openstack_compute_servergroup_v2.servers.id
@@ -107,22 +107,16 @@ module "servers" {
         cluster_name        = var.name
       }),
       "patches/rke2-cilium.yaml" : templatefile("${path.module}/patches/rke2-cilium.yaml.tpl", {
-        operator_replica  = local.operator_replica
-        cluster_name      = var.name
-        cluster_id        = var.cluster_id
-        ff_with_kubeproxy = var.ff_with_kubeproxy
-        enable_encryption = var.enable_cilium_encryption
-        encryption_type = "wireguard"
+        operator_replica       = local.operator_replica
+        cluster_name           = var.name
+        cluster_id             = var.cluster_id
+        ff_with_kubeproxy      = var.ff_with_kubeproxy
+        enable_encryption      = var.enable_cilium_encryption
+        encryption_type        = "wireguard"
         enable_node_encryption = var.enable_cilium_node_encryption
       }),
       "patches/rke2-coredns.yaml" : templatefile("${path.module}/patches/rke2-coredns.yaml.tpl", {
         operator_replica = local.operator_replica
-      }),
-      "patches/rke2-metrics-server.yaml" : templatefile("${path.module}/patches/rke2-metrics-server.yaml.tpl", {
-      }),
-      "patches/rke2-snapshot-controller.yaml" : templatefile("${path.module}/patches/rke2-snapshot-controller.yaml.tpl", {
-      }),
-      "patches/rke2-snapshot-validation-webhook.yaml" : templatefile("${path.module}/patches/rke2-snapshot-validation-webhook.yaml.tpl", {
       }),
     },
     var.ff_infomaniak_sc ? merge([for perf in ["perf1", "perf2", "perf3"] : {
@@ -173,7 +167,7 @@ module "servers" {
   ff_autoremove_agent = null
   ff_wait_ready       = var.ff_wait_ready
   ff_with_kubeproxy   = var.ff_with_kubeproxy
-  
+
   node_taints = each.value.node_taints
   node_labels = each.value.node_labels
 }
@@ -198,7 +192,7 @@ module "agents" {
   image_uuid       = each.value.image_uuid
   boot_volume_size = each.value.boot_volume_size
   boot_volume_type = each.value.boot_volume_type
-  registries  = var.registries
+  registries       = var.registries
 
   availability_zones = coalesce(each.value.availability_zones, [])
   group_id           = each.value.group_id != null ? each.value.group_id : openstack_compute_servergroup_v2.agents.id
@@ -227,7 +221,7 @@ module "agents" {
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_wait_ready       = var.ff_wait_ready
   ff_with_kubeproxy   = var.ff_with_kubeproxy
- 
+
   node_taints = each.value.node_taints
   node_labels = each.value.node_labels
 }
