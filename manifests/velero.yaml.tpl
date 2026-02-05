@@ -6,22 +6,16 @@ metadata:
 spec:
   chart: velero
   repo: https://vmware-tanzu.github.io/helm-charts
-  version: 6.0.0
+  version: 11.3.2
   targetNamespace: velero
   valuesContent: |-
     image:
       repository: docker.io/velero/velero
-      tag: v1.13.0
+      tag: v1.17.1
       pullPolicy: IfNotPresent
     initContainers:
       - name: velero-plugin-for-openstack
-        image: docker.io/lirt/velero-plugin-for-openstack:v0.7.0
-        imagePullPolicy: IfNotPresent
-        volumeMounts:
-          - mountPath: /target
-            name: plugins
-      - name: velero-plugin-for-csi
-        image: docker.io/velero/velero-plugin-for-csi:v0.7.0
+        image: docker.io/lirt/velero-plugin-for-openstack:v0.8.0
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /target
@@ -34,7 +28,6 @@ spec:
         cpu: 100m
         memory: 128Mi
       limits:
-        cpu: null
         memory: 256Mi
     kubectl:
       image:
@@ -55,12 +48,16 @@ spec:
         - name: default
           provider: csi
       extraEnvVars:
-        OS_AUTH_URL: ${auth_url}/v3
-        OS_APPLICATION_CREDENTIAL_ID: ${app_id}
-        OS_APPLICATION_CREDENTIAL_NAME: ${app_name}
-        OS_APPLICATION_CREDENTIAL_SECRET: ${app_secret}
-        # for community.openstack.org/openstack (env vars do not work and take precedence over clouds.yaml unless cloud set)
-        OS_CLOUD: self
+        - name: OS_AUTH_URL
+          value: "${auth_url}/v3"
+        - name: OS_APPLICATION_CREDENTIAL_ID
+          value: "${app_id}"
+        - name: OS_APPLICATION_CREDENTIAL_NAME
+          value: "${app_name}"
+        - name: OS_APPLICATION_CREDENTIAL_SECRET
+          value: "${app_secret}"
+        - name: OS_CLOUD
+          value: self
     credentials:
       # for community.openstack.org/openstack
       secretContents:
@@ -97,5 +94,4 @@ spec:
           cpu: 100m
           memory: 128Mi
         limits:
-          cpu: null
-          memory: null
+          memory: 256Mi
