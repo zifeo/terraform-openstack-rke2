@@ -88,13 +88,13 @@ write_files:
       curl -sfL https://get.rke2.io | sh - || { echo "Failed to download or install rke2"; exit 1; }
     fi
 %{ if is_server ~}
-    %{~ for k, v in manifests_files ~}
+  %{~ for k, v in manifests_files ~}
 - path: /opt/rke2/manifests/${k}
   permissions: "0600"
   owner: root:root
   encoding: gz+b64
   content: ${v}
-    %{~ endfor ~}
+  %{~ endfor ~}
 - path: /usr/local/bin/customize-chart.sh
   permissions: "0755"
   owner: root:root
@@ -258,14 +258,14 @@ write_files:
     cni: "${cni}"
     node-taint:
       - "node-role.kubernetes.io/control-plane:NoSchedule"
-  %{ for k, v in node_taints ~}
-    - "${k}=${v}"
-  %{ endfor ~}  
-  node-label:
-      - node.kubernetes.io/exclude-from-external-load-balancers=true
-  %{ for k, v in node_labels ~}
-    - ${k}=${v}
-  %{ endfor ~}
+    %{~ for t in node_taints ~}
+      - "${t}"
+    %{~ endfor ~}
+    node-label:
+      - "node.kubernetes.io/exclude-from-external-load-balancers=true"
+    %{~ for k, v in node_labels ~}
+      - "${k}=${v}"
+    %{~ endfor ~}
 %{~ else ~}
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
@@ -277,18 +277,18 @@ write_files:
     cloud-provider-name: external
     %{~ if length(node_taints) > 0 ~}
     node-taint:
-      %{ for k, v in node_taints ~}
-      - "${k}=${v}"
-      %{ endfor ~}
+    %{~ for t in node_taints ~}
+      - "${t}"
+    %{~ endfor ~}
     %{~ endif ~}
     %{~ if length(node_labels) > 0 ~}
     node-label:
-      %{ for k, v in node_labels ~}
+    %{~ for k, v in node_labels ~}
       - "${k}=${v}"
-      %{ endfor ~}
+    %{~ endfor ~}
     %{~ endif ~}
 %{~ endif ~}
-%{ if registries != null }
+%{~ if registries != null ~}
 - path: /etc/rancher/rke2/registries.yaml
   permissions: "0600"
   owner: root:root
