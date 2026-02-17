@@ -125,13 +125,13 @@ resource "openstack_compute_instance_v2" "instance" {
       try("kube-proxy-cpu=${var.kube_proxy_resources.limits.cpu}", ""),
       try("kube-proxy-memory=${var.kube_proxy_resources.limits.memory}", ""),
     ] : limit if limit != ""])
-    system_user        = var.system_user
-    authorized_keys    = var.ssh_authorized_keys
-    ff_wait_apiserver  = false
-    ff_with_kubeproxy  = var.ff_with_kubeproxy
-    node_taints  = var.node_taints
-    node_labels  = var.node_labels
-    registries = var.registries
+    system_user       = var.system_user
+    authorized_keys   = var.ssh_authorized_keys
+    ff_wait_apiserver = false
+    ff_with_kubeproxy = var.ff_with_kubeproxy
+    node_taints       = [for t in var.node_taints : "${t.key}${t.value != null ? "=${t.value}" : ""}:${t.effect}"]
+    node_labels       = var.node_labels
+    registries        = var.registries
   }))
 }
 
