@@ -5,10 +5,9 @@ growpart:
   mode: auto
   devices:
     - /
-    - ${rke2_device}
   ignore_growroot_disabled: false
 fs_setup:
-  - label: None
+  - label: rke2_data
     filesystem: ext4
     device: ${rke2_device}
 # no mounts as managed by systemd
@@ -47,7 +46,7 @@ write_files:
     After=local-fs-pre.target
     Before=local-fs.target
     [Mount]
-    What=${rke2_device}
+    What=/dev/disk/by-label/rke2_data
     Where=/mnt
     Type=ext4
     Options=defaults
@@ -157,8 +156,6 @@ write_files:
           value: "true"
         - name: port
           value: "6443"
-        - name: vip_interface
-          value: "${vip_interface}"
         - name: vip_cidr
           value: "32"
         - name: cp_enable
@@ -238,6 +235,9 @@ write_files:
     etcd-s3-access-key: "${s3.access_key}"
     etcd-s3-secret-key: "${s3.access_secret}"
     etcd-s3-bucket: "${s3.bucket}"
+    %{~ if s3.region != null ~}
+    etcd-s3-region: "${s3.region}"
+    %{~ endif ~}
       %{~ if backup_schedule != null ~}
     etcd-snapshot-schedule-cron: ${backup_schedule}
       %{~ endif ~}
@@ -254,7 +254,9 @@ write_files:
     %{~ endif ~}
     disable-cloud-controller: true
     disable-kube-proxy: ${ff_with_kubeproxy ? "false" : "true"}
-    disable: rke2-ingress-nginx
+    disable:
+      - rke2-ingress-nginx
+      - rke2-traefik
     cni: "${cni}"
     node-taint:
       - "node-role.kubernetes.io/control-plane:NoSchedule"
@@ -266,6 +268,9 @@ write_files:
     %{~ for k, v in node_labels ~}
       - "${k}=${v}"
     %{~ endfor ~}
+    %{~ if rke2_conf != "" ~}
+    ${ indent(4, rke2_conf) }
+    %{~ endif ~}
 %{~ else ~}
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
@@ -286,6 +291,9 @@ write_files:
     %{~ for k, v in node_labels ~}
       - "${k}=${v}"
     %{~ endfor ~}
+    %{~ endif ~}
+    %{~ if rke2_conf != "" ~}
+    ${ indent(4, rke2_conf) }
     %{~ endif ~}
 %{~ endif ~}
 %{~ if registries != null ~}

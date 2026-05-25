@@ -6,7 +6,8 @@ metadata:
 spec:
   chart: openstack-cloud-controller-manager
   repo: https://kubernetes.github.io/cloud-provider-openstack
-  version: 2.34.1
+  # https://artifacthub.io/packages/helm/cloud-provider-openstack/openstack-cloud-controller-manager
+  version: 2.36.0
   targetNamespace: kube-system
   bootstrap: true
   valuesContent: |-
@@ -32,6 +33,7 @@ spec:
         floating-network-id: ${floating_network_id}
         %{~ endif ~}
         subnet-id: ${subnet_id}
+        member-subnet-id: ${subnet_id}
         network-id: ${network_id}
         lb-provider: ${lb_provider}
         manage-security-groups: true

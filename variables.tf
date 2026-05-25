@@ -99,11 +99,6 @@ variable "cni" {
   default = "cilium"
 }
 
-variable "vip_interface" {
-  type    = string
-  default = "ens3"
-}
-
 variable "dns_nameservers4" {
   type = list(string)
   # Cloudflare
@@ -209,12 +204,14 @@ variable "s3_backup" {
     access_key    = string
     access_secret = string
     bucket        = string
+    region        = optional(string)
   })
   default = {
     endpoint      = ""
     access_key    = ""
     access_secret = ""
     bucket        = ""
+    region        = null
   }
 }
 
@@ -318,6 +315,11 @@ variable "object_store_endpoint" {
   default = ""
 }
 
+variable "object_store_region" {
+  type    = string
+  default = null
+}
+
 variable "identity_endpoint" {
   type = string
 }
@@ -325,6 +327,12 @@ variable "identity_endpoint" {
 variable "ff_write_kubeconfig" {
   type    = bool
   default = true
+}
+
+variable "ff_lb_subnets_compat" {
+  type        = bool
+  default     = false
+  description = "Enable backward compatibility for existing Load Balancers in the legacy LB subnet"
 }
 
 variable "ff_autoremove_agent" {

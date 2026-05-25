@@ -10,8 +10,16 @@ output "network_id" {
   value = openstack_networking_network_v2.net.id
 }
 
+output "servers_subnet_id" {
+  value = openstack_networking_subnet_v2.servers.id
+}
+
 output "lb_subnet_id" {
-  value = openstack_networking_subnet_v2.lb.id
+  value = try(openstack_networking_subnet_v2.lb[0].id, null)
+}
+
+output "agents_subnet_id" {
+  value = openstack_networking_subnet_v2.agents.id
 }
 
 output "restore_cmd" {

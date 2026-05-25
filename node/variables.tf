@@ -85,10 +85,6 @@ variable "internal_vip" {
   default = ""
 }
 
-variable "vip_interface" {
-  type = string
-}
-
 variable "bastion_host" {
   type = string
 }
@@ -143,12 +139,14 @@ variable "s3" {
     access_key    = string
     access_secret = string
     bucket        = string
+    region        = optional(string)
   })
   default = {
     endpoint      = ""
     access_key    = ""
     access_secret = ""
     bucket        = ""
+    region        = null
   }
 }
 

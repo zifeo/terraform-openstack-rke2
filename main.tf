@@ -4,6 +4,7 @@ locals {
     access_key    = openstack_identity_ec2_credential_v3.s3[0].access
     access_secret = openstack_identity_ec2_credential_v3.s3[0].secret
     bucket        = openstack_objectstorage_container_v1.etcd_snapshots[0].name
+    region        = var.object_store_region
   } : var.s3_backup
 
   external_ip      = openstack_networking_floatingip_v2.floating_ip.address
@@ -61,16 +62,15 @@ module "servers" {
   keypair_name        = openstack_compute_keypair_v2.key.name
   ssh_authorized_keys = local.ssh_authorized_keys
 
-  network_id    = openstack_networking_network_v2.net.id
-  subnet_id     = openstack_networking_subnet_v2.servers.id
-  cluster_cidr  = var.cluster_cidr
-  service_cidr  = var.service_cidr
-  cni           = var.cni
-  secgroup_id   = openstack_networking_secgroup_v2.server.id
-  internal_vip  = local.internal_vip
-  vip_interface = var.vip_interface
-  bastion_host  = local.external_ip
-  san           = distinct(concat([local.external_ip, local.internal_vip], var.additional_san))
+  network_id   = openstack_networking_network_v2.net.id
+  subnet_id    = openstack_networking_subnet_v2.servers.id
+  cluster_cidr = var.cluster_cidr
+  service_cidr = var.service_cidr
+  cni          = var.cni
+  secgroup_id  = openstack_networking_secgroup_v2.server.id
+  internal_vip = local.internal_vip
+  bastion_host = local.external_ip
+  san          = distinct(concat([local.external_ip, local.internal_vip], var.additional_san))
 
   manifests_folder = var.manifests_folder
   manifests = merge(
@@ -101,7 +101,7 @@ module "servers" {
         app_secret          = openstack_identity_application_credential_v3.rke2.secret
         app_name            = openstack_identity_application_credential_v3.rke2.name
         network_id          = openstack_networking_network_v2.net.id
-        subnet_id           = openstack_networking_subnet_v2.lb.id
+        subnet_id           = openstack_networking_subnet_v2.agents.id
         floating_network_id = data.openstack_networking_network_v2.floating_net.id
         lb_provider         = var.lb_provider
         cluster_name        = var.name
@@ -208,15 +208,14 @@ module "agents" {
   keypair_name        = openstack_compute_keypair_v2.key.name
   ssh_authorized_keys = local.ssh_authorized_keys
 
-  network_id    = openstack_networking_network_v2.net.id
-  subnet_id     = openstack_networking_subnet_v2.agents.id
-  cluster_cidr  = var.cluster_cidr
-  service_cidr  = var.service_cidr
-  cni           = var.cni
-  secgroup_id   = openstack_networking_secgroup_v2.agent.id
-  internal_vip  = local.internal_vip
-  vip_interface = var.vip_interface
-  bastion_host  = local.external_ip
+  network_id   = openstack_networking_network_v2.net.id
+  subnet_id    = openstack_networking_subnet_v2.agents.id
+  cluster_cidr = var.cluster_cidr
+  service_cidr = var.service_cidr
+  cni          = var.cni
+  secgroup_id  = openstack_networking_secgroup_v2.agent.id
+  internal_vip = local.internal_vip
+  bastion_host = local.external_ip
 
   ff_autoremove_agent = var.ff_autoremove_agent
   ff_wait_ready       = var.ff_wait_ready
