@@ -282,3 +282,21 @@ variable "registries" {
 
   default = null
 }
+
+variable "gpu" {
+  type = object({
+    enabled         = optional(bool, false)
+    driver          = optional(object({
+      package      = optional(string, "nvidia-driver-550")
+      preinstalled = optional(bool, false)
+    }), {})
+    toolkit_package = optional(string, "nvidia-container-toolkit")
+    runtime_class   = optional(bool, true)
+  })
+  default = {
+    enabled         = false
+    driver          = {}
+    toolkit_package = "nvidia-container-toolkit"
+    runtime_class   = true
+  }
+}

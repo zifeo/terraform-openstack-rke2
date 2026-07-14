@@ -26,6 +26,12 @@ packages:
   - logrotate
   - nfs-client
   - fio
+%{ if gpu.enabled && !gpu.driver.preinstalled }
+  - ${gpu.driver.package}
+%{ endif }
+%{ if gpu.enabled }
+  - ${gpu.toolkit_package}
+%{ endif }
 
 users:
   - default
@@ -304,6 +310,82 @@ write_files:
   content: |
     ${ indent(4, yamlencode(registries)) }
 %{~ endif ~}
+%{~ if gpu.enabled ~}
+- path: /usr/local/bin/setup-gpu.sh
+  permissions: "0755"
+  owner: root:root
+  content: |
+    #!/bin/bash
+    set -euo pipefail
+
+    if [ -f /var/lib/gpu-setup-done ]; then
+      echo "GPU setup already completed, skipping..."
+      exit 0
+    fi
+
+    echo "=== Setting up NVIDIA GPU runtime ==="
+
+    echo "Loading NVIDIA kernel modules..."
+    modprobe nvidia
+    modprobe nvidia_uvm || true
+
+    # nvidia-container-runtime (from nvidia-container-toolkit) must be on the
+    # rke2-agent service PATH; systemd does not expand $PATH, so expand it here
+    echo "Configuring rke2-agent PATH..."
+    NVIDIA_BIN_DIR=/usr/local/nvidia/toolkit
+    command -v nvidia-container-runtime >/dev/null && NVIDIA_BIN_DIR=$(dirname "$(command -v nvidia-container-runtime)")
+    grep -qs "^PATH=" /etc/default/rke2-agent || echo "PATH=$NVIDIA_BIN_DIR:$PATH" >> /etc/default/rke2-agent
+
+    # RKE2 regenerates containerd's config.toml on start; the nvidia runtime must
+    # be registered via a template extending the base:
+    # - config.toml.tmpl for containerd 1.x (RKE2 < v1.31.6)
+    # - config-v3.toml.tmpl for containerd 2.0+ (RKE2 >= v1.31.6)
+    echo "Writing containerd templates..."
+    mkdir -p /var/lib/rancher/rke2/agent/etc/containerd
+    printf '%s\n' \
+      '{{ template "base" . }}' \
+      '' \
+      '[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]' \
+      '  runtime_type = "io.containerd.runc.v2"' \
+      '[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]' \
+      '  BinaryName = "'"$NVIDIA_BIN_DIR"'/nvidia-container-runtime"' \
+      '  SystemdCgroup = true' \
+      > /var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmpl
+    printf '%s\n' \
+      '{{ template "base" . }}' \
+      '' \
+      '[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.nvidia]' \
+      '  runtime_type = "io.containerd.runc.v2"' \
+      '[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.nvidia.options]' \
+      '  BinaryName = "'"$NVIDIA_BIN_DIR"'/nvidia-container-runtime"' \
+      '  SystemdCgroup = true' \
+      > /var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.tmpl
+
+    touch /var/lib/gpu-setup-done
+    echo "=== GPU setup complete ==="
+
+- path: /etc/systemd/system/gpu-setup.service
+  content: |
+    [Unit]
+    Description=NVIDIA GPU Runtime Setup
+    Before=rke2-agent.service
+    ConditionPathExists=!/var/lib/gpu-setup-done
+
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    ExecStart=/usr/local/bin/setup-gpu.sh
+
+    [Install]
+    WantedBy=multi-user.target
+
+- path: /etc/systemd/system/rke2-agent.service.d/gpu-setup.conf
+  content: |
+    [Unit]
+    After=gpu-setup.service
+    Wants=gpu-setup.service
+
+%{ endif }
 
 runcmd:
   - mkdir -p /mnt /var/lib/rancher/rke2 /var/lib/kubelet
@@ -346,7 +428,23 @@ runcmd:
   - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active after restart" "systemctl is-active -q rke2-server.service" 3 60'
   %{~ endif ~}
   %{~ else ~}
-  - systemctl enable rke2-agent.service
-  - systemctl start rke2-agent.service
+  - |
+%{ if gpu.enabled }
+    systemctl enable gpu-setup.service
+%{ if !gpu.driver.preinstalled }
+    if ! modprobe -q nvidia; then
+      # After reboot, enabled units (gpu-setup + rke2-agent) start via systemd;
+      # cloud-init will not re-run the remaining runcmd.
+      systemctl enable rke2-agent.service
+      echo "NVIDIA driver not loaded yet - rebooting; gpu-setup.service and rke2-agent.service start on next boot"
+      reboot
+      sleep 300
+      exit 0
+    fi
+%{ endif }
+    systemctl start gpu-setup.service
+%{ endif }
+    systemctl enable rke2-agent.service
+    systemctl start rke2-agent.service
   - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-agent active" "systemctl is-active -q rke2-agent.service" 3 60'
   %{~ endif ~}

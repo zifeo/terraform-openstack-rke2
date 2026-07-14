@@ -133,6 +133,7 @@ resource "openstack_compute_instance_v2" "instance" {
     node_taints             = [for t in var.node_taints : "${t.key}${t.value != null ? "=${t.value}" : ""}:${t.effect}"]
     node_labels             = var.node_labels
     registries              = var.registries
+    gpu                     = var.gpu
   }))
 }
 
