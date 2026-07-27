@@ -14,9 +14,8 @@ fs_setup:
 
 package_update: true
 package_upgrade: true
-# When we install the NVIDIA driver ourselves we reboot explicitly after modules
-# fail to load; avoid an earlier cloud-init reboot racing that path.
-package_reboot_if_required: ${gpu.enabled && !gpu.driver.preinstalled ? false : true}
+# GPU nodes always reboot manually after driver install; do not let cloud-init auto-reboot and race that path. Non-GPU nodes keep the usual behavior.
+package_reboot_if_required: ${gpu.enabled ? false : true}
 packages:
   - fail2ban
   - unattended-upgrades
@@ -29,10 +28,18 @@ packages:
   - nfs-client
   - fio
 %{ if gpu.enabled && !gpu.driver.preinstalled }
+  %{ if gpu.driver.version != null }
+  - ${gpu.driver.package}=${gpu.driver.version}
+  %{ else }
   - ${gpu.driver.package}
+  %{ endif }
 %{ endif }
 %{ if gpu.enabled }
+  %{ if gpu.toolkit_version != null }
+  - ${gpu.toolkit_package}=${gpu.toolkit_version}
+  %{ else }
   - ${gpu.toolkit_package}
+  %{ endif }
 %{ endif }
 
 users:
@@ -369,8 +376,7 @@ write_files:
     NVIDIA_BIN_DIR="$(dirname "$RUNTIME_BIN")"
     test -x "$RUNTIME_BIN"
 
-    # nvidia-container-runtime must be on the rke2-agent service PATH; systemd does
-    # not expand $PATH, so set an absolute PATH that includes the toolkit.
+    # nvidia-container-runtime must be on the rke2-agent service PATH; systemd does not expand $PATH, so set an absolute PATH that includes the toolkit.
     echo "Configuring rke2-agent PATH..."
     mkdir -p /etc/default
     DEFAULT_PATH="$NVIDIA_BIN_DIR:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -479,16 +485,16 @@ runcmd:
     systemctl daemon-reload
     systemctl enable gpu-setup.service
 %{ if !gpu.driver.preinstalled }
-    if ! modprobe -q nvidia; then
-      if [ -f /var/lib/gpu-reboot-attempted ]; then
+    # Always reboot once after driver install so the kernel module is available;
+    if [ -f /var/lib/gpu-reboot-attempted ]; then
+      if ! modprobe -q nvidia; then
         echo "FATAL: nvidia module still not loadable after reboot"
         exit 1
       fi
-      # After reboot, enabled units (gpu-setup + rke2-agent) start via systemd;
-      # cloud-init will not re-run the remaining runcmd.
+    else
       touch /var/lib/gpu-reboot-attempted
       systemctl enable rke2-agent.service
-      echo "NVIDIA driver not loaded yet - rebooting; gpu-setup.service and rke2-agent.service start on next boot"
+      echo "NVIDIA driver installed - rebooting; gpu-setup.service and rke2-agent.service start on next boot"
       reboot
       sleep 300
       exit 0

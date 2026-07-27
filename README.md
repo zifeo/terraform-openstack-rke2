@@ -132,7 +132,7 @@ scheduling isolation is left to your existing `node_taints` / `node_labels`.
 ```hcl
 agents = [
   {
-    name        = "gpu"
+    name        = "example-gpu"
     nodes_count = 1
 
     # Infomaniak: GPU flavors are often project-gated (e.g. nvl4-* for L4).
@@ -153,8 +153,9 @@ agents = [
     gpu = {
       enabled = true
       # defaults:
-      # driver = { package = "nvidia-driver-550", preinstalled = false }
+      # driver = { package = "nvidia-driver-550", version = null, preinstalled = false }
       # toolkit_package = "nvidia-container-toolkit"
+      # toolkit_version = null  # set to pin, e.g. "1.17.8-1"
       # runtime_class   = true  # deploys a cluster RuntimeClass named "nvidia"
     }
   }
@@ -165,8 +166,10 @@ agents = [
 | ------ | ------- | ------- |
 | `enabled` | `false` | Turn on GPU cloud-init on this pool |
 | `driver.package` | `nvidia-driver-550` | Apt package for the NVIDIA kernel driver (Ubuntu 24.04 + L4) |
+| `driver.version` | `null` | Optional apt version pin for `driver.package` |
 | `driver.preinstalled` | `false` | Skip driver install if the image already has it |
 | `toolkit_package` | `nvidia-container-toolkit` | Provides `nvidia-container-runtime` |
+| `toolkit_version` | `null` | Optional apt version pin for `toolkit_package` |
 | `runtime_class` | `true` | Ship a cluster `RuntimeClass` (`handler: nvidia`) when any pool requests it |
 
 Control-plane (`servers`) pools do not get GPU setup in this version.
@@ -175,7 +178,7 @@ Control-plane (`servers`) pools do not get GPU setup in this version.
 
 1. Adds the NVIDIA container-toolkit apt repository (when GPU is enabled).
 2. Installs the driver and toolkit packages (unless `preinstalled = true`).
-3. Reboots once if the `nvidia` module is not yet loadable after install
+3. Always reboots once after a fresh driver install so the kernel module loads
    (drivers are kernel-sensitive).
 4. Writes RKE2 containerd templates (`config.toml.tmpl` /
    `config-v3.toml.tmpl`) registering the `nvidia` runtime
@@ -184,8 +187,7 @@ Control-plane (`servers`) pools do not get GPU setup in this version.
 6. Starts `rke2-agent` only after GPU setup succeeds.
 
 If you use `ff_wait_ready = true`, expect a longer first boot on GPU nodes
-because of the possible reboot; Terraform’s wait can time out during that
-window.
+because of the driver reboot; Terraform’s wait can time out during that window.
 
 ### Verify on a GPU node
 

@@ -288,9 +288,11 @@ variable "gpu" {
     enabled = optional(bool, false)
     driver = optional(object({
       package      = optional(string, "nvidia-driver-550")
+      version      = optional(string) # apt pin, e.g. "550.144.03-0ubuntu0.24.04.1"
       preinstalled = optional(bool, false)
     }), {})
     toolkit_package = optional(string, "nvidia-container-toolkit")
+    toolkit_version = optional(string) # apt pin for toolkit_package when set
     runtime_class   = optional(bool, true)
   })
   default = {
@@ -299,5 +301,5 @@ variable "gpu" {
     toolkit_package = "nvidia-container-toolkit"
     runtime_class   = true
   }
-  description = "Optional NVIDIA GPU setup for agent nodes. Installs driver/toolkit, registers the nvidia containerd runtime, and can deploy a RuntimeClass. Workloads must set runtimeClassName: nvidia."
+  description = "Optional NVIDIA GPU setup for agent nodes. Installs driver/toolkit, registers the nvidia containerd runtime, and can deploy a RuntimeClass. Workloads must set runtimeClassName: nvidia. Pin apt versions with driver.version / toolkit_version when needed."
 }
