@@ -343,6 +343,12 @@ write_files:
     #!/bin/bash
     set -euo pipefail
 
+    # RKE2 auto-registers nvidia when the runtime is on PATH; do not add
+    # runtimes.nvidia via config.toml.tmpl (duplicates the key, containerd fails).
+    mkdir -p /var/lib/rancher/rke2/agent/etc/containerd
+    rm -f /var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmpl \
+          /var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.tmpl
+
     if [ -f /var/lib/gpu-setup-done ]; then
       echo "GPU setup already completed, skipping..."
       exit 0
@@ -386,31 +392,6 @@ write_files:
     else
       echo "PATH=$DEFAULT_PATH" >> /etc/default/rke2-agent
     fi
-
-    # RKE2 regenerates containerd's config.toml on start; the nvidia runtime must
-    # be registered via a template extending the base:
-    # - config.toml.tmpl for containerd 1.x (RKE2 < v1.31.6)
-    # - config-v3.toml.tmpl for containerd 2.0+ (RKE2 >= v1.31.6)
-    echo "Writing containerd templates..."
-    mkdir -p /var/lib/rancher/rke2/agent/etc/containerd
-    printf '%s\n' \
-      '{{ template "base" . }}' \
-      '' \
-      '[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]' \
-      '  runtime_type = "io.containerd.runc.v2"' \
-      '[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]' \
-      '  BinaryName = "'"$RUNTIME_BIN"'"' \
-      '  SystemdCgroup = true' \
-      > /var/lib/rancher/rke2/agent/etc/containerd/config.toml.tmpl
-    printf '%s\n' \
-      '{{ template "base" . }}' \
-      '' \
-      '[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.nvidia]' \
-      '  runtime_type = "io.containerd.runc.v2"' \
-      '[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.nvidia.options]' \
-      '  BinaryName = "'"$RUNTIME_BIN"'"' \
-      '  SystemdCgroup = true' \
-      > /var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.tmpl
 
     touch /var/lib/gpu-setup-done
     echo "=== GPU setup complete ==="
