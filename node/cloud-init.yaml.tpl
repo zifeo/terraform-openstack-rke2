@@ -15,7 +15,7 @@ fs_setup:
 package_update: true
 package_upgrade: true
 # GPU nodes always reboot manually after driver install; do not let cloud-init auto-reboot and race that path. Non-GPU nodes keep the usual behavior.
-package_reboot_if_required: ${gpu.enabled ? false : true}
+package_reboot_if_required: !${gpu.enabled}
 packages:
   - fail2ban
   - unattended-upgrades
