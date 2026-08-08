@@ -154,7 +154,11 @@ module "servers" {
     },
     {
       for f in fileset(path.module, "manifests/*.{yml,yaml}") : basename(f) => file("${path.module}/${f}")
+      if basename(f) != "runtimeclass-nvidia.yaml"
     },
+    anytrue([for a in var.agents : try(a.gpu.enabled && a.gpu.runtime_class, false)]) ? {
+      "runtimeclass-nvidia.yaml" = file("${path.module}/manifests/runtimeclass-nvidia.yaml")
+    } : {},
     var.manifests,
   )
 
@@ -170,6 +174,7 @@ module "servers" {
 
   node_taints = each.value.node_taints
   node_labels = each.value.node_labels
+  gpu         = {}
 }
 
 module "agents" {
@@ -223,4 +228,5 @@ module "agents" {
 
   node_taints = each.value.node_taints
   node_labels = each.value.node_labels
+  gpu         = each.value.gpu
 }

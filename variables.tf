@@ -185,6 +185,17 @@ variable "agents" {
       effect = string
     })), [])
     node_labels = optional(map(string), {})
+    gpu = optional(object({
+      enabled = optional(bool, false)
+      driver = optional(object({
+        package      = optional(string, "nvidia-driver-550")
+        version      = optional(string)
+        preinstalled = optional(bool, false)
+      }), {})
+      toolkit_package = optional(string, "nvidia-container-toolkit")
+      toolkit_version = optional(string)
+      runtime_class   = optional(bool, true)
+    }), {})
   }))
   validation {
     condition = (
