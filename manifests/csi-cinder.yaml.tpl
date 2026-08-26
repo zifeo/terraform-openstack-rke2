@@ -50,7 +50,8 @@ spec:
             memory: 32M
       plugin:
         nodePlugin:
-          tolerations: []
+          tolerations:
+${indent(12, yamlencode(node_plugin_tolerations))}
         controllerPlugin:
           replicas: ${operator_replica}
           nodeSelector:

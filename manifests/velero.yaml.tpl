@@ -89,6 +89,8 @@ spec:
       podVolumePath: /var/lib/kubelet/pods
       containerSecurityContext:
         privileged: false
+      tolerations:
+${indent(8, yamlencode(node_agent_tolerations))}
       resources:
         requests:
           cpu: 100m
