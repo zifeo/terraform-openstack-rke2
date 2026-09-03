@@ -10,6 +10,32 @@ locals {
   external_ip      = openstack_networking_floatingip_v2.floating_ip.address
   internal_vip     = var.subnet_servers_vip != null ? var.subnet_servers_vip : cidrhost(var.subnet_servers_cidr, 4)
   operator_replica = length(var.servers) > 1 ? 2 : 1
+
+  agent_daemonset_tolerations_derived = distinct(concat(
+    flatten([
+      for a in var.agents : [
+        for t in a.node_taints : merge(
+          {
+            key      = t.key
+            effect   = t.effect
+            operator = t.value != null ? "Equal" : "Exists"
+          },
+          t.value != null ? { value = t.value } : {}
+        )
+      ]
+    ]),
+    anytrue([for a in var.agents : try(a.gpu.enabled, false)]) ? [{
+      key      = "nvidia.com/gpu"
+      operator = "Exists"
+      effect   = "NoSchedule"
+    }] : []
+  ))
+
+  agent_daemonset_tolerations = (
+    var.agent_daemonset_tolerations != null
+    ? var.agent_daemonset_tolerations
+    : local.agent_daemonset_tolerations_derived
+  )
 }
 
 resource "openstack_compute_servergroup_v2" "servers" {
@@ -76,22 +102,24 @@ module "servers" {
   manifests = merge(
     {
       "cinder-csi.yaml" : templatefile("${path.module}/manifests/csi-cinder.yaml.tpl", {
-        operator_replica = local.operator_replica
-        auth_url         = var.identity_endpoint
-        region           = openstack_identity_application_credential_v3.rke2.region
-        project_id       = openstack_identity_application_credential_v3.rke2.project_id
-        app_id           = openstack_identity_application_credential_v3.rke2.id
-        app_secret       = openstack_identity_application_credential_v3.rke2.secret
-        app_name         = openstack_identity_application_credential_v3.rke2.name
+        operator_replica        = local.operator_replica
+        auth_url                = var.identity_endpoint
+        region                  = openstack_identity_application_credential_v3.rke2.region
+        project_id              = openstack_identity_application_credential_v3.rke2.project_id
+        app_id                  = openstack_identity_application_credential_v3.rke2.id
+        app_secret              = openstack_identity_application_credential_v3.rke2.secret
+        app_name                = openstack_identity_application_credential_v3.rke2.name
+        node_plugin_tolerations = local.agent_daemonset_tolerations
       }),
       "velero.yaml" : templatefile("${path.module}/manifests/velero.yaml.tpl", {
-        auth_url      = var.identity_endpoint
-        region        = openstack_identity_application_credential_v3.rke2.region
-        app_id        = openstack_identity_application_credential_v3.rke2.id
-        app_secret    = openstack_identity_application_credential_v3.rke2.secret
-        app_name      = openstack_identity_application_credential_v3.rke2.name
-        bucket_restic = openstack_objectstorage_container_v1.restic.name
-        bucket_velero = openstack_objectstorage_container_v1.velero.name
+        auth_url               = var.identity_endpoint
+        region                 = openstack_identity_application_credential_v3.rke2.region
+        app_id                 = openstack_identity_application_credential_v3.rke2.id
+        app_secret             = openstack_identity_application_credential_v3.rke2.secret
+        app_name               = openstack_identity_application_credential_v3.rke2.name
+        bucket_restic          = openstack_objectstorage_container_v1.restic.name
+        bucket_velero          = openstack_objectstorage_container_v1.velero.name
+        node_agent_tolerations = local.agent_daemonset_tolerations
       }),
       "cloud-controller-openstack.yaml" : templatefile("${path.module}/manifests/cloud-controller-openstack.yaml.tpl", {
         auth_url            = var.identity_endpoint

@@ -127,6 +127,12 @@ This does **not** deploy the [NVIDIA GPU Operator](https://docs.rke2.io/add-ons/
 allocatable resource; workloads must set `runtimeClassName: nvidia` and
 scheduling isolation is left to your existing `node_taints` / `node_labels`.
 
+When any agent pool has `gpu.enabled = true`, node DaemonSets that must run on
+every agent (Cinder CSI nodePlugin and Velero node-agent) automatically gain an
+`nvidia.com/gpu` toleration (and any agent `node_taints`) so volumes and
+pod-volume backups work on GPU nodes. Override with
+`agent_daemonset_tolerations` if needed.
+
 ### Define a GPU agent pool
 
 ```hcl
