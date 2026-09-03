@@ -1,3 +1,4 @@
+## template: jinja
 #cloud-config
 
 resize_rootfs: True
@@ -142,6 +143,15 @@ write_files:
       done
       [ -z "$_cr_miss" ]
     }
+# Pre-set Node.spec.providerID at registration so the OpenStack CCM never sees an
+# empty ProviderID when reconciling load-balancer security groups for a new node.
+# `v1.instance_id` is the Nova instance UUID, rendered by cloud-init's jinja
+- path: /etc/rancher/rke2/config.yaml.d/00-openstack-provider-id.yaml
+  permissions: "0600"
+  owner: root:root
+  content: |
+    kubelet-arg+:
+      - "provider-id=openstack:///{{ v1.instance_id }}"
 %{ if is_server ~}
   %{~ for k, v in manifests_files ~}
 - path: /opt/rke2/manifests/${k}
