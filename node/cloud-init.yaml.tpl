@@ -421,7 +421,11 @@ write_files:
 %{ endif }
 
 runcmd:
-  - mkdir -p /mnt /var/lib/rancher/rke2 /var/lib/kubelet
+  - mkdir -p /mnt /var/lib/rancher/rke2 /var/lib/kubelet /etc/rancher/rke2/config.yaml.d
+  - |
+    # Kubelet must create Node.spec.providerID so OCCM LB SG reconcile never sees an empty ID.
+    printf '%s\n' 'kubelet-arg+:' "  - \"provider-id=openstack:///$(cat /var/lib/cloud/data/instance-id)\"" > /etc/rancher/rke2/config.yaml.d/99-openstack-provider-id.yaml
+    chmod 0600 /etc/rancher/rke2/config.yaml.d/99-openstack-provider-id.yaml
   - systemctl daemon-reload
   - systemctl enable mnt.mount var-lib-rancher-rke2.mount var-lib-kubelet.mount
   - systemctl start mnt.mount var-lib-rancher-rke2.mount var-lib-kubelet.mount
