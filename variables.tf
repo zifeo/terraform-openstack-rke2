@@ -306,6 +306,19 @@ variable "kube_proxy_resources" {
   default = null
 }
 
+variable "agent_daemonset_tolerations" {
+  type = list(object({
+    key               = optional(string)
+    operator          = optional(string)
+    value             = optional(string)
+    effect            = optional(string)
+    tolerationSeconds = optional(number)
+  }))
+  default     = null
+  description = "Tolerations for node DaemonSets that must run on every agent (Cinder CSI
+    nodePlugin and Velero node-agent)."
+}
+
 variable "manifests_folder" {
   type    = string
   default = ""
