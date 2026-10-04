@@ -15,7 +15,7 @@ fs_setup:
 package_update: true
 package_upgrade: true
 # GPU nodes always reboot manually after driver install; do not let cloud-init auto-reboot and race that path. Non-GPU nodes keep the usual behavior.
-package_reboot_if_required: !${gpu.enabled}
+package_reboot_if_required: ${!gpu.enabled}
 packages:
   - fail2ban
   - unattended-upgrades
@@ -107,6 +107,11 @@ write_files:
     Options=bind
     [Install]
     WantedBy=multi-user.target
+- path: /etc/systemd/system/rke2-${is_server ? "server" : "agent"}.service.d/mounts.conf
+  content: |
+    # on reboot nothing orders rke2 after mnt.mount: without this rke2 may write to the root disk, later hidden by the mount
+    [Unit]
+    RequiresMountsFor=/var/lib/rancher/rke2 /var/lib/kubelet
 - path: /usr/local/bin/install-or-upgrade-rke2.sh
   permissions: "0755"
   owner: root:root
@@ -122,11 +127,12 @@ write_files:
   owner: root:root
   content: |
     #!/bin/bash
+    # max=0 waits forever: rke2 readiness depends on cluster state (restore, joins), not on a fixed delay
     wait_for() {
       _wf_desc="$1"; _wf_test="$2"; _wf_sleep="$3"; _wf_max="$4"; _wf_n=0
       until eval "$_wf_test"; do
         _wf_n=$((_wf_n + 1))
-        if [ "$_wf_n" -ge "$_wf_max" ]; then
+        if [ "$_wf_max" -gt 0 ] && [ "$_wf_n" -ge "$_wf_max" ]; then
           echo "FATAL: $_wf_desc not ready after $_wf_max attempts on $(hostname) - node unusable, aborting cloud-init"
           exit 1
         fi
@@ -134,14 +140,20 @@ write_files:
         sleep "$_wf_sleep"
       done
     }
+    # rke2 links bin and writes .extracted only once the current runtime is fully extracted
+    _rke2_data_dir() {
+      _rd=$(dirname "$(readlink -f /var/lib/rancher/rke2/bin)") && [ -f "$_rd/.extracted" ] && echo "$_rd"
+    }
     _charts_ready() {
+      [ -d "$1" ] || return 1
       _cr_miss=""
       for _cr_p in /opt/rke2/manifests/patches/*; do
         [ -e "$_cr_p" ] || continue
-        [ -f "/var/lib/rancher/rke2/server/manifests/$(basename "$_cr_p")" ] || _cr_miss=1
+        [ -f "$1/$(basename "$_cr_p")" ] || _cr_miss=1
       done
       [ -z "$_cr_miss" ]
     }
+    _data_charts_ready() { _dcr=$(_rke2_data_dir) && _charts_ready "$_dcr/charts"; }
 %{ if is_server ~}
   %{~ for k, v in manifests_files ~}
 - path: /opt/rke2/manifests/${k}
@@ -244,6 +256,7 @@ write_files:
       - name: kubeconfig
         hostPath:
           path: /etc/rancher/rke2/rke2.yaml
+          type: File
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
   owner: root:root
@@ -429,14 +442,14 @@ runcmd:
   - systemctl daemon-reload
   - systemctl enable mnt.mount var-lib-rancher-rke2.mount var-lib-kubelet.mount
   - systemctl start mnt.mount var-lib-rancher-rke2.mount var-lib-kubelet.mount
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2 data mounts" "mountpoint -q /mnt && mountpoint -q /var/lib/rancher/rke2 && mountpoint -q /var/lib/kubelet" 5 30' || exit 1
   %{~ for key in authorized_keys ~}
   - grep -qxF "${key}" /home/${system_user}/.ssh/authorized_keys || echo "${key}" >> /home/${system_user}/.ssh/authorized_keys
   %{~ endfor ~}
-  - /usr/local/bin/install-or-upgrade-rke2.sh
+  - /usr/local/bin/install-or-upgrade-rke2.sh || exit 1
   - systemctl daemon-reload
   - grep -qxF 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' /home/${system_user}/.bashrc || echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   - grep -qxF 'alias ctr="sudo /var/lib/rancher/rke2/bin/ctr --address /run/k3s/containerd/containerd.sock --namespace k8s.io"' /home/${system_user}/.bashrc || echo 'alias ctr="sudo /var/lib/rancher/rke2/bin/ctr --address /run/k3s/containerd/containerd.sock --namespace k8s.io"' >> /home/${system_user}/.bashrc
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "/mnt mountpoint" "mountpoint -q /mnt" 5 30'
   %{~ if is_server ~}
   - systemctl restart systemd-modules-load.service # ensure ipvs is loaded
   - grep -qxF 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' /home/${system_user}/.bashrc || echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc
@@ -451,18 +464,20 @@ runcmd:
     command -v yq >/dev/null || { echo "ERROR: yq install/checksum failed"; exit 1; };
   - systemctl enable rke2-server.service
   - systemctl start rke2-server.service
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "chart manifests" _charts_ready 1 60'
-  - /usr/local/bin/customize-charts.sh /var/lib/rancher/rke2/server/manifests
-  - >
-    for f in /opt/rke2/manifests/*.yaml; do [ -e "$f" ] || continue; mv -v "$f" /var/lib/rancher/rke2/server/manifests; done;
-  - ls /var/lib/rancher/rke2/server/manifests
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "static pod manifests dir" "[ -d /var/lib/rancher/rke2/agent/pod-manifests/ ]" 1 60'
-  - mv -v /opt/rke2/kube-vip.yaml /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yaml
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "static pod manifests dir" "[ -d /var/lib/rancher/rke2/agent/pod-manifests/ ]" 1 0' || exit 1
+  - mv -v /opt/rke2/kube-vip.yaml /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yaml || exit 1
   - ls /var/lib/rancher/rke2/agent/pod-manifests
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active" "systemctl is-active -q rke2-server.service" 3 60'
+  # rke2 recopies data/<digest>/charts into server/manifests on every start: patch the source too
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2 data charts" _data_charts_ready 1 0 && /usr/local/bin/customize-charts.sh "$(_rke2_data_dir)/charts"' || exit 1
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "chart manifests" "_charts_ready /var/lib/rancher/rke2/server/manifests" 1 0' || exit 1
+  - /usr/local/bin/customize-charts.sh /var/lib/rancher/rke2/server/manifests || exit 1
+  - >
+    for f in /opt/rke2/manifests/*.yaml; do [ -e "$f" ] || continue; mv -v -t /var/lib/rancher/rke2/server/manifests "$f" || exit 1; done;
+  - ls /var/lib/rancher/rke2/server/manifests
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active" "systemctl is-active -q rke2-server.service" 3 0' || exit 1
   %{~ if bootstrap ~}
   - systemctl restart rke2-server.service # force deploy controller to re-read patched server/manifests (bootstrap only)
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active after restart" "systemctl is-active -q rke2-server.service" 3 60'
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active after restart" "systemctl is-active -q rke2-server.service" 3 0' || exit 1
   %{~ endif ~}
   %{~ else ~}
   - |
@@ -489,5 +504,5 @@ runcmd:
 %{ endif }
     systemctl enable rke2-agent.service
     systemctl start rke2-agent.service
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-agent active" "systemctl is-active -q rke2-agent.service" 5 120'
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-agent active" "systemctl is-active -q rke2-agent.service" 5 0' || exit 1
   %{~ endif ~}
