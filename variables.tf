@@ -315,8 +315,7 @@ variable "agent_daemonset_tolerations" {
     tolerationSeconds = optional(number)
   }))
   default     = null
-  description = "Tolerations for node DaemonSets that must run on every agent (Cinder CSI
-    nodePlugin and Velero node-agent)."
+  description = "Tolerations for node DaemonSets that must run on every agent (Cinder CSI nodePlugin and Velero node-agent)."
 }
 
 variable "manifests_folder" {
