@@ -1,0 +1,15 @@
+{
+  "rke2_version": "v1.37.1+rke2r1",
+  "charts": {
+    "rke2-cilium": {
+      "chart_version": "1.20.200",
+      "values_sha256": "30b568c1a37734492bfe9cd654989f57c1bf52db511c36425f8c3f1366b414ca",
+      "merge_status": "ok"
+    },
+    "rke2-coredns": {
+      "chart_version": "1.47.102",
+      "values_sha256": "185088902cbe1e74044200415f687bfa5dccbdd98a082ddb9f861b3787b2a83d",
+      "merge_status": "ok"
+    }
+  }
+}

@@ -191,7 +191,7 @@ write_files:
     spec:
       containers:
       - name: kube-vip
-        image: ghcr.io/kube-vip/kube-vip:v0.7.2
+        image: ghcr.io/kube-vip/kube-vip:v1.2.4
         imagePullPolicy: IfNotPresent
         args:
         - manager
@@ -200,7 +200,7 @@ write_files:
           value: "true"
         - name: port
           value: "6443"
-        - name: vip_cidr
+        - name: vip_subnet
           value: "32"
         - name: cp_enable
           value: "true"
@@ -232,12 +232,14 @@ write_files:
           value: "${internal_vip}"
         - name: prometheus_server
           value: ":2112"
+        - name: k8s_config_file
+          value: /etc/kubernetes/admin.conf
         resources:
           requests:
             cpu: 25m
-            memory: 32Mi
+            memory: 64Mi
           limits:
-            memory: 32Mi
+            memory: 128Mi
         securityContext:
           capabilities:
             add:

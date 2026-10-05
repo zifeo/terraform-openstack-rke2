@@ -27,12 +27,16 @@ jobs:
           sudo mv yq_linux_amd64 /usr/local/bin/yq
           yq --version
 
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.19.5
+
       - name: Run patch tests
         env:
           YQ_BIN: /usr/local/bin/yq
         run: |
           uv sync
-          uv run pytest -q
+          uv run pytest -q tests/patches
 
       - name: Upload diff on failure
         if: failure()

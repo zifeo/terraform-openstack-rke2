@@ -24,18 +24,3 @@
    # Max size of replicaCount (default of 0 is no max)
    max: 0
    # Whether to include unschedulable nodes in the nodes/cores calculations - this requires version 1.8.0+ of the autoscaler
-@@ -56,11 +56,11 @@
-   # resources for autoscaler pod
-   resources:
-     requests:
--      cpu: "25m"
--      memory: "16Mi"
-+      cpu: "20m"
-+      memory: "10Mi"
-     limits:
-       cpu: "100m"
--      memory: "64Mi"
-+      memory: "10Mi"
-   # Options for autoscaler configmap
-   configmap:
-     ## Annotations for the coredns-autoscaler configmap

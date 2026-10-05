@@ -21,3 +21,16 @@ jobs:
       - name: Render cloud-init and reject invalid YAML
         working-directory: tests/cloud-init
         run: tofu test
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Manifests, cross-server identity, cloud-init schema, shellcheck, versions
+        run: |
+          uv sync
+          uv run pytest -q tests/static

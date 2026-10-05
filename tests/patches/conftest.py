@@ -2,18 +2,26 @@ import os
 
 import pytest
 
-from helpers import load_rke2_versions, render_patches, run
+from helpers import RENDER_VARS, load_rke2_versions, render_patches, run
 
 
-@pytest.fixture(scope="session")
-def rendered_patches(tmp_path_factory) -> dict:
-    out = tmp_path_factory.mktemp("rendered-patches")
+def _write_patches(out, variables=None) -> dict:
     patches = {}
-    for chart, content in render_patches().items():
+    for chart, content in render_patches(variables).items():
         path = out / chart
         path.write_text(content)
         patches[chart.removesuffix(".yaml")] = path
     return patches
+
+
+@pytest.fixture(scope="session")
+def rendered_patches(tmp_path_factory) -> dict:
+    return _write_patches(tmp_path_factory.mktemp("rendered-patches"))
+
+
+@pytest.fixture(scope="session")
+def concrete_patches(tmp_path_factory) -> dict:
+    return _write_patches(tmp_path_factory.mktemp("concrete-patches"), RENDER_VARS)
 
 
 @pytest.fixture(scope="session")
