@@ -84,3 +84,13 @@ def test_user_data_carries_manifests(renders):
 def test_agents_get_no_manifests(renders):
     files = write_files(renders["agent"]["rendered"])
     assert not [p for p in files if p.startswith("/opt/rke2/manifests/")]
+
+
+# ingress and Gateway API live outside rke2: a bundled copy competes with them on upgrades
+RKE2_DISABLED_CHARTS = {"rke2-ingress-nginx", "rke2-traefik", "rke2-gateway-api-crd"}
+
+
+@pytest.mark.parametrize("profile", ["server-bootstrap", "server-join"])
+def test_servers_disable_bundled_ingress_charts(renders, profile):
+    config = yaml.safe_load(write_files(renders[profile]["rendered"])["/etc/rancher/rke2/config.yaml"])
+    assert RKE2_DISABLED_CHARTS <= set(config.get("disable", []))

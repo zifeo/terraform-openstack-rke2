@@ -304,6 +304,9 @@ write_files:
     disable:
       - rke2-ingress-nginx
       - rke2-traefik
+      # Gateway API CRDs belong to the gateway implementation installed outside rke2,
+      # otherwise an rke2 upgrade can move them ahead of what that implementation reads
+      - rke2-gateway-api-crd
     cni: "${cni}"
     node-taint:
       - "node-role.kubernetes.io/control-plane:NoSchedule"
