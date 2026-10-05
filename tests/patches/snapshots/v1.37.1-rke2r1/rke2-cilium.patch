@@ -1,0 +1,139 @@
+--- rke2-cilium/values.yaml
++++ rke2-cilium/values.patched.yaml
+@@ -5,15 +5,15 @@
+   # * It must begin and end with a lower case alphanumeric character;
+   # * It may contain lower case alphanumeric characters and dashes between.
+   # The "default" name cannot be used if the Cluster ID is different from 0.
+-  name: default
++  name: <value:string>
+   # -- (int) Unique ID of the cluster. Must be unique across all connected
+   # clusters and in the range of 1 to 255. Only required for Cluster Mesh,
+   # may be 0 if Cluster Mesh is not used.
+-  id: 0
+-enableIPv4Masquerade: ~
+-kubeProxyReplacement: "false"
+-k8sServiceHost: ""
+-k8sServicePort: ""
++  id: <value:int>
++enableIPv4Masquerade: true
++kubeProxyReplacement: "<value:bool>"
++k8sServiceHost: "127.0.0.1"
++k8sServicePort: 6443
+ operator:
+   # -- Enable the cilium-operator component (required).
+   enabled: true
+@@ -31,7 +31,7 @@
+     pullPolicy: "IfNotPresent"
+     suffix: ""
+   # -- Number of replicas to run for the cilium-operator deployment
+-  replicas: 2
++  replicas: <value:int>
+   # -- The priority class to use for cilium-operator
+   priorityClassName: ""
+   # -- DNS policy for Cilium operator pods.
+@@ -67,6 +67,7 @@
+   # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+   nodeSelector:
+     kubernetes.io/os: linux
++    node-role.kubernetes.io/control-plane: "true"
+   # -- Node tolerations for cilium-operator scheduling to nodes with taints
+   # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+   # Toleration for agentNotReadyTaintKey taint is always added to cilium-operator pods.
+@@ -138,7 +139,12 @@
+     unhealthyPodEvictionPolicy: null
+   # -- cilium-operator resource limits & requests
+   # ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+-  resources: {}
++  resources:
++    requests:
++      cpu: 50m
++      memory: 256Mi
++    limits:
++      memory: 384Mi
+   #   limits:
+   #     cpu: 1000m
+   #     memory: 1Gi
+@@ -274,7 +280,7 @@
+   #  - portmap
+ 
+   # Otherwise rke2 hostPort does not work! Used for nginx
+-  chainingMode: portmap
++  chainingMode: "none"
+   # @schema
+   # type: [null, string]
+   # @schema
+@@ -341,10 +347,15 @@
+   enableRouteMTUForCNIChaining: false
+   # -- Enable the removal of iptables rules created by the AWS CNI VPC plugin.
+   iptablesRemoveAWSRules: true
+-resources: {}
++resources:
++  requests:
++    cpu: 50m
++    memory: 256Mi
++  limits:
++    memory: 512Mi
+ hubble:
+   # -- Enable Hubble (true by default).
+-  enabled: false
++  enabled: true
+   # @schema
+   # type: [null, boolean]
+   # @schema
+@@ -391,7 +402,16 @@
+     #
+     #   --set hubble.metrics.enabled="{dns:query;ignoreAAAA,drop,tcp,flow,icmp,http}"
+     #
+-    enabled: ~
++    enabled:
++      - dns
++      - drop
++      - flow
++      - flows-to-world
++      - httpV2
++      - icmp
++      - kafka
++      - port-distribution
++      - tcp
+     # -- Enables exporting hubble metrics in OpenMetrics format.
+     enableOpenMetrics: false
+     # -- Configure the port the hubble metric server listens on.
+@@ -656,7 +676,7 @@
+       extraIpAddresses: []
+   relay:
+     # -- Enable Hubble Relay (requires hubble.enabled=true)
+-    enabled: false
++    enabled: true
+     # -- Roll out Hubble Relay pods automatically when configmap is updated.
+     rollOutPods: false
+     # -- Hubble-relay container image.
+@@ -670,7 +690,12 @@
+       useDigest: false
+       pullPolicy: "IfNotPresent"
+     # -- Specifies the resources for the hubble-relay pods
+-    resources: {}
++    resources:
++      requests:
++        cpu: 25m
++        memory: 128Mi
++      limits:
++        memory: 128Mi
+     # -- Number of replicas run for the hubble-relay deployment.
+     replicas: 1
+     # -- Affinity for hubble-replay
+@@ -1177,12 +1202,12 @@
+       - policy_denied
+ encryption:
+   # -- Enable transparent network encryption.
+-  enabled: false
++  enabled: <value:bool>
+   # -- Encryption method. Can be one of ipsec, wireguard or ztunnel.
+-  type: ipsec
++  type: <value:string>
+   # -- Enable encryption for pure node to node traffic.
+   # This option is only effective when encryption.type is set to "wireguard".
+-  nodeEncryption: false
++  nodeEncryption: <value:bool>
+   # -- Configure the Encryption Pod2Pod strict mode.
+   strictMode:
+     egress:

@@ -1,4 +1,6 @@
+import base64
 import hashlib
+import io
 import os
 import re
 import shutil
@@ -55,24 +57,36 @@ def yq_bin() -> str:
     raise RuntimeError("yq not found; install mikefarah/yq v4.40.5 or set YQ_BIN")
 
 
-def render_patch_tpl(tpl_path: Path) -> str:
+# Concrete values for checks that render the chart (helm template validates names, ints and booleans).
+RENDER_VARS = {
+    "operator_replica": 2,
+    "cluster_name": "fixture",
+    "cluster_id": 1,
+    "ff_with_kubeproxy": False,
+    "enable_encryption": False,
+    "encryption_type": "wireguard",
+    "enable_node_encryption": False,
+}
+
+
+def render_patch_tpl(tpl_path: Path, variables: Optional[Dict] = None) -> str:
+    variables = PATCH_VARS if variables is None else variables
     content = tpl_path.read_text()
 
     def replace_ternary(match: re.Match) -> str:
-        var = match.group(1).strip()
-        false_val = match.group(2).strip()
-        true_val = match.group(3).strip()
-        val = PATCH_VARS[var]
+        val = variables[match.group(1).strip()]
         if isinstance(val, str):
             return val
-        return false_val if val else true_val
+        # templatefile renders the HCL string literal without its quotes
+        branch = match.group(2) if val else match.group(3)
+        return branch.strip().strip('"')
 
     content = re.sub(
         r"\$\{(\w+)\s*\?\s*([^:]+)\s*:\s*([^}]+)\}",
         replace_ternary,
         content,
     )
-    for key, value in PATCH_VARS.items():
+    for key, value in variables.items():
         if isinstance(value, bool):
             rendered = "true" if value else "false"
         else:
@@ -81,11 +95,11 @@ def render_patch_tpl(tpl_path: Path) -> str:
     return content
 
 
-def render_patches() -> Dict[str, str]:
+def render_patches(variables: Optional[Dict] = None) -> Dict[str, str]:
     patches = {}
     for tpl_path in sorted(PATCHES_DIR.glob("rke2-*.yaml.tpl")):
         chart = tpl_path.name.removesuffix(".tpl")
-        patches[chart] = render_patch_tpl(tpl_path)
+        patches[chart] = render_patch_tpl(tpl_path, variables)
     if not patches:
         raise RuntimeError(f"No patch templates found in {PATCHES_DIR}")
     return patches
@@ -142,6 +156,13 @@ def extract_chart_values(chart_file: Path, chart_name: str, workdir: Path) -> Tu
         chart_yaml_path.write_bytes(tar.extractfile(f"{chart_name}/Chart.yaml").read())
     chart_version = run([yq_bin(), "-r", ".version", str(chart_yaml_path)]).stdout.strip()
     return values_path, chart_version
+
+
+def chart_archive(chart_file: Path) -> Dict[str, bytes]:
+    """Members of the chart tgz embedded in a rke2 HelmChart manifest, by name."""
+    chart_content = run([yq_bin(), "-r", ".spec.chartContent", str(chart_file)]).stdout
+    with tarfile.open(fileobj=io.BytesIO(base64.b64decode(chart_content)), mode="r:gz") as tar:
+        return {m.name: tar.extractfile(m).read() for m in tar.getmembers() if m.isfile()}
 
 
 def merge_patch(values_path: Path, patch_path: Path, output_path: Path) -> None:

@@ -1,0 +1,26 @@
+--- rke2-coredns/values.yaml
++++ rke2-coredns/values.patched.yaml
+@@ -1,10 +1,10 @@
+ resources:
+   limits:
+-    cpu: 100m
+-    memory: 128Mi
++    cpu: "100m" # because of autoscaler
++    memory: "128Mi"
+   requests:
+-    cpu: 100m
+-    memory: 128Mi
++    cpu: "100m"
++    memory: "128Mi"
+ autoscaler:
+   # Enabled the cluster-proportional-autoscaler
+   enabled: true
+@@ -13,7 +13,7 @@
+   # Number of nodes in the cluster per coredns replica
+   nodesPerReplica: 16
+   # Min size of replicaCount
+-  min: 0
++  min: <value:int>
+   # Max size of replicaCount (default of 0 is no max)
+   max: 0
+   # Whether to include unschedulable nodes in the nodes/cores calculations - this requires version 1.8.0+ of the autoscaler

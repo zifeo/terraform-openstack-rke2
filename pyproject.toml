@@ -17,4 +17,4 @@ default-groups = ["dev"]
 required-version = ">=0.11"
 
 [tool.pytest.ini_options]
-testpaths = ["tests/patches"]
+testpaths = ["tests/patches", "tests/static"]
