@@ -7,9 +7,3 @@ resources:
     memory: "128Mi"
 autoscaler:
   min: ${operator_replica}
-  resources:
-    requests:
-      cpu: "20m"
-      memory: "10Mi"
-    limits:
-      memory: "10Mi"

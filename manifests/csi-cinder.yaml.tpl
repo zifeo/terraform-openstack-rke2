@@ -51,7 +51,7 @@ spec:
       plugin:
         nodePlugin:
           tolerations:
-${indent(12, yamlencode(node_plugin_tolerations))}
+            ${indent(12, yamlencode(node_plugin_tolerations))}
         controllerPlugin:
           replicas: ${operator_replica}
           nodeSelector:

@@ -90,7 +90,7 @@ spec:
       containerSecurityContext:
         privileged: false
       tolerations:
-${indent(8, yamlencode(node_agent_tolerations))}
+        ${indent(8, yamlencode(node_agent_tolerations))}
       resources:
         requests:
           cpu: 100m
