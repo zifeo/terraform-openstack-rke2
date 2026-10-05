@@ -32,11 +32,11 @@ defaults for running production workload.
 | Component                  | Version                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | OpenStack                  | 2024.1 Caracal (verified), maybe older version are supported too                                                         |
-| RKE2                       | [v1.35.4+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.35.4+rke2r1)                                            |
-| OpenStack Cloud Controller | [v2.34.1](https://github.com/kubernetes/cloud-provider-openstack/releases/tag/openstack-cloud-controller-manager-2.34.1) |
-| OpenStack Cinder           | [v2.34.1](https://github.com/kubernetes/cloud-provider-openstack/releases/tag/openstack-cinder-csi-2.34.1)               |
+| RKE2                       | [v1.36.2+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.36.2+rke2r1)                                            |
+| OpenStack Cloud Controller | [v2.36.0](https://github.com/kubernetes/cloud-provider-openstack/releases/tag/openstack-cloud-controller-manager-2.36.0) |
+| OpenStack Cinder           | [v2.36.0](https://github.com/kubernetes/cloud-provider-openstack/releases/tag/openstack-cinder-csi-2.36.0)               |
 | Velero                     | [v11.3.2](https://github.com/vmware-tanzu/helm-charts/releases/tag/velero-11.3.2)                                        |
-| Kube-vip                   | [v0.7.2](https://github.com/kube-vip/kube-vip/releases/tag/v0.7.2)                                                       |
+| Kube-vip                   | [v1.2.4](https://github.com/kube-vip/kube-vip/releases/tag/v1.2.4)                                                       |
 
 ## Getting started
 
@@ -296,7 +296,7 @@ metadata:
 spec:
   containers:
     - name: kube-vip
-      image: ghcr.io/kube-vip/kube-vip:v0.7.2
+      image: ghcr.io/kube-vip/kube-vip:v1.2.4
       imagePullPolicy: IfNotPresent
       args:
         - manager
@@ -305,7 +305,7 @@ spec:
           value: "true"
         - name: port
           value: "6443"
-        - name: vip_cidr
+        - name: vip_subnet
           value: "32"
         - name: cp_enable
           value: "true"
