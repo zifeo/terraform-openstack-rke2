@@ -19,10 +19,31 @@
 +kubeProxyReplacement: "<value:bool>"
 +k8sServiceHost: "127.0.0.1"
 +k8sServicePort: 6443
+ nodePort:
+   # -- Port range to use for NodePort services.
+   # range: "30000,32767"
+@@ -28,7 +28,8 @@
+   #
+   #   addresses: ["192.168.1.0/24", "2001::/64"]
+   #
+-  addresses: ~
++  addresses:
++    - <value:string>
+   # -- Set to true to prevent applications binding to service ports.
+   bindProtection: true
+   # -- Append NodePort range to ip_local_reserved_ports if clash with ephemeral
+@@ -51,6 +52,10 @@
+   # terminatePodConnections: true
+   # -- Enables tracing for socket-based load balancing.
+   # tracing: true
++
++  # required by sandboxed runtimes like gVisor, whose own network stack never reaches the socket hooks that
++  # translate Services
++  hostNamespaceOnly: true
  operator:
    # -- Enable the cilium-operator component (required).
    enabled: true
-@@ -31,7 +31,7 @@
+@@ -68,7 +73,7 @@
      pullPolicy: "IfNotPresent"
      suffix: ""
    # -- Number of replicas to run for the cilium-operator deployment
@@ -31,7 +52,7 @@
    # -- The priority class to use for cilium-operator
    priorityClassName: ""
    # -- DNS policy for Cilium operator pods.
-@@ -67,6 +67,7 @@
+@@ -104,6 +109,7 @@
    # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
    nodeSelector:
      kubernetes.io/os: linux
@@ -39,7 +60,21 @@
    # -- Node tolerations for cilium-operator scheduling to nodes with taints
    # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
    # Toleration for agentNotReadyTaintKey taint is always added to cilium-operator pods.
-@@ -138,7 +139,12 @@
+@@ -152,11 +158,11 @@
+   podAnnotations: {}
+   # -- Labels to be added to cilium-operator pods
+   podLabels: {}
+-  # PodDisruptionBudget settings
++  # maxUnavailable 1, the chart's: two drains at once never take every operator
+   podDisruptionBudget:
+     # -- enable PodDisruptionBudget
+     # ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
+-    enabled: false
++    enabled: true
+     # @schema
+     # type: [null, integer, string]
+     # @schema
+@@ -175,7 +181,12 @@
      unhealthyPodEvictionPolicy: null
    # -- cilium-operator resource limits & requests
    # ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -53,7 +88,7 @@
    #   limits:
    #     cpu: 1000m
    #     memory: 1Gi
-@@ -274,7 +280,7 @@
+@@ -311,7 +322,7 @@
    #  - portmap
  
    # Otherwise rke2 hostPort does not work! Used for nginx
@@ -62,7 +97,7 @@
    # @schema
    # type: [null, string]
    # @schema
-@@ -341,10 +347,15 @@
+@@ -378,4 +389,9 @@
    enableRouteMTUForCNIChaining: false
    # -- Enable the removal of iptables rules created by the AWS CNI VPC plugin.
    iptablesRemoveAWSRules: true
@@ -73,67 +108,3 @@
 +    memory: 256Mi
 +  limits:
 +    memory: 512Mi
- hubble:
-   # -- Enable Hubble (true by default).
--  enabled: false
-+  enabled: true
-   # @schema
-   # type: [null, boolean]
-   # @schema
-@@ -391,7 +402,16 @@
-     #
-     #   --set hubble.metrics.enabled="{dns:query;ignoreAAAA,drop,tcp,flow,icmp,http}"
-     #
--    enabled: ~
-+    enabled:
-+      - dns
-+      - drop
-+      - flow
-+      - flows-to-world
-+      - httpV2
-+      - icmp
-+      - kafka
-+      - port-distribution
-+      - tcp
-     # -- Enables exporting hubble metrics in OpenMetrics format.
-     enableOpenMetrics: false
-     # -- Configure the port the hubble metric server listens on.
-@@ -656,7 +676,7 @@
-       extraIpAddresses: []
-   relay:
-     # -- Enable Hubble Relay (requires hubble.enabled=true)
--    enabled: false
-+    enabled: true
-     # -- Roll out Hubble Relay pods automatically when configmap is updated.
-     rollOutPods: false
-     # -- Hubble-relay container image.
-@@ -670,7 +690,12 @@
-       useDigest: false
-       pullPolicy: "IfNotPresent"
-     # -- Specifies the resources for the hubble-relay pods
--    resources: {}
-+    resources:
-+      requests:
-+        cpu: 25m
-+        memory: 128Mi
-+      limits:
-+        memory: 128Mi
-     # -- Number of replicas run for the hubble-relay deployment.
-     replicas: 1
-     # -- Affinity for hubble-replay
-@@ -1177,12 +1202,12 @@
-       - policy_denied
- encryption:
-   # -- Enable transparent network encryption.
--  enabled: false
-+  enabled: <value:bool>
-   # -- Encryption method. Can be one of ipsec, wireguard or ztunnel.
--  type: ipsec
-+  type: <value:string>
-   # -- Enable encryption for pure node to node traffic.
-   # This option is only effective when encryption.type is set to "wireguard".
--  nodeEncryption: false
-+  nodeEncryption: <value:bool>
-   # -- Configure the Encryption Pod2Pod strict mode.
-   strictMode:
-     egress:

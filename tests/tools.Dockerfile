@@ -1,6 +1,8 @@
-# same userland as the nodes: GNU tar/gzip, the yq release pinned in node/cloud-init.yaml.tpl, Ubuntu 22.04 cloud-init schema
-FROM ubuntu:22.04
-ARG YQ_VERSION=v4.40.5
+# same userland as the nodes: Ubuntu 26.04 (uutils coreutils, GNU tar/gzip), its cloud-init schema, the yq release pinned in node/cloud-init.yaml.tpl
+# checkov:skip=CKV_DOCKER_2:runs one test script per docker run --rm, no service to health check
+# checkov:skip=CKV_DOCKER_3:root like the nodes, and it writes into host directories mounted by the tests
+FROM ubuntu:26.04
+ARG YQ_VERSION=v4.54.1
 RUN apt-get update -qq \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends cloud-init shellcheck wget ca-certificates \
   && rm -rf /var/lib/apt/lists/*

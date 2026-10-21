@@ -1,6 +1,6 @@
 resource "openstack_networking_network_v2" "net" {
   name                  = "${var.name}-net"
-  port_security_enabled = "true"
+  port_security_enabled = var.security_groups
 }
 
 resource "openstack_networking_subnet_v2" "servers" {
@@ -58,9 +58,13 @@ resource "openstack_networking_floatingip_v2" "floating_ip" {
   description = "FIP for ${var.name}-vip (used)"
 }
 
-resource "openstack_networking_floatingip_associate_v2" "fip" {
-  floating_ip = openstack_networking_floatingip_v2.floating_ip.address
-  port_id     = openstack_networking_port_v2.dummy.id
+# the association moved to the first server's module (node/network.tf): forgotten, not destroyed, which would detach
+# the floating IP from the VIP
+removed {
+  from = openstack_networking_floatingip_associate_v2.fip
+  lifecycle {
+    destroy = false
+  }
 }
 
 resource "openstack_networking_port_v2" "dummy" {
@@ -68,11 +72,14 @@ resource "openstack_networking_port_v2" "dummy" {
   # if associated directly to a server, it will steal the ip without being ready
   name               = "${var.name}-vip"
   network_id         = openstack_networking_network_v2.net.id
-  security_group_ids = [openstack_networking_secgroup_v2.server.id]
+  security_group_ids = var.security_groups ? [openstack_networking_secgroup_v2.server[0].id] : []
+  no_security_groups = var.security_groups ? null : true
   admin_state_up     = false
 
   fixed_ip {
-    subnet_id  = openstack_networking_subnet_v2.servers.id
+    # through the router interface: the floating IP the first server's node module associates with this port needs
+    # the subnet routed
+    subnet_id  = openstack_networking_router_interface_v2.servers.subnet_id
     ip_address = local.internal_vip
   }
 }
@@ -81,6 +88,7 @@ moved {
   from = openstack_networking_subnet_v2.lb
   to   = openstack_networking_subnet_v2.lb[0]
 }
+
 
 moved {
   from = openstack_networking_router_interface_v2.lb

@@ -16,17 +16,16 @@ ROOT = Path(__file__).resolve().parents[2]
 PATCHES_DIR = ROOT / "patches"
 RKE2_YAML = ROOT / "RKE2.yaml"
 SNAPSHOTS_DIR = Path(__file__).resolve().parent / "snapshots"
-YQ_VERSION = "4.40.5"
+YQ_VERSION = "4.54.1"
 
-# Stable render fixtures for patches/rke2-*.yaml.tpl; prod binds the same vars in main.tf (cilium ~L109, coredns ~L118). Every fixture value is a typed placeholder token (<value:int|string|bool>) so every value that appears in the snapshot diff is obviously a voluntary test value, never a real prod default.
+# Stable render fixtures for patches/rke2-*.yaml.tpl; prod binds the same vars in main.tf (local.cilium_values, the rke2-coredns.yaml manifest). Every fixture value is a typed placeholder token (<value:int|string|bool>) so every value that appears in the snapshot diff is obviously a voluntary test value, never a real prod default.
 PATCH_VARS = {
     "operator_replica": "<value:int>",
+    "agent_replica": "<value:int>",
     "cluster_name": "<value:string>",
     "cluster_id": "<value:int>",
-    "ff_with_kubeproxy": "<value:bool>",
-    "enable_encryption": "<value:bool>",
-    "encryption_type": "<value:string>",
-    "enable_node_encryption": "<value:bool>",
+    "kube_proxy": "<value:bool>",
+    "nodeport_cidr": "<value:string>",
 }
 
 
@@ -54,18 +53,17 @@ def yq_bin() -> str:
     found = shutil.which("yq")
     if found:
         return found
-    raise RuntimeError("yq not found; install mikefarah/yq v4.40.5 or set YQ_BIN")
+    raise RuntimeError("yq not found; install mikefarah/yq v4.54.1 or set YQ_BIN")
 
 
 # Concrete values for checks that render the chart (helm template validates names, ints and booleans).
 RENDER_VARS = {
     "operator_replica": 2,
+    "agent_replica": 2,
     "cluster_name": "fixture",
     "cluster_id": 1,
-    "ff_with_kubeproxy": False,
-    "enable_encryption": False,
-    "encryption_type": "wireguard",
-    "enable_node_encryption": False,
+    "kube_proxy": False,
+    "nodeport_cidr": "10.0.0.0/24",
 }
 
 

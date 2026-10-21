@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.3.3"
+  required_version = ">= 1.9"
 
   required_providers {
     null = {
@@ -9,6 +9,10 @@ terraform {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
       version = ">= 3"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = ">= 4"
     }
   }
 }

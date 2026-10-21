@@ -10,8 +10,10 @@ provisioner: cinder.csi.openstack.org
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 reclaimPolicy: ${reclaimPolicy}
+# availability nova unless a class says otherwise: "" leaves the zone to the pod's node, as zoned regions need
 parameters:
-  availability: nova
-  %{~ for k, v in parameters ~}
+  %{~ for k, v in merge({ availability = "nova" }, parameters) ~}
+  %{~ if v != "" ~}
   ${k}: ${v}
+  %{~ endif ~}
   %{~ endfor ~}

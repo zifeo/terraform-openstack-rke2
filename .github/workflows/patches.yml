@@ -11,36 +11,17 @@ jobs:
   patches:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install yq
-        run: |
-          wget -q https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64.tar.gz -O - | tar xz
-          sudo mv yq_linux_amd64 /usr/local/bin/yq
-          yq --version
-
-      - uses: azure/setup-helm@v4
-        with:
-          version: v3.19.5
+      # installs mise.lock, checksums verified
+      - uses: jdx/mise-action@v5.2.0
 
       - name: Run patch tests
-        env:
-          YQ_BIN: /usr/local/bin/yq
-        run: |
-          uv sync
-          uv run pytest -q tests/patches
+        run: uv run pytest -q tests/patches
 
       - name: Upload diff on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: snapshots-diff
           path: tests/patches/snapshots/

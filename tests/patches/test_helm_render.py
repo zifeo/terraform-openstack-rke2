@@ -25,10 +25,16 @@ EXPECTED = {
         ("DaemonSet", "cilium", _AGENT_ENV + ("name=KUBERNETES_SERVICE_PORT", "value"), "6443"),
         ("Deployment", "cilium-operator", ("spec", "replicas"), 2),
         ("Deployment", "cilium-operator", _POD + ("nodeSelector", "node-role.kubernetes.io/control-plane"), "true"),
+        ("PodDisruptionBudget", "cilium-operator", ("spec", "maxUnavailable"), 1),
     ],
     "rke2-coredns": [
         ("Deployment", "rke2-coredns-rke2-coredns", _POD + ("containers", 0, "resources", "limits", "memory"), "128Mi"),
         ("ConfigMap", "rke2-coredns-rke2-coredns-autoscaler", ("data", "linear"), None),
+        ("PodDisruptionBudget", "rke2-coredns-rke2-coredns", ("spec", "maxUnavailable"), 1),
+    ],
+    "rke2-metrics-server": [
+        ("Deployment", "rke2-metrics-server", ("spec", "replicas"), 2),
+        ("PodDisruptionBudget", "rke2-metrics-server", ("spec", "maxUnavailable"), 1),
     ],
 }
 

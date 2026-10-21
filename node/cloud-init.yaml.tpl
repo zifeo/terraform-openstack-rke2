@@ -1,4 +1,5 @@
 #cloud-config
+# rke2's secrets ${secrets_sha256}: pushed by tofu, read by rke2 when it starts, so a change replaces the node
 
 resize_rootfs: True
 growpart:
@@ -12,21 +13,35 @@ fs_setup:
     device: ${rke2_device}
 # no mounts as managed by systemd
 
+# the host key tofu pins before it pushes the node's secrets over SSH
+ssh_deletekeys: true
+# the one type tofu provides: cloud-init generates only those it lacks
+ssh_genkeytypes: [ed25519]
+ssh_keys:
+  ed25519_private: |
+    ${indent(4, host_key.private)}
+  ed25519_public: ${host_key.public}
+
+%{ if !image_prebuilt ~}
 package_update: true
 package_upgrade: true
 # GPU nodes always reboot manually after driver install; do not let cloud-init auto-reboot and race that path. Non-GPU nodes keep the usual behavior.
 package_reboot_if_required: ${!gpu.enabled}
+%{ endif ~}
+%{ if !image_prebuilt || gpu.enabled ~}
 packages:
+%{ endif ~}
+%{ if !image_prebuilt ~}
   - fail2ban
   - unattended-upgrades
   - apt-listchanges
-  - apt-transport-https
   - ncdu
   - htop
   - curl
   - logrotate
-  - nfs-client
+  - nfs-common
   - fio
+%{ endif ~}
 %{ if gpu.enabled && !gpu.driver.preinstalled }
   %{ if gpu.driver.version != null }
   - ${gpu.driver.package}=${gpu.driver.version}
@@ -65,6 +80,15 @@ bootcmd:
 %{ endif ~}
 
 write_files:
+%{ if !is_server ~}
+# Cinder CSI's node plugin reads it from the node (hostMount); a server's, with the controller's credentials, comes
+# from tofu over SSH
+- path: /etc/config/cloud.conf
+  permissions: "0644"
+  owner: root:root
+  content: |
+    ${indent(4, cinder_node)}
+%{ endif ~}
 - path: /etc/logrotate.conf
   append: true
   permissions: "0644"
@@ -112,6 +136,12 @@ write_files:
     # on reboot nothing orders rke2 after mnt.mount: without this rke2 may write to the root disk, later hidden by the mount
     [Unit]
     RequiresMountsFor=/var/lib/rancher/rke2 /var/lib/kubelet
+- path: /etc/systemd/system/rke2-${is_server ? "server" : "agent"}.service.d/metadata-guard.conf
+  content: |
+    # on reboot too: no pod runs before the guard, nor without it should its rules fail to load
+    [Unit]
+    Requires=rke2-metadata-guard.service
+    After=rke2-metadata-guard.service
 - path: /usr/local/bin/install-or-upgrade-rke2.sh
   permissions: "0755"
   owner: root:root
@@ -120,14 +150,59 @@ write_files:
     export INSTALL_RKE2_VERSION=${rke2_version}
     which rke2 >/dev/null 2>&1 && RKE2_VERSION=$(rke2 --version | head -1 | cut -f 3 -d " ")
     if ([ -z "$RKE2_VERSION" ]) || ([ -n "$INSTALL_RKE2_VERSION" ] && [ "$INSTALL_RKE2_VERSION" != "$RKE2_VERSION" ]); then
-      curl -sfL https://get.rke2.io -o /tmp/rke2-install.sh && sh /tmp/rke2-install.sh || { echo "Failed to download or install rke2"; exit 1; }
+      # the installer of the release it installs, not get.rke2.io's, which follows rke2's main branch. Its own curl has no
+      # timeout: a stalled download would hold the node for good, so the release is fetched here, a transfer under
+      # 1 KB/s for 60 s retried, and the installer checks it against the release's sha256sum
+      arch=$(dpkg --print-architecture)
+      release=https://github.com/rancher/rke2/releases/download/${replace(rke2_version, "+", "%2B")}
+      fetch() { curl -fsSL --retry 5 --retry-all-errors --connect-timeout 10 --speed-limit 1024 --speed-time 60 -o "$1" "$2"; }
+      mkdir -p /tmp/rke2-artifacts &&
+        fetch /tmp/rke2-install.sh "https://raw.githubusercontent.com/rancher/rke2/${replace(rke2_version, "+", "%2B")}/install.sh" &&
+        fetch "/tmp/rke2-artifacts/sha256sum-$arch.txt" "$release/sha256sum-$arch.txt" &&
+        fetch "/tmp/rke2-artifacts/rke2.linux-$arch.tar.gz" "$release/rke2.linux-$arch.tar.gz" &&
+        INSTALL_RKE2_ARTIFACT_PATH=/tmp/rke2-artifacts sh /tmp/rke2-install.sh || { echo "Failed to download or install rke2"; exit 1; }
     fi
+# rke2 turns graceful node shutdown off: without it, a server's kube-apiserver holds every reboot for the time systemd
+# gives a container to stop. Installed into kubelet.conf.d, on the rke2 volume, once it is mounted.
+- path: /opt/rke2/kubelet/50-graceful-shutdown.conf
+  permissions: "0600"
+  owner: root:root
+  content: |
+%{ if kubelet_config == null ~}
+    apiVersion: kubelet.config.k8s.io/v1beta1
+    kind: KubeletConfiguration
+    shutdownGracePeriod: 30s
+    shutdownGracePeriodCriticalPods: 10s
+%{ else ~}
+    ${indent(4, kubelet_config)}
+%{ endif ~}
+%{ if length(runtime_classes) > 0 ~}
+# handlers of the pool's RuntimeClasses, whose runtimes come with the image; rke2 imports config-v3.toml.d into the
+# containerd config it generates on every start. Installed on the rke2 volume once it is mounted.
+- path: /opt/rke2/containerd/runtime-classes.toml
+  permissions: "0600"
+  owner: root:root
+  content: |
+    version = 3
+%{ for rc in runtime_classes ~}
+
+    [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.${rc.handler}]
+      runtime_type = ${jsonencode(rc.runtime_type)}
+%{ if length(rc.options) > 0 ~}
+
+    [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.${rc.handler}.options]
+%{ for k, v in rc.options ~}
+      ${k} = ${jsonencode(v)}
+%{ endfor ~}
+%{ endif ~}
+%{ endfor ~}
+%{ endif ~}
 - path: /usr/local/bin/cloud-init-wait.sh
   permissions: "0755"
   owner: root:root
   content: |
     #!/bin/bash
-    # max=0 waits forever: rke2 readiness depends on cluster state (restore, joins), not on a fixed delay
+    # sleep, then attempts: tofu gives up on a node after 10 minutes, cloud-init then says what it waited for
     wait_for() {
       _wf_desc="$1"; _wf_test="$2"; _wf_sleep="$3"; _wf_max="$4"; _wf_n=0
       until eval "$_wf_test"; do
@@ -155,6 +230,25 @@ write_files:
     }
     _data_charts_ready() { _dcr=$(_rke2_data_dir) && _charts_ready "$_dcr/charts"; }
 %{ if is_server ~}
+# rke2 starts only once etcd's and kube-apiserver's pod sandboxes are its manifests', polling every 20 s and removing
+# any other it finds (pkg/executor/staticpod/spw.go): those of the previous boot cost a server 40 to 60 s per reboot.
+# Ordered after rke2, it stops before it, once the kubelet's graceful shutdown stopped the pods and while containerd runs
+- path: /etc/systemd/system/rke2-static-pods-cleanup.service
+  permissions: "0644"
+  owner: root:root
+  content: |
+    [Unit]
+    Description=Removes etcd's and kube-apiserver's pod sandboxes at shutdown
+    After=rke2-server.service
+
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    ExecStart=/bin/true
+    ExecStop=/bin/sh -c 'c="/var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"; for p in $($c pods -q --label component=etcd) $($c pods -q --label component=kube-apiserver); do $c stopp "$p" && $c rmp "$p"; done'
+
+    [Install]
+    WantedBy=multi-user.target
   %{~ for k, v in manifests_files ~}
 - path: /opt/rke2/manifests/${k}
   permissions: "0600"
@@ -172,13 +266,14 @@ write_files:
   owner: root:root
   encoding: gz+b64
   content: ${customize_charts_script}
-- path: /etc/modules-load.d/ipvs.conf
-  permissions: "0644"
-  owner: root:root
+- path: /etc/modules-load.d/kube-vip.conf
   content: |
-    # loads kernel modules for kube-vip
     ip_vs
     ip_vs_rr
+- path: /etc/sysctl.d/90-kube-vip.conf
+  content: |
+    # set before kube-vip starts, as it cannot write /proc/sys: its masquerade needs it. Forwarding, rke2 turns on
+    net.ipv4.vs.conntrack = 1
 - path: /opt/rke2/kube-vip.yaml
   permissions: "0600"
   owner: root:root
@@ -189,9 +284,13 @@ write_files:
       name: kube-vip
       namespace: kube-system
     spec:
+      # as rke2's control plane pods: at priority 0, the scheduler preempts its mirror pod for any critical pod short of
+      # memory, the kubelet recreates it at once and rejects that pod, over and over
+      priorityClassName: system-cluster-critical
       containers:
       - name: kube-vip
-        image: ghcr.io/kube-vip/kube-vip:v1.2.4
+        # the iptables variant: masquerade adds its rule with the iptables binary, which the plain image lacks
+        image: ghcr.io/kube-vip/kube-vip-iptables:v1.3.0@sha256:23477ad40d2c411236eac50088cd92fe9f289ae01433da18f695da3282d00ff1
         imagePullPolicy: IfNotPresent
         args:
         - manager
@@ -222,12 +321,19 @@ write_files:
           value: "1"
         - name: enable_node_labeling
           value: "true"
+        # IPVS spreads the VIP's API connections over every server. lb_fwdmethod local sent them all to the holder's
+        # own kube-apiserver; masquerade forwards them, with conntrack following them (90-kube-vip.conf), else UFW
+        # drops the client's FIN as invalid and a client reusing the port meets the stale IPVS entry
         - name: lb_enable
           value: "true"
         - name: lb_port
           value: "6443"
         - name: lb_fwdmethod
-          value: local
+          value: masquerade
+        # its default nftables path makes the nat table's POSTROUTING a filter chain, adds no masquerade there and
+        # leaves no room for Cilium's
+        - name: egress_withnftables
+          value: "false"
         - name: address
           value: "${internal_vip}"
         - name: prometheus_server
@@ -259,12 +365,54 @@ write_files:
         hostPath:
           path: /etc/rancher/rke2/rke2.yaml
           type: File
+%{ if is_first ~}
+# the first server starting the cluster alone holds the VIP, as no server answers on it yet: the floating IP, on the
+# VIP from the start, reaches it for tofu's secrets push. Released before rke2 starts kube-vip, which takes it over
+- path: /usr/local/bin/rke2-vip-claim
+  permissions: "0755"
+  owner: root:root
+  content: |
+    #!/bin/bash
+    set -euo pipefail
+    vip=${internal_vip}
+    dev=$(ip -o -4 addr show | awk -v ip=${node_ip} '{ split($4, a, "/") } a[1] == ip { print $2; exit }')
+    [ -n "$dev" ] || { echo "rke2-vip-claim: no interface holds ${node_ip}" >&2; exit 1; }
+    case "$1" in
+      claim)
+        # only a server that starts the cluster alone, as its instance metadata says on the config drive (bootstrap, or
+        # a single server): a first server replaced later joins a cluster whose kube-vip holds the VIP
+        bootstrap=$(cloud-init query ds.meta_data.meta.rke2_bootstrap) || {
+          echo "rke2-vip-claim: no rke2_bootstrap in the instance metadata" >&2
+          exit 1
+        }
+        case "$bootstrap" in
+          true) ;;
+          false) echo "rke2-vip-claim: this server joins a cluster, whose kube-vip holds $vip"; exit 0 ;;
+          *) echo "rke2-vip-claim: rke2_bootstrap is $bootstrap" >&2; exit 1 ;;
+        esac
+        # a connection makes the kernel ask who has the VIP: a server holding it answers, whatever its firewall
+        timeout 5 bash -c "exec 3<>/dev/tcp/$vip/9345" 2>/dev/null || true
+        if ip -4 neigh show "$vip" dev "$dev" | grep -q lladdr; then
+          echo "rke2-vip-claim: a server holds $vip already"
+          exit 0
+        fi
+        ip -4 addr add "$vip/32" dev "$dev"
+        touch /run/rke2-vip-claimed
+        echo "rke2-vip-claim: $vip held until rke2 starts"
+        ;;
+      release)
+        [ -e /run/rke2-vip-claimed ] || exit 0
+        ip -4 addr del "$vip/32" dev "$dev"
+        rm /run/rke2-vip-claimed
+        ;;
+      *) echo "usage: rke2-vip-claim claim|release" >&2; exit 2 ;;
+    esac
+%{ endif ~}
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
   owner: root:root
   content: |
-    token: "${rke2_token}"
-    %{~ if !bootstrap ~}
+    %{~ if !is_first ~}
     server: "https://${internal_vip}:9345"
     %{~ endif ~}
     node-ip: "${node_ip}"
@@ -276,23 +424,24 @@ write_files:
     tls-san:
       ${ indent(6, yamlencode(san)) }
     kube-apiserver-arg: "kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname"
-    %{~ if s3.endpoint != "" ~}
+    %{~ if s3 != null ~}
     etcd-s3: true
     etcd-s3-endpoint: "${s3.endpoint}"
-    etcd-s3-access-key: "${s3.access_key}"
-    etcd-s3-secret-key: "${s3.access_secret}"
     etcd-s3-bucket: "${s3.bucket}"
     %{~ if s3.region != null ~}
     etcd-s3-region: "${s3.region}"
     %{~ endif ~}
-      %{~ if backup_schedule != null ~}
-    etcd-snapshot-schedule-cron: "${backup_schedule}"
-      %{~ endif ~}
-      %{~ if backup_retention != null ~}
-    etcd-snapshot-retention: "${backup_retention}"
-      %{~ endif ~}
-    etcd-snapshot-compress: true
+    %{~ if s3.retention != null ~}
+    etcd-s3-retention: ${s3.retention}
     %{~ endif ~}
+    %{~ endif ~}
+    %{~ if backup_schedule != null ~}
+    etcd-snapshot-schedule-cron: "${backup_schedule}"
+    %{~ endif ~}
+    %{~ if backup_retention != null ~}
+    etcd-snapshot-retention: "${backup_retention}"
+    %{~ endif ~}
+    etcd-snapshot-compress: true
     %{~ if control_plane_requests != "" ~}
     control-plane-resource-requests: "${control_plane_requests}"
     %{~ endif ~}
@@ -300,14 +449,22 @@ write_files:
     control-plane-resource-limits: "${control_plane_limits}"
     %{~ endif ~}
     disable-cloud-controller: true
-    disable-kube-proxy: ${ff_with_kubeproxy ? "false" : "true"}
+    disable-kube-proxy: ${kube_proxy ? "false" : "true"}
+    # disable alone keeps rke2-traefik-crd and its Traefik CRDs
+    ingress-controller: none
     disable:
       - rke2-ingress-nginx
       - rke2-traefik
+      - rke2-security-responder
+      # its RuntimeClasses name runtimes whether the nodes have them (crun, nvidia-experimental): the module deploys
+      # those its pools run
+      - rke2-runtimeclasses
+      %{~ if !ff_gateway_api_crd ~}
       # Gateway API CRDs belong to the gateway implementation installed outside rke2,
       # otherwise an rke2 upgrade can move them ahead of what that implementation reads
       - rke2-gateway-api-crd
-    cni: "${cni}"
+      %{~ endif ~}
+    cni: cilium
     node-taint:
       - "node-role.kubernetes.io/control-plane:NoSchedule"
     %{~ for t in node_taints ~}
@@ -326,7 +483,6 @@ write_files:
   permissions: "0600"
   owner: root:root
   content: |
-    token: "${rke2_token}"
     server: https://${internal_vip}:9345
     node-ip: "${node_ip}"
     cloud-provider-name: external
@@ -345,13 +501,6 @@ write_files:
     %{~ if rke2_conf != "" ~}
     ${ indent(4, rke2_conf) }
     %{~ endif ~}
-%{~ endif ~}
-%{~ if registries != null ~}
-- path: /etc/rancher/rke2/registries.yaml
-  permissions: "0600"
-  owner: root:root
-  content: |
-    ${ indent(4, yamlencode(registries)) }
 %{~ endif ~}
 %{~ if gpu.enabled ~}
 - path: /usr/local/bin/setup-gpu.sh
@@ -437,8 +586,71 @@ write_files:
     Requires=gpu-setup.service
 
 %{ endif }
+# the one key tofu pins: a package upgrade adds RSA and ECDSA keys, which clients preferring them would be shown instead.
+# sshd reads it on every connection, ssh.socket starting one per connection
+- path: /etc/ssh/sshd_config.d/10-rke2-host-key.conf
+  content: |
+    HostKey /etc/ssh/ssh_host_ed25519_key
+%{ if kube_proxy ~}
+# node ports on the agents' addresses only, as Cilium's (patches/rke2-cilium.yaml.tpl): kube-proxy's DNAT comes before
+# UFW, which then forwards them
+- path: /etc/rancher/rke2/config.yaml.d/60-kube-proxy-nodeports.yaml
+  permissions: "0600"
+  owner: root:root
+  content: |
+    kube-proxy-arg+:
+      - "nodeport-addresses=${nodeport_cidr}"
+%{ endif ~}
+- path: /etc/rke2-metadata-guard.nft
+  content: |
+    # pods' packets enter the node through their veth: under the Cilium policy, whatever runs in the cluster.
+    # Host-network pods' leave through output, as the node's own: nothing on the node reads it either, cloud-init and
+    # the Cinder node plugin taking the config drive, the cloud controller never asking. Before any DNAT, so that a
+    # test redirecting the metadata sees the same drop.
+    table inet rke2_metadata_guard
+    flush table inet rke2_metadata_guard
+    table inet rke2_metadata_guard {
+      chain prerouting {
+        type filter hook prerouting priority -300; policy accept;
+        ip daddr 169.254.169.254 counter drop
+        ip6 daddr fe80::a9fe:a9fe counter drop
+      }
+      chain output {
+        type filter hook output priority -300; policy accept;
+        ip daddr 169.254.169.254 counter drop
+        ip6 daddr fe80::a9fe:a9fe counter drop
+      }
+    }
+- path: /etc/systemd/system/rke2-metadata-guard.service
+  content: |
+    [Unit]
+    Description=Keeps pods off the instance metadata, which serves the node's user_data
+    Before=rke2-server.service rke2-agent.service
 
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    ExecStart=/usr/sbin/nft -f /etc/rke2-metadata-guard.nft
+
+    [Install]
+    WantedBy=multi-user.target
+- path: /usr/local/bin/rke2-node-config
+  permissions: "0755"
+  content: |
+    ${indent(4, node_config_script)}
+- path: /etc/systemd/system/rke2-node-config.service
+  content: |
+    [Unit]
+    Description=SSH keys and firewall of the node, from what tofu pushes
+
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/bin/python3 /usr/local/bin/rke2-node-config ${system_user}
 runcmd:
+  %{~ if is_first ~}
+  # first, as tofu waits for this server on the VIP to push its secrets
+  - /usr/local/bin/rke2-vip-claim claim || exit 1
+  %{~ endif ~}
   - mkdir -p /mnt /var/lib/rancher/rke2 /var/lib/kubelet /etc/rancher/rke2/config.yaml.d
   - |
     # Kubelet must create Node.spec.providerID so OCCM LB SG reconcile never sees an empty ID.
@@ -448,43 +660,72 @@ runcmd:
   - systemctl enable mnt.mount var-lib-rancher-rke2.mount var-lib-kubelet.mount
   - systemctl start mnt.mount var-lib-rancher-rke2.mount var-lib-kubelet.mount
   - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2 data mounts" "mountpoint -q /mnt && mountpoint -q /var/lib/rancher/rke2 && mountpoint -q /var/lib/kubelet" 5 30' || exit 1
-  %{~ for key in authorized_keys ~}
-  - grep -qxF "${key}" /home/${system_user}/.ssh/authorized_keys || echo "${key}" >> /home/${system_user}/.ssh/authorized_keys
-  %{~ endfor ~}
+  - install -D -m 0600 /opt/rke2/kubelet/50-graceful-shutdown.conf /var/lib/rancher/rke2/agent/etc/kubelet.conf.d/50-graceful-shutdown.conf || exit 1
+  # before rke2 listens: a node that cannot read its keys and firewall does not start
+  - systemctl daemon-reload
+  - systemctl enable --now rke2-metadata-guard.service || exit 1
+  # NFSv4 mounts, ReadWriteMany volumes' included, need no portmapper: only NFSv3 asks rpcbind, listening on 0.0.0.0:111
+  - systemctl mask --now rpcbind.socket rpcbind.service || exit 1
+%{ if length(runtime_classes) > 0 ~}
+  - install -D -m 0600 /opt/rke2/containerd/runtime-classes.toml /var/lib/rancher/rke2/agent/etc/containerd/config-v3.toml.d/runtime-classes.toml || exit 1
+%{ endif ~}
   - /usr/local/bin/install-or-upgrade-rke2.sh || exit 1
   - systemctl daemon-reload
   - grep -qxF 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' /home/${system_user}/.bashrc || echo 'alias crictl="sudo /var/lib/rancher/rke2/bin/crictl -r unix:///run/k3s/containerd/containerd.sock"' >> /home/${system_user}/.bashrc
   - grep -qxF 'alias ctr="sudo /var/lib/rancher/rke2/bin/ctr --address /run/k3s/containerd/containerd.sock --namespace k8s.io"' /home/${system_user}/.bashrc || echo 'alias ctr="sudo /var/lib/rancher/rke2/bin/ctr --address /run/k3s/containerd/containerd.sock --namespace k8s.io"' >> /home/${system_user}/.bashrc
   %{~ if is_server ~}
-  - systemctl restart systemd-modules-load.service # ensure ipvs is loaded
   - grep -qxF 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' /home/${system_user}/.bashrc || echo 'alias kubectl="sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"' >> /home/${system_user}/.bashrc
-  - if ! systemctl is-active -q rke2-server.service; then rm -rf /var/lib/rancher/rke2/server/manifests; fi # clear stale manifests only on a fresh/inactive node
+  - systemctl enable --now rke2-static-pods-cleanup.service || exit 1
+  # kube-vip's IPVS modules, then the sysctls they bring
+  - systemctl restart systemd-modules-load.service || exit 1
+  - systemctl restart systemd-sysctl.service || exit 1
+  # a persisted volume holds the previous instance's manifests, its kube-vip among them
+  - rm -rf /var/lib/rancher/rke2/server/manifests && rm -f /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yaml
   - >
-    YQ_SHA256="bccbf5ce1717ea5cec9662446b8bfa5863747ffb0a49a32e4c8dd23ada5c26fa";
-    for i in $(seq 1 10); do
-      wget -T 30 https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64.tar.gz -O /tmp/yq_linux_amd64.tar.gz && echo "$YQ_SHA256  /tmp/yq_linux_amd64.tar.gz" | sha256sum -c - && tar xzf /tmp/yq_linux_amd64.tar.gz -C /tmp && mv /tmp/yq_linux_amd64 /usr/bin/yq && break;
+    YQ_VERSION=v4.54.1; YQ_ARCH=$(dpkg --print-architecture);
+    case "$YQ_ARCH" in
+      amd64) YQ_SHA256=e68a456f90c577af3fe4960184b3a3cf5c461e0348407c10f107da3a5fec8972 ;;
+      arm64) YQ_SHA256=8c27f6e7476fb5acefb9352e3d30f6bc2dc93f1956eb92e8da727173fb7ec6d3 ;;
+      *) echo "ERROR: no yq checksum for $YQ_ARCH"; exit 1 ;;
+    esac;
+    yq --version 2>/dev/null | grep -qF "version $YQ_VERSION" || for i in $(seq 1 10); do
+      wget -T 30 https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_linux_$YQ_ARCH.tar.gz -O /tmp/yq.tar.gz && echo "$YQ_SHA256  /tmp/yq.tar.gz" | sha256sum -c - && tar xzf /tmp/yq.tar.gz -C /tmp && mv /tmp/yq_linux_$YQ_ARCH /usr/bin/yq && break;
       sleep 5;
     done;
-    rm -f /tmp/yq_linux_amd64.tar.gz;
-    command -v yq >/dev/null || { echo "ERROR: yq install/checksum failed"; exit 1; };
+    rm -f /tmp/yq.tar.gz;
+    yq --version 2>/dev/null | grep -qF "version $YQ_VERSION" || { echo "ERROR: yq $YQ_VERSION install/checksum failed"; exit 1; };
+  # tokens and keys come over SSH from tofu, never through user_data: a server without its token would start a
+  # cluster of its own
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "secrets from tofu" "[ -s /etc/rancher/rke2/config.yaml.d/50-secrets.yaml ]" 5 360' || exit 1
+  # the firewall and SSH keys came first, applied before rke2 starts
+  - systemctl start rke2-node-config.service || exit 1
   - systemctl enable rke2-server.service
   - systemctl start rke2-server.service
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "static pod manifests dir" "[ -d /var/lib/rancher/rke2/agent/pod-manifests/ ]" 1 0' || exit 1
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "static pod manifests dir" "[ -d /var/lib/rancher/rke2/agent/pod-manifests/ ]" 1 300' || exit 1
+  %{~ if is_first ~}
+  # held while rke2 starts, the others joining through it; released before kube-vip, which takes it over, so that no
+  # two hold it
+  - /usr/local/bin/rke2-vip-claim release || exit 1
+  %{~ endif ~}
   - mv -v /opt/rke2/kube-vip.yaml /var/lib/rancher/rke2/agent/pod-manifests/kube-vip.yaml || exit 1
   - ls /var/lib/rancher/rke2/agent/pod-manifests
   # rke2 recopies data/<digest>/charts into server/manifests on every start: patch the source too
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2 data charts" _data_charts_ready 1 0 && /usr/local/bin/customize-charts.sh "$(_rke2_data_dir)/charts"' || exit 1
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "chart manifests" "_charts_ready /var/lib/rancher/rke2/server/manifests" 1 0' || exit 1
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2 data charts" _data_charts_ready 1 300 && /usr/local/bin/customize-charts.sh "$(_rke2_data_dir)/charts"' || exit 1
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "chart manifests" "_charts_ready /var/lib/rancher/rke2/server/manifests" 1 300' || exit 1
   - /usr/local/bin/customize-charts.sh /var/lib/rancher/rke2/server/manifests || exit 1
   - >
     for f in /opt/rke2/manifests/*.yaml; do [ -e "$f" ] || continue; mv -v -t /var/lib/rancher/rke2/server/manifests "$f" || exit 1; done;
   - ls /var/lib/rancher/rke2/server/manifests
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active" "systemctl is-active -q rke2-server.service" 3 0' || exit 1
-  %{~ if bootstrap ~}
-  - systemctl restart rke2-server.service # force deploy controller to re-read patched server/manifests (bootstrap only)
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active after restart" "systemctl is-active -q rke2-server.service" 3 0' || exit 1
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active" "systemctl is-active -q rke2-server.service" 3 200' || exit 1
+  %{~ if is_first ~}
+  - systemctl restart rke2-server.service # force deploy controller to re-read patched server/manifests
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-server active after restart" "systemctl is-active -q rke2-server.service" 3 200' || exit 1
   %{~ endif ~}
   %{~ else ~}
+  # the token comes over SSH from tofu, never through user_data
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "secrets from tofu" "[ -s /etc/rancher/rke2/config.yaml.d/50-secrets.yaml ]" 5 360' || exit 1
+  # the firewall and SSH keys came first, applied before rke2 starts
+  - systemctl start rke2-node-config.service || exit 1
   - |
 %{ if gpu.enabled }
     systemctl daemon-reload
@@ -509,5 +750,5 @@ runcmd:
 %{ endif }
     systemctl enable rke2-agent.service
     systemctl start rke2-agent.service
-  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-agent active" "systemctl is-active -q rke2-agent.service" 5 0' || exit 1
+  - bash -c 'source /usr/local/bin/cloud-init-wait.sh && wait_for "rke2-agent active" "systemctl is-active -q rke2-agent.service" 5 120' || exit 1
   %{~ endif ~}

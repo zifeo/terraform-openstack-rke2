@@ -1,3 +1,10 @@
+locals {
+  host_keys = [for i in range(var.nodes_count) : var.host_key != null ? var.host_key : {
+    private = tls_private_key.host[i].private_key_openssh
+    public  = trimspace(tls_private_key.host[i].public_key_openssh)
+  }]
+}
+
 data "openstack_images_image_v2" "image" {
   name        = var.image_name
   most_recent = true
@@ -14,20 +21,50 @@ resource "openstack_blockstorage_volume_v3" "volume" {
 resource "openstack_networking_port_v2" "port" {
   count = var.nodes_count
 
-  name               = "${var.name}-${count.index + 1}"
-  network_id         = var.network_id
-  security_group_ids = [var.secgroup_id]
+  name                  = "${var.name}-${count.index + 1}"
+  network_id            = var.network_id
+  security_group_ids    = var.secgroup_id == null ? [] : [var.secgroup_id]
+  no_security_groups    = var.secgroup_id == null ? true : null
+  port_security_enabled = var.secgroup_id == null ? false : null
 
   fixed_ip {
     subnet_id = var.subnet_id
   }
 
+  # without port security nothing filters the VIP, and Neutron refuses address pairs
   dynamic "allowed_address_pairs" {
-    for_each = var.is_server ? [var.internal_vip] : []
+    for_each = var.is_server && var.secgroup_id != null ? [var.internal_vip] : []
     content {
       ip_address = allowed_address_pairs.value
     }
   }
+}
+
+module "metadata" {
+  source = "./metadata"
+  count  = var.nodes_count
+
+  rke2_version        = var.rke2_version
+  role                = var.is_server ? "server" : "agent"
+  bootstrap           = var.bootstrap && var.is_first && count.index == 0
+  ssh_authorized_keys = var.ssh_authorized_keys
+  firewall            = var.firewall
+}
+
+# agents' own host keys: servers share theirs (var.host_key)
+resource "tls_private_key" "host" {
+  count     = var.host_key == null ? var.nodes_count : 0
+  algorithm = "ED25519"
+}
+
+module "secrets" {
+  source = "./secrets"
+
+  token              = var.rke2_token
+  agent_token        = var.rke2_agent_token
+  s3                 = var.s3 == null ? null : { access_key = var.s3.access_key, access_secret = var.s3.access_secret }
+  cinder_credentials = var.cinder_credentials
+  registries         = var.registries
 }
 
 resource "openstack_compute_instance_v2" "instance" {
@@ -38,6 +75,9 @@ resource "openstack_compute_instance_v2" "instance" {
   flavor_name  = var.flavor_name
   key_pair     = var.keypair_name
   config_drive = true
+  # Nova deletes an instance at once otherwise: stopped first, its kubelet's graceful shutdown and
+  # rke2-static-pods-cleanup run before it goes
+  stop_before_destroy = true
 
   network {
     port = openstack_networking_port_v2.port[count.index].id
@@ -47,10 +87,7 @@ resource "openstack_compute_instance_v2" "instance" {
     group = var.group_id
   }
 
-  metadata = {
-    rke2_version = var.rke2_version
-    rke2_role    = var.is_server ? "server" : "agent"
-  }
+  metadata = module.metadata[count.index].metadata
 
   block_device {
     uuid                  = var.image_uuid != null ? var.image_uuid : data.openstack_images_image_v2.image.id
@@ -76,21 +113,24 @@ resource "openstack_compute_instance_v2" "instance" {
     # potential solution: https://github.com/hashicorp/terraform/issues/31707
   }
 
-  # yamlencode(yamldecode to debug yaml
   user_data = base64encode(templatefile("${path.module}/cloud-init.yaml.tpl", {
-    rke2_token   = var.rke2_token
-    rke2_version = var.rke2_version
-    rke2_conf    = var.rke2_config != null ? var.rke2_config : ""
-    rke2_device  = var.rke2_volume_device
-    is_server    = var.is_server
-    is_first     = var.is_first && count.index == 0
-    bootstrap    = var.bootstrap && var.is_first && count.index == 0
-    internal_vip = var.internal_vip
-    node_ip      = openstack_networking_port_v2.port[count.index].all_fixed_ips[0]
-    cluster_cidr = var.cluster_cidr
-    service_cidr = var.service_cidr
-    cni          = var.cni
-    san          = var.is_server ? var.san : []
+    # a prebuilt image already has the packages and their upgrades
+    image_prebuilt     = var.image_prebuilt
+    node_config_script = file("${path.module}/rke2-node-config.py")
+    kubelet_config     = var.kubelet_config
+    host_key           = local.host_keys[count.index]
+    rke2_version       = var.rke2_version
+    rke2_conf          = var.rke2_config != null ? var.rke2_config : ""
+    rke2_device        = var.rke2_volume_device
+    is_server          = var.is_server
+    secrets_sha256     = nonsensitive(sha256(join("", [module.secrets.token, module.secrets.config, module.secrets.registries, module.secrets.cinder != null ? module.secrets.cinder : ""])))
+    cinder_node        = module.secrets.cinder_node
+    is_first           = var.is_first && count.index == 0
+    internal_vip       = var.internal_vip
+    node_ip            = openstack_networking_port_v2.port[count.index].all_fixed_ips[0]
+    cluster_cidr       = var.cluster_cidr
+    service_cidr       = var.service_cidr
+    san                = var.is_server ? var.san : []
     manifests_files = var.is_server ? merge(
       var.manifests_folder != "" ? {
         for f in fileset(var.manifests_folder, "*.{yml,yaml}") : f => base64gzip(file("${var.manifests_folder}/${f}"))
@@ -127,20 +167,13 @@ resource "openstack_compute_instance_v2" "instance" {
     system_user             = var.system_user
     customize_chart_script  = base64gzip(file("${path.module}/customize-chart.sh"))
     customize_charts_script = base64gzip(file("${path.module}/customize-charts.sh"))
-    authorized_keys         = var.ssh_authorized_keys
-    ff_wait_apiserver       = false
-    ff_with_kubeproxy       = var.ff_with_kubeproxy
+    kube_proxy              = var.kube_proxy
+    nodeport_cidr           = var.nodeport_cidr
     node_taints             = [for t in var.node_taints : "${t.key}${t.value != null ? "=${t.value}" : ""}:${t.effect}"]
     node_labels             = var.node_labels
-    registries              = var.registries
     gpu                     = var.gpu
+    runtime_classes         = values(var.runtime_classes)
+    ff_gateway_api_crd      = var.ff_gateway_api_crd
   }))
 }
 
-/*
-resource "local_file" "debug" {
-  count    = var.nodes_count
-  filename = "${path.module}/${var.name}-${count.index + 1}.yaml"
-  content = ""
-}
-*/

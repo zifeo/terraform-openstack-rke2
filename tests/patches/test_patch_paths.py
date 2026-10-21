@@ -9,6 +9,8 @@ INTENTIONAL_ADDITIONS = {
     "rke2-cilium": {
         # nodeSelector is a free-form label map; upstream only ships kubernetes.io/os
         "operator.nodeSelector.node-role.kubernetes.io/control-plane",
+        # commented out upstream (# hostNamespaceOnly: false), read by templates/cilium-configmap.yaml
+        "socketLB.hostNamespaceOnly",
     },
 }
 
