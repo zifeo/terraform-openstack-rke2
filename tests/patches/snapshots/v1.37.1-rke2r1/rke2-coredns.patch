@@ -15,7 +15,7 @@
  autoscaler:
    # Enabled the cluster-proportional-autoscaler
    enabled: true
-@@ -13,7 +13,7 @@
+@@ -13,13 +13,13 @@
    # Number of nodes in the cluster per coredns replica
    nodesPerReplica: 16
    # Min size of replicaCount
@@ -24,3 +24,30 @@
    # Max size of replicaCount (default of 0 is no max)
    max: 0
    # Whether to include unschedulable nodes in the nodes/cores calculations - this requires version 1.8.0+ of the autoscaler
+   includeUnschedulableNodes: false
+-  # If true does not allow single points of failure to form
+-  preventSinglePointFailure: true
++  # its two replicas from two nodes on would leave one Pending on a single agent: min decides
++  preventSinglePointFailure: false
+   # Annotations for the coredns proportional autoscaler pods
+   podAnnotations: {}
+   # When true, top-level customLabels are also applied to the autoscaler Deployment/pods.
+@@ -94,14 +94,9 @@
+   # - name: some-container-name
+   #   image: some-image:latest
+   #   imagePullPolicy: Always
+-tolerations:
+-  - key: "node-role.kubernetes.io/control-plane"
+-    operator: "Exists"
+-    effect: "NoSchedule"
+-  - key: "node-role.kubernetes.io/etcd"
+-    operator: "Exists"
+-    effect: "NoExecute"
++tolerations: []
+ rollingUpdate:
+   maxUnavailable: 1
+-  maxSurge: 25%
+-podDisruptionBudget: {}
++  maxSurge: 0
++podDisruptionBudget:
++  maxUnavailable: 1

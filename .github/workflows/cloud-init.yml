@@ -11,26 +11,16 @@ jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: opentofu/setup-opentofu@v1
-        with:
-          tofu_version: 1.9.1
-          tofu_wrapper: false
+      # installs mise.lock, checksums verified
+      - uses: jdx/mise-action@v5.2.0
 
       - name: Render cloud-init and reject invalid YAML
         working-directory: tests/cloud-init
-        run: tofu test
-
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+        run: |
+          tofu init -backend=false -input=false
+          tofu test
 
       - name: Manifests, cross-server identity, cloud-init schema, shellcheck, versions
-        run: |
-          uv sync
-          uv run pytest -q tests/static
+        run: uv run pytest -q tests/static

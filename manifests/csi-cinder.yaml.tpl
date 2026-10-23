@@ -7,9 +7,11 @@ spec:
   chart: openstack-cinder-csi
   repo: https://kubernetes.github.io/cloud-provider-openstack
   # https://artifacthub.io/packages/helm/cloud-provider-openstack/openstack-cinder-csi
-  version: 2.36.0
+  version: 2.37.1
   targetNamespace: kube-system
   bootstrap: true
+  failurePolicy: retry
+  forceConflicts: true
   valuesContent: |-
     csi:
       attacher:
@@ -73,22 +75,11 @@ spec:
             memory: 128Mi
           limits:
             memory: 256Mi
+    # the node's /etc/config/cloud.conf: the credentials on the servers only, where the controller runs. The chart
+    # gives both plugins the same Secret, which would put them on every agent
     secret:
-      enabled: true
-      create: true
-      name: cinder-csi-cloud-config
-      data:
-        cloud.conf: |-
-          [Global]
-          auth-url = ${auth_url}
-          application-credential-name = ${app_name}
-          application-credential-id = ${app_id}
-          application-credential-secret = ${app_secret}
-          region = ${region}
-          tenant-id = ${project_id}
-          [BlockStorage]
-          ignore-volume-az = true
-          rescan-on-resize = true
+      enabled: false
+      hostMount: true
     storageClass:
       enabled: false
     logVerbosityLevel: 5

@@ -1,3 +1,7 @@
+variables {
+  rke2_version = "v1.37.1+rke2r1"
+}
+
 run "agent_without_gpu" {
   command = apply
 
@@ -27,47 +31,32 @@ run "agent_with_gpu" {
   }
 }
 
-run "agent_with_preinstalled_gpu_driver" {
+run "agent_prebuilt" {
   command = apply
 
   variables {
-    is_server               = false
-    gpu_enabled             = true
-    gpu_driver_preinstalled = true
+    is_server      = false
+    gpu_enabled    = false
+    image_prebuilt = true
   }
 
   assert {
-    condition     = output.starts_with_cloud_config && output.package_reboot_if_required == false
-    error_message = "GPU cloud-init with a preinstalled driver must still parse, with package_reboot_if_required set to boolean false."
+    condition     = output.starts_with_cloud_config && !output.package_upgrade && output.package_reboot_if_required == null && length(output.packages) == 0
+    error_message = "A prebuilt image already ran the package part: its user_data must not update, upgrade, reboot or install packages."
   }
 }
 
-run "server_bootstrap" {
+run "agent_with_gpu_prebuilt" {
   command = apply
 
   variables {
-    is_server   = true
-    gpu_enabled = false
-    bootstrap   = true
+    is_server      = false
+    gpu_enabled    = true
+    image_prebuilt = true
   }
 
   assert {
-    condition     = output.starts_with_cloud_config && output.package_reboot_if_required == true
-    error_message = "Bootstrap server cloud-init must parse as YAML and set package_reboot_if_required to boolean true."
-  }
-}
-
-run "server_join" {
-  command = apply
-
-  variables {
-    is_server   = true
-    gpu_enabled = false
-    bootstrap   = false
-  }
-
-  assert {
-    condition     = output.starts_with_cloud_config && output.package_reboot_if_required == true
-    error_message = "Joining server cloud-init must parse as YAML and set package_reboot_if_required to boolean true."
+    condition     = !output.package_upgrade && output.packages == ["nvidia-driver-580", "nvidia-container-toolkit"]
+    error_message = "A prebuilt GPU image still installs the driver and toolkit at launch, and nothing else."
   }
 }

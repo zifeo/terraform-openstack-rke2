@@ -10,6 +10,11 @@
       "chart_version": "1.47.102",
       "values_sha256": "185088902cbe1e74044200415f687bfa5dccbdd98a082ddb9f861b3787b2a83d",
       "merge_status": "ok"
+    },
+    "rke2-metrics-server": {
+      "chart_version": "3.14.001",
+      "values_sha256": "46abdf50e8a7f04b9de90e3a30b86e366e93d03ffdae9248d8653fe47e6ad07d",
+      "merge_status": "ok"
     }
   }
 }

@@ -23,24 +23,35 @@ output "agents_subnet_id" {
 }
 
 output "restore_cmd" {
-  value     = "sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=${local.s3.bucket} --etcd-s3-access-key=${local.s3.access_key} --etcd-s3-secret-key=${local.s3.access_secret} --cluster-reset-restore-path=[filename]"
+  value     = local.s3 == null ? null : "sudo rke2 server --cluster-reset --etcd-s3 --etcd-s3-bucket=${local.s3.bucket} --etcd-s3-access-key=${local.s3.restore_access_key} --etcd-s3-secret-key=${local.s3.restore_access_secret} --cluster-reset-restore-path=[filename]"
   sensitive = true
 }
 
+# the host keys tofu made, which ssh checks without a known_hosts file to keep
 output "ssh_cmd" {
-  value     = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=accept-new -o ForwardAgent=yes ubuntu@${local.external_ip}"
+  value     = "ssh -o UserKnownHostsFile=/dev/null -o 'KnownHostsCommand=/bin/echo %H ${local.servers_host_key.public}' -o StrictHostKeyChecking=yes ${var.servers[0].system_user}@${local.external_ip}"
   sensitive = true
 }
 
+# each node through the floating IP: ProxyJump, unlike a forwarded agent, lends root on the jump host no key
 output "ssh_config" {
   value     = <<EOF
 Host ${var.name}
 HostName ${local.external_ip}
 Port 22
-User ubuntu
-ForwardAgent yes
+User ${var.servers[0].system_user}
 UserKnownHostsFile /dev/null
-StrictHostKeyChecking accept-new
+KnownHostsCommand /bin/echo %H ${local.servers_host_key.public}
+StrictHostKeyChecking yes
+%{for name, host in merge([for m in concat(values(module.servers), values(module.agents)) : m.ssh_hosts]...)~}
+Host ${name}
+HostName ${host.address}
+User ${host.user}
+ProxyJump ${var.name}
+UserKnownHostsFile /dev/null
+KnownHostsCommand /bin/echo %H ${host.host_key}
+StrictHostKeyChecking yes
+%{endfor~}
   EOF
   sensitive = true
 }

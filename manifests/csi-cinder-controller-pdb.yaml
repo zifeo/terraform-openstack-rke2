@@ -1,0 +1,13 @@
+# the chart has none: two drains at once never take every controller, a single one still drains
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: openstack-cinder-csi-controllerplugin
+  namespace: kube-system
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: openstack-cinder-csi
+      component: controllerplugin
+      release: openstack-cinder-csi

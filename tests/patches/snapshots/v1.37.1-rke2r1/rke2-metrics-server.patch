@@ -1,0 +1,27 @@
+--- rke2-metrics-server/values.yaml
++++ rke2-metrics-server/values.patched.yaml
+@@ -1,9 +1,19 @@
+-replicas: 1
+-updateStrategy: {}
+-affinity: {}
++replicas: <value:int>
++updateStrategy:
++  type: RollingUpdate
++  rollingUpdate:
++    maxSurge: 0
++    maxUnavailable: 1
++affinity:
++  podAntiAffinity:
++    requiredDuringSchedulingIgnoredDuringExecution:
++      - labelSelector:
++          matchLabels:
++            app.kubernetes.io/name: rke2-metrics-server
++        topologyKey: kubernetes.io/hostname
+ podDisruptionBudget:
+   # https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+-  enabled: false
++  enabled: true
+   minAvailable:
+-  maxUnavailable:
++  maxUnavailable: 1
+   unhealthyPodEvictionPolicy:

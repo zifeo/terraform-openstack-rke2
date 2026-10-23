@@ -7,11 +7,16 @@ spec:
   chart: openstack-cloud-controller-manager
   repo: https://kubernetes.github.io/cloud-provider-openstack
   # https://artifacthub.io/packages/helm/cloud-provider-openstack/openstack-cloud-controller-manager
-  version: 2.36.0
+  version: 2.37.1
   targetNamespace: kube-system
   bootstrap: true
+  failurePolicy: retry
+  forceConflicts: true
   valuesContent: |-
     logVerbosityLevel: 2
+    # the node's resolvers, as before chart 2.37: on a new cluster CoreDNS waits for the nodes this controller
+    # initializes, so it cannot resolve the identity endpoint through CoreDNS (ClusterFirstWithHostNet)
+    dnsPolicy: Default
     nodeSelector:
       node-role.kubernetes.io/control-plane: "true"
     resources:
@@ -20,24 +25,10 @@ spec:
         memory: 64Mi
       limits:
         memory: 64Mi
-    cloudConfig:
-      global:
-        auth-url: ${auth_url}
-        application-credential-name: ${app_name}
-        application-credential-id: ${app_id}
-        application-credential-secret: ${app_secret}
-        region: ${region}
-        tenant-id: ${project_id}
-      loadBalancer:
-        %{~ if floating_network_id != null ~}
-        floating-network-id: ${floating_network_id}
-        %{~ endif ~}
-        subnet-id: ${subnet_id}
-        member-subnet-id: ${subnet_id}
-        network-id: ${network_id}
-        lb-provider: ${lb_provider}
-        manage-security-groups: true
-        max-shared-lb: 10
+    secret:
+      enabled: true
+      create: false
+      name: rke2-occm-cloud-config
     controllerExtraArgs: |-
       - --use-service-account-credentials=false
     cluster:

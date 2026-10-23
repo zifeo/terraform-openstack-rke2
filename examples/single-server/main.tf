@@ -3,9 +3,6 @@ module "rke2" {
   # version = ""
   source = "./../.."
 
-  # must be true for single server cluster or
-  # only on the first run for high-availability cluster 
-  bootstrap           = true
   name                = "single-server"
   ssh_authorized_keys = ["~/.ssh/id_rsa.pub"]
   floating_pool       = "ext-floating1"
@@ -19,15 +16,14 @@ module "rke2" {
     name = "server-a"
 
     flavor_name = "a2-ram4-disk0"
-    image_name  = "Ubuntu 22.04 LTS Jammy Jellyfish"
+    image_name  = "Ubuntu 26.04 LTS Resolute Raccoon"
     # if you want fixed image version
     # image_uuid       = "UUID"
-    image_uuid = "8ca95333-e5c3-4d9b-90bc-f261ca434114"
 
     system_user      = "ubuntu"
     boot_volume_size = 6
 
-    rke2_version     = "v1.30.3+rke2r1"
+    rke2_version     = "v1.37.1+rke2r1"
     rke2_volume_size = 8
     # https://docs.rke2.io/install/install_options/server_config/
     rke2_config = <<EOF
@@ -42,15 +38,14 @@ EOF
       nodes_count = 1
 
       flavor_name = "a1-ram2-disk0"
-      image_name  = "Ubuntu 22.04 LTS Jammy Jellyfish"
+      image_name  = "Ubuntu 26.04 LTS Resolute Raccoon"
       # if you want fixed image version
       # image_uuid       = "UUID"
-      image_uuid = "8ca95333-e5c3-4d9b-90bc-f261ca434114"
 
       system_user      = "ubuntu"
       boot_volume_size = 6
 
-      rke2_version     = "v1.30.3+rke2r1"
+      rke2_version     = "v1.37.1+rke2r1"
       rke2_volume_size = 8
     }
   ]
@@ -86,12 +81,12 @@ EOF
     }
   }
 
-  # enable automatically agent removal of the cluster (wait max for 30s)
-  ff_autoremove_agent = "30s"
+  # drain and delete the Node of a destroyed agent (wait max 30s for SSH)
+  agent_removal_timeout = "30s"
   # rewrite kubeconfig
   ff_write_kubeconfig = true
   # deploy etcd backup
-  ff_native_backup = true
+  etcd_snapshots_in_object_store = true
   # wait for the cluster to be ready when deploying
   ff_wait_ready = true
 
@@ -126,12 +121,12 @@ provider "openstack" {
 }
 
 terraform {
-  required_version = ">= 0.14.0"
+  required_version = ">= 1.10"
 
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = "~> 1.53.0"
+      version = "~> 3.4"
     }
   }
 }

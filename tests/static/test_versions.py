@@ -1,6 +1,7 @@
 """Pinned versions must agree across RKE2.yaml, patch snapshots, manifests, cloud-init and the README."""
 
 import re
+import tomllib
 import urllib.request
 
 import pytest
@@ -15,7 +16,6 @@ SNAPSHOTS_DIR = ROOT / "tests" / "patches" / "snapshots"
 CHART_ROWS = {
     "OpenStack Cloud Controller": "manifests/cloud-controller-openstack.yaml.tpl",
     "OpenStack Cinder": "manifests/csi-cinder.yaml.tpl",
-    "Velero": "manifests/velero.yaml.tpl",
 }
 
 
@@ -32,6 +32,10 @@ def _rke2_versions() -> list:
 def _kube_vip_container(renders) -> dict:
     pod = yaml.safe_load(write_files(renders["server-bootstrap"]["rendered"])["/opt/rke2/kube-vip.yaml"])
     return pod["spec"]["containers"][0]
+
+
+
+
 
 
 def test_snapshots_cover_tested_versions():
@@ -52,16 +56,27 @@ def test_readme_chart_versions(component, manifest):
     assert _readme_row(component) == pinned, f"README {component} differs from {manifest}"
 
 
+def test_yq_pins_agree():
+    """customize-chart.sh is tested with the yq of the tools image and of mise: both must be the release the nodes install."""
+    node = re.search(r"YQ_VERSION=(v[0-9.]+);", (ROOT / "node" / "cloud-init.yaml.tpl").read_text()).group(1)
+    image = re.search(r"ARG YQ_VERSION=(v[0-9.]+)", (ROOT / "tests" / "tools.Dockerfile").read_text()).group(1)
+    with (ROOT / "mise.toml").open("rb") as f:
+        pinned = "v" + tomllib.load(f)["tools"]["yq"]
+    assert node == image == pinned, f"node {node}, tools image {image}, mise {pinned}"
+
+
 def test_readme_kube_vip_version(renders):
-    tag = _kube_vip_container(renders)["image"].rsplit(":", 1)[1]
-    assert _readme_row("Kube-vip") == tag.lstrip("v")
-    assert f"image: ghcr.io/kube-vip/kube-vip:{tag}" in README, "README manual kube-vip manifest uses another tag"
+    image = _kube_vip_container(renders)["image"]
+    # pinned by digest, the tag kept for the README
+    tag, digest = image.split("@")
+    assert digest.startswith("sha256:") and len(digest) == len("sha256:") + 64
+    assert _readme_row("Kube-vip") == tag.rsplit(":", 1)[1].lstrip("v")
 
 
 def test_kube_vip_env_names_exist_upstream(renders):
     """kube-vip ignores unknown env vars, so a renamed setting (vip_cidr -> vip_subnet) silently falls back to defaults."""
     container = _kube_vip_container(renders)
-    tag = container["image"].rsplit(":", 1)[1]
+    tag = container["image"].split("@")[0].rsplit(":", 1)[1]
     url = f"https://raw.githubusercontent.com/kube-vip/kube-vip/{tag}/pkg/kubevip/config_envvar.go"
     with urllib.request.urlopen(url, timeout=30) as response:
         known = set(re.findall(r'=\s*"([a-z0-9_]+)"', response.read().decode()))
