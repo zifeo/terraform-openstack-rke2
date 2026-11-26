@@ -290,7 +290,7 @@ write_files:
       containers:
       - name: kube-vip
         # the iptables variant: masquerade adds its rule with the iptables binary, which the plain image lacks
-        image: ghcr.io/kube-vip/kube-vip-iptables:v1.3.0@sha256:23477ad40d2c411236eac50088cd92fe9f289ae01433da18f695da3282d00ff1
+        image: ghcr.io/kube-vip/kube-vip-iptables:v1.3.2@sha256:43d28776996a39de3047e701cb01d42a350f735e4d5e90236e6d6042577cb06a
         imagePullPolicy: IfNotPresent
         args:
         - manager

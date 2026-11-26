@@ -13,8 +13,8 @@ jobs:
     if: github.ref_type == 'tag'
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: ncipollo/release-action@v1
+      - uses: actions/checkout@v7
+      - uses: ncipollo/release-action@v1.21.0
         with:
           tag: ${{ github.ref_name }}
           makeLatest: true

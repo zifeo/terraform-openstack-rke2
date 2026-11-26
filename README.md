@@ -36,7 +36,7 @@ defaults for running production workload.
 | RKE2                       | [v1.37.1+rke2r1](https://github.com/rancher/rke2/releases/tag/v1.37.1+rke2r1), the only minor supported                |
 | OpenStack Cloud Controller | [v2.37.1](https://github.com/kubernetes/cloud-provider-openstack/releases/tag/openstack-cloud-controller-manager-2.37.1) |
 | OpenStack Cinder           | [v2.37.1](https://github.com/kubernetes/cloud-provider-openstack/releases/tag/openstack-cinder-csi-2.37.1)               |
-| Kube-vip                   | [v1.3.0](https://github.com/kube-vip/kube-vip/releases/tag/v1.3.0)                                                       |
+| Kube-vip                   | [v1.3.2](https://github.com/kube-vip/kube-vip/releases/tag/v1.3.2)                                                       |
 
 ### Bundled RKE2 components
 
@@ -526,7 +526,7 @@ metadata:
 spec:
   containers:
     - name: kube-vip
-      image: ghcr.io/kube-vip/kube-vip:v1.2.4
+      image: ghcr.io/kube-vip/kube-vip:v1.3.2
       imagePullPolicy: IfNotPresent
       args:
         - manager
